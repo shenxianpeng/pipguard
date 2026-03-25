@@ -78,36 +78,36 @@ real-time feed that could be consumed without building the infrastructure from s
 
 ---
 
-## TODO-4: --allow-sdist 安全语义文档化
+## TODO-4: Document `--allow-sdist` Security Semantics
 
-**What:** README 和 `--help` 当前说 "WARNING: reduces security guarantee"。实际上 `--allow-sdist` **销毁**了安全保证，不只是弱化。即使 pipguard 对 Python 源文件运行了 AST 扫描，`pip install` 在安装阶段仍会执行 `setup.py` / build-backend 中的任意代码。AST 扫描只覆盖了 setup.py 的**静态内容**，无法防止运行时动态生成的载荷。
+**What:** README and `--help` currently say "WARNING: reduces security guarantee". In fact, `--allow-sdist` **destroys** the security guarantee, not merely weakens it. Even though pipguard runs AST scanning on Python source files, `pip install` will still execute arbitrary code in `setup.py` / build-backend during installation. AST scanning only covers the **static content** of setup.py and cannot prevent runtime-generated payloads.
 
-**Why:** 用户看到 "reduces security guarantee" 可能误以为扫描仍然提供部分保护。实际上：sdist 安装 = 代码执行，pipguard 无法阻止。错误的安全感比没有保护更危险。
+**Why:** Users seeing "reduces security guarantee" may mistakenly believe scanning still provides partial protection. In reality: sdist install = code execution, and pipguard cannot prevent it. A false sense of security is more dangerous than no protection at all.
 
 **Proposed fix:**
-- README 中将 `--allow-sdist` 警告升级为明确声明："sdist install executes arbitrary code. pipguard's AST scan does NOT prevent this."
-- `--help` 文本同步更新
-- 考虑将 `--allow-sdist` 重命名为 `--allow-code-execution` 以强制用户意识到风险
+- Upgrade the `--allow-sdist` warning in README to explicitly state: "sdist install executes arbitrary code. pipguard's AST scan does NOT prevent this."
+- Sync `--help` text accordingly
+- Consider renaming `--allow-sdist` to `--allow-code-execution` to force users to acknowledge the risk
 
-**Depends on:** 无
-**Priority:** v0.1.x（文档修复，随下个 patch 版本发布）
+**Depends on:** None
+**Priority:** v0.1.x (documentation fix, ship with next patch release)
 
 ---
 
-## TODO-5: binary-only 包的闸道行为决策
+## TODO-5: Gate Behavior Decision for Binary-Only Packages
 
-**What:** 当前 binary-only 包（无 .py 源码的 wheel）显示为 `[UNKNOWN]`，但其 `effective_level = CLEAN`，闸道逻辑不阻断，安装静默继续。这是 fail-open 行为。
+**What:** Currently, binary-only packages (wheels with no `.py` source) are shown as `[UNKNOWN]` but their `effective_level = CLEAN`, the gate does not block, and installation continues silently. This is fail-open behavior.
 
-**Why:** pipguard 的核心承诺是"扫描后才安装"。binary-only 包完全无法被 AST 扫描——它们是最不透明的包类型，同时也是最危险的。将其标为 CLEAN 并静默安装与这个承诺矛盾。
+**Why:** pipguard's core promise is "scan before install". Binary-only packages cannot be AST-scanned at all — they are the most opaque package type, and simultaneously the most dangerous. Marking them as CLEAN and silently installing contradicts this promise.
 
 **Options to decide:**
-- A) `binary-only` → `effective_level = MEDIUM` → 触发确认提示（--yes 可跳过）
-- B) `binary-only` → 默认阻断，需 `--allow-binary-only` 显式允许
-- C) 保持现状（用户看到 UNKNOWN 警告后自行决定）
+- A) `binary-only` → `effective_level = MEDIUM` → triggers confirmation prompt (skippable with `--yes`)
+- B) `binary-only` → blocked by default, requires `--allow-binary-only` to explicitly allow
+- C) Keep current behavior (user sees UNKNOWN warning and decides)
 
-**Current state:** TODO-1 (.so 扫描) 将为 binary-only 包增加 LOW finding，届时 gate 会触发提示。可等 TODO-1 完成后一并决定。
+**Current state:** TODO-1 (.so scanning) will add a LOW finding for binary-only packages, at which point the gate will trigger a prompt. Can be decided together when TODO-1 is done.
 
-**Depends on:** TODO-1（.so 扫描）
+**Depends on:** TODO-1 (.so scanning)
 **Priority:** v0.2
 
 ---
