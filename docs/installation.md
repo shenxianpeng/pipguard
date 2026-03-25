@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 - pip (any recent version)
 - Zero external dependencies — pipguard uses only the Python standard library
 

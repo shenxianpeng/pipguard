@@ -7,7 +7,7 @@ name = "pipguard"
 dynamic = ["version"]
 description = "Scan Python packages for supply chain attacks before installing them"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
   { name="Xianpeng Shen", email="xianpeng.shen@gmail.com" }
 ]
@@ -17,7 +17,6 @@ classifiers = [
   "Environment :: Console",
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
