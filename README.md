@@ -88,7 +88,7 @@ pip install --no-index            ← installs FROM SCANNED FILES (TOCTOU-safe)
 | Level    | Triggers |
 |----------|----------|
 | CRITICAL | `.pth` executable code; `eval(base64.b64decode(...))`; network in `setup.py` |
-| HIGH     | Reads `~/.ssh`, `~/.aws`, `~/.kube`, `~/.gnupg` in install hooks; `shell=True` subprocess |
+| HIGH     | Reads `~/.ssh`, `~/.aws`, `~/.kube`, `~/.gnupg` in install hooks; `shell=True` subprocess; `os.system()`/`os.popen()` in install hooks |
 | MEDIUM   | Network calls in runtime code; sensitive env var access (`*TOKEN*`, `*KEY*`, etc.) |
 | LOW      | Dynamic `importlib`/`__import__` |
 | CLEAN    | None of the above |
