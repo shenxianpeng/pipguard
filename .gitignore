@@ -13,3 +13,4 @@ build/
 site
 **/*.py,cover
 .coverage
+*.egg-info
