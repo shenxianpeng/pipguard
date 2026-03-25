@@ -11,3 +11,5 @@ build/
 *.egg
 .gstack/
 site
+**/*.py,cover
+.coverage
