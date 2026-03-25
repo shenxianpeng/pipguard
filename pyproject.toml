@@ -40,9 +40,6 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 
-[tool.setuptools.packages.find]
-include = ["pipguard*"]
-
 [tool.setuptools_scm]
 # Derives version from git tags: v0.2.0 → 0.2.0
 # Between tags: 0.2.0.dev3+gabcdef (automatically)
