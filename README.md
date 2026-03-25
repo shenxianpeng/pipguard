@@ -1,5 +1,7 @@
 # pipguard
 
+[![PyPI - Version](https://img.shields.io/pypi/v/pipguard)](https://pypi.org/project/pipguard/)
+
 **Python supply chain security tool. Scan packages before installing them.**
 
 ```bash
