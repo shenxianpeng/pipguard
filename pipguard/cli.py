@@ -333,7 +333,7 @@ def main() -> int:
     args = parser.parse_args()
     if args.command == "install":
         return cmd_install(args)
-    return 0
+    return 0  # pragma: no cover
 
 
 if __name__ == "__main__":

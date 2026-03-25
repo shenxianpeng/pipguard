@@ -1,6 +1,8 @@
 # pipguard
 
 [![PyPI - Version](https://img.shields.io/pypi/v/pipguard)](https://pypi.org/project/pipguard/)
+[![codecov](https://codecov.io/gh/shenxianpeng/pipguard/graph/badge.svg)](https://codecov.io/gh/shenxianpeng/pipguard)
+[![Documentation](https://img.shields.io/badge/docs-mkdocs-blue)](https://shenxianpeng.github.io/pipguard/)
 
 **Python supply chain security tool. Scan packages before installing them.**
 
@@ -51,82 +53,7 @@ pipguard install --allow paramiko paramiko
 pipguard install --force my-trusted-internal-pkg
 ```
 
-## How It Works
-
-```
-pipguard install X
-       │
-       ▼
-pip download --prefer-binary X    ← downloads wheel/sdist, no code execution
-       │
-       ▼
-Detect sdist fallback             ← exit 2 if sdist detected (unless --allow-sdist)
-       │
-       ▼
-Extract archive (zipfile/tarfile) ← never executes code
-       │
-       ▼
-AST scan all .py files            ← parallel, ThreadPoolExecutor
-  setup.py, pyproject.toml, *.pth ← CRITICAL/HIGH scope
-  all other .py                   ← MEDIUM/LOW scope
-       │
-       ▼
-Risk scoring:
-  CRITICAL → block (exit 1)
-  HIGH     → block (exit 1)
-  MEDIUM   → warn + confirm
-  LOW      → warn + confirm
-  CLEAN    → install silently
-       │
-       ▼
-pip install --no-index            ← installs FROM SCANNED FILES (TOCTOU-safe)
-    --find-links /tmp/pipguard-XX
-```
-
-## Risk Levels
-
-| Level    | Triggers |
-|----------|----------|
-| CRITICAL | `.pth` executable code; `eval(base64.b64decode(...))`; network in `setup.py` |
-| HIGH     | Reads `~/.ssh`, `~/.aws`, `~/.kube`, `~/.gnupg` in install hooks; `shell=True` subprocess; `os.system()`/`os.popen()` in install hooks |
-| MEDIUM   | Network calls in runtime code; sensitive env var access (`*TOKEN*`, `*KEY*`, etc.) |
-| LOW      | Dynamic `importlib`/`__import__` |
-| CLEAN    | None of the above |
-
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0    | Clean install succeeded |
-| 1    | Blocked — CRITICAL or HIGH risk detected |
-| 2    | Scan error (download failed, unsupported format) |
-
-## GitHub Action
-
-```yaml
-- name: Secure pip install
-  uses: pipguard/action@v1
-  with:
-    requirements: requirements.txt
-```
-
-## Seed Allowlist
-
-These packages legitimately access credential stores and are pre-allowlisted
-(HIGH reduced to MEDIUM — CRITICAL is **never** reduced):
-
-`keyring`, `keyrings.alt`, `boto3`, `botocore`, `awscli`, `paramiko`,
-`google-auth`, `google-cloud-storage`, `google-cloud-bigquery`,
-`google-cloud-core`, `azure-identity`
-
-Add more per-invocation: `pipguard install --allow my-package ...`
-
-## Limitations (Phase 1)
-
-- Static AST scanning can be bypassed by multi-layer obfuscation
-- C extensions (`.so`/`.pyd`) are opaque to AST scanning (flagged as UNKNOWN)
-- Python/pip only — no npm, cargo, go modules
-- Phase 2 (in design): seccomp/eBPF sandbox for zero-day capability interception
+For the full reference — risk levels, exit codes, allowlist, and CI integration — see the **[documentation](https://shenxianpeng.github.io/pipguard/)**.
 
 ## License
 
