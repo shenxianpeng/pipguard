@@ -9,6 +9,9 @@ PIPGUARD_NETWORK_TESTS environment variable.
 import os
 import sys
 import tempfile
+import types
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -17,7 +20,9 @@ from pipguard.cli import (
     _pkg_name_from_filename,
     _validate_requirements_file,
     build_parser,
+    cmd_install,
 )
+from pipguard.models import Finding, PackageScanResult, RiskLevel
 
 
 # ── Package name extraction ──────────────────────────────────────────────────
@@ -157,6 +162,140 @@ class TestBuildParser:
         parser = build_parser()
         with pytest.raises(SystemExit):
             parser.parse_args([])
+
+
+# ── cmd_install gate logic (mock download/scan/install) ──────────────────────
+
+def _make_args(**kwargs):
+    """Build a minimal args namespace for cmd_install."""
+    defaults = dict(
+        packages=["requests"],
+        r=None,
+        yes=False,
+        force=False,
+        allow=[],
+        allow_sdist=False,
+    )
+    defaults.update(kwargs)
+    return types.SimpleNamespace(**defaults)
+
+
+def _make_scan_result(pkg_name, level):
+    """Create a PackageScanResult at the given effective level."""
+    if level == RiskLevel.CLEAN:
+        return PackageScanResult(package_name=pkg_name, version="", findings=[])
+    return PackageScanResult(
+        package_name=pkg_name,
+        version="",
+        findings=[Finding(level=level, file_path="f.py", line=1, description="test")],
+    )
+
+
+@patch("pipguard.cli.install_from_local", return_value=0)
+@patch("pipguard.cli.print_findings_report")
+@patch("pipguard.cli._scan_one_package")
+@patch("pipguard.cli.download_packages")
+@patch("pipguard.cli.register_temp_dir")
+@patch("pipguard.cli.install_signal_handlers")
+class TestCmdInstallGate:
+
+    def test_clean_package_exits_0(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """CLEAN result → exit 0, install proceeds."""
+        mock_dl.return_value = ([str(tmp_path / "requests-2.28.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("requests", RiskLevel.CLEAN)
+        rc = cmd_install(_make_args())
+        assert rc == 0
+        mock_install.assert_called_once()
+
+    def test_critical_finding_exits_1(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """CRITICAL finding without --force → exit 1, install blocked."""
+        mock_dl.return_value = ([str(tmp_path / "evil-1.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("evil", RiskLevel.CRITICAL)
+        rc = cmd_install(_make_args(packages=["evil"]))
+        assert rc == 1
+        mock_install.assert_not_called()
+
+    def test_high_finding_exits_1(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """HIGH finding without --force → exit 1."""
+        mock_dl.return_value = ([str(tmp_path / "evil-1.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("evil", RiskLevel.HIGH)
+        rc = cmd_install(_make_args(packages=["evil"]))
+        assert rc == 1
+        mock_install.assert_not_called()
+
+    def test_critical_with_force_exits_0(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """CRITICAL + --force → install proceeds, exit 0."""
+        mock_dl.return_value = ([str(tmp_path / "evil-1.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("evil", RiskLevel.CRITICAL)
+        rc = cmd_install(_make_args(packages=["evil"], force=True))
+        assert rc == 0
+        mock_install.assert_called_once()
+
+    def test_medium_with_yes_exits_0(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """MEDIUM + --yes → no prompt, install proceeds, exit 0."""
+        mock_dl.return_value = ([str(tmp_path / "pkg-1.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("pkg", RiskLevel.MEDIUM)
+        rc = cmd_install(_make_args(yes=True))
+        assert rc == 0
+        mock_install.assert_called_once()
+
+    def test_scan_exception_is_medium_not_silent(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """Regression: scan exception must produce MEDIUM result, not be silently dropped."""
+        mock_dl.return_value = ([str(tmp_path / "evil-1.0-py3-none-any.whl")], [])
+        mock_scan.side_effect = RuntimeError("boom")
+        # MEDIUM result means _confirm_install would be called; --yes skips the prompt
+        rc = cmd_install(_make_args(yes=True))
+        # Should NOT exit 0 silently with a clean result — scan error → MEDIUM → prompt/block
+        # With --yes it proceeds, but the point is the result was not dropped
+        mock_report.assert_called_once()
+        reported_results = mock_report.call_args[0][0]
+        assert len(reported_results) == 1
+        assert reported_results[0].effective_level == RiskLevel.MEDIUM
+
+    def test_sdist_rejected_without_flag(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """sdist packages without --allow-sdist → exit 2."""
+        mock_dl.return_value = ([], ["litellm"])
+        rc = cmd_install(_make_args(packages=["litellm"]))
+        assert rc == 2
+        mock_install.assert_not_called()
+
+
+class TestValidateRequirementsFilePEP508:
+    """Regression tests for PEP 508 direct URL dependencies."""
+
+    def _write(self, tmp_path, content):
+        req = tmp_path / "requirements.txt"
+        req.write_text(content)
+        return str(req)
+
+    def test_pep508_https_url_returns_2(self, tmp_path):
+        """pkg @ https://... must be rejected (exit 2)."""
+        f = self._write(tmp_path, "requests @ https://example.com/requests.whl\n")
+        assert _validate_requirements_file(f) == 2
+
+    def test_pep508_file_url_returns_2(self, tmp_path):
+        """pkg @ file:///... must be rejected (exit 2)."""
+        f = self._write(tmp_path, "mypkg @ file:///home/user/mypkg-1.0.whl\n")
+        assert _validate_requirements_file(f) == 2
+
+    def test_normal_pinned_dep_returns_0(self, tmp_path):
+        """Normal pinned dep without @ must still pass."""
+        f = self._write(tmp_path, "requests==2.28.0\n")
+        assert _validate_requirements_file(f) == 0
 
 
 # ── Network-gated integration tests ──────────────────────────────────────────

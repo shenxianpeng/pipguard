@@ -21,9 +21,9 @@ from . import __version__
 from .aggregator import aggregate_findings, print_findings_report
 from .cleanup import install_signal_handlers, register_temp_dir
 from .downloader import download_packages
-from .extractor import collect_scannable_files, extract_archive, has_python_source
+from .extractor import collect_scannable_files, extract_archive
 from .installer import install_from_local
-from .models import PackageScanResult, RiskLevel
+from .models import Finding, PackageScanResult, RiskLevel
 from .scanner import scan_pth_file, scan_python_file
 
 
@@ -76,17 +76,19 @@ def _scan_one_package(
             )],
         )
 
-    if not has_python_source(extract_dir):
-        return aggregate_findings(
-            pkg_name, [], extra_allow=extra_allow, is_binary_only=True
-        )
-
     all_findings = []
+    has_scannable = False
     for filepath, is_hook in collect_scannable_files(extract_dir):
+        has_scannable = True
         if filepath.endswith(".pth"):
             all_findings.extend(scan_pth_file(filepath))
         else:
             all_findings.extend(scan_python_file(filepath, is_hook=is_hook))
+
+    if not has_scannable:
+        return aggregate_findings(
+            pkg_name, [], extra_allow=extra_allow, is_binary_only=True
+        )
 
     return aggregate_findings(pkg_name, all_findings, extra_allow=extra_allow)
 
@@ -116,6 +118,9 @@ def _validate_requirements_file(filepath: str) -> int:
                     for prefix in ("git+", "hg+", "svn+", "bzr+")
                 ):
                     unsupported.append((lineno, line, "VCS dependency"))
+                elif " @ " in line:
+                    # PEP 508 direct URL: pkg @ https://... or pkg @ file:///...
+                    unsupported.append((lineno, line, "direct URL dependency (PEP 508 @ syntax)"))
                 elif line.startswith("./") or line.startswith("../") or (
                     line.startswith("/") and not line.startswith("-")
                 ):
@@ -217,9 +222,19 @@ def cmd_install(args) -> int:
         for future in concurrent.futures.as_completed(future_to_arch):
             try:
                 results.append(future.result())
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 pkg = _pkg_name_from_filename(future_to_arch[future])
                 print(f"Warning: scan failed for {pkg}: {exc}", file=sys.stderr)
+                results.append(PackageScanResult(
+                    package_name=pkg,
+                    version="",
+                    findings=[Finding(
+                        level=RiskLevel.MEDIUM,
+                        file_path=future_to_arch[future],
+                        line=0,
+                        description=f"Scan error (fail-safe): {exc}",
+                    )],
+                ))
 
     print_findings_report(results)
 

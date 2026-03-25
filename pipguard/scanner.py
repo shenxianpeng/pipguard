@@ -134,6 +134,8 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
     findings: List[Finding] = []
 
     try:
+        if os.path.getsize(filepath) > 1_048_576:  # 1 MB limit
+            return findings
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             source = f.read()
     except OSError:
@@ -183,13 +185,23 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
                     description=f"Dynamic code execution ({name}()) in install hook",
                 ))
 
+        # ── os.system / os.popen in install hooks (always shell execution) ────────
+        if is_hook and isinstance(node, ast.Call):
+            name = _call_name(node)
+            if name in ("os.system", "os.popen"):
+                findings.append(Finding(
+                    level=RiskLevel.HIGH,
+                    file_path=filepath,
+                    line=lineno,
+                    description=f"Shell execution ({name}()) in install hook",
+                ))
+
         # ── subprocess shell=True in install hooks ──────────────────────────────
         if is_hook and isinstance(node, ast.Call):
             name = _call_name(node)
             if name in (
                 "subprocess.run", "subprocess.call", "subprocess.check_call",
                 "subprocess.check_output", "subprocess.Popen",
-                "os.system", "os.popen",
             ):
                 for kw in getattr(node, "keywords", []):
                     if kw.arg == "shell" and isinstance(kw.value, ast.Constant):
