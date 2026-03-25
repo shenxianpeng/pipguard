@@ -1,5 +1,7 @@
 # Usage
 
+![pipguard demo](assets/demo.gif)
+
 ## Basic Usage
 
 ### Install a single package

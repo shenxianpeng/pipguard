@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" width="80" alt="pipguard logo">
+</p>
+
 # pipguard
 
 [![PyPI - Version](https://img.shields.io/pypi/v/pipguard)](https://pypi.org/project/pipguard/)
@@ -12,6 +16,8 @@ pipguard install litellm==1.82.8   # Blocks the March 2026 attack. Exits 1.
 ```
 
 Zero configuration. Zero external dependencies. Pure stdlib.
+
+![pipguard demo](docs/assets/demo.gif)
 
 ---
 
@@ -30,7 +36,17 @@ The answer is **no**. And that question doesn't require a database.
 
 ## Installation
 
+Install pipguard **outside your project's virtualenv** — this prevents untrusted
+package code from tampering with the scanner itself.
+
 ```bash
+# Recommended: isolated, persistent install
+pipx install pipguard
+
+# CI / one-off use (no pre-install needed)
+uvx pipguard install -r requirements.txt
+
+# Standard
 pip install pipguard
 ```
 
