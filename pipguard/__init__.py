@@ -1,9 +1,9 @@
 
 """
-pipguard - A placeholder package for pipguard.
+pipguard — Python supply chain security tool.
+
+Scan packages for malicious install-time behavior before installing them.
+Zero configuration. Zero external dependencies. Pure stdlib.
 """
 
-__version__ = "0.0.1"
-
-def hello():
-    return "Hello pipguard"
+__version__ = "0.1.0"

