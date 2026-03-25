@@ -36,11 +36,7 @@ jobs:
         run: pip install build
 
       - name: Build sdist and wheel
-        run: |
-          # Strip leading 'v' from tag (v0.2.1 → 0.2.1) so PyPI gets a clean version.
-          # SETUPTOOLS_SCM_PRETEND_VERSION overrides the git-derived version entirely.
-          VERSION="${GITHUB_REF_NAME#v}"
-          SETUPTOOLS_SCM_PRETEND_VERSION="$VERSION" python -m build
+        run: python -m build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0

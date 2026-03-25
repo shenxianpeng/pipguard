@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pipguard"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Scan Python packages for supply chain attacks before installing them"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -32,6 +32,10 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+[tool.setuptools_scm]
+# Derives version from git tags: v0.2.0 → 0.2.0
+# Between tags: 0.2.0.dev3+gabcdef (automatically)
 
 [tool.coverage.run]
 source = ["pipguard"]
