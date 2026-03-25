@@ -8,7 +8,8 @@ edit_uri: edit/main/docs/
 theme:
   name: material
   custom_dir: docs/overrides
-  favicon: assets/favicon.svg
+  favicon: assets/favicon.png
+  logo: assets/logo.svg
   font:
     text: false   # We load fonts manually via extra_css
     code: false
