@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.10+
 - pip (any recent version)
 - Zero external dependencies — pipguard uses only the Python standard library
 
@@ -37,16 +37,6 @@ Add to your `requirements-dev.txt` or install directly in your CI pipeline:
 - name: Secure dependency install
   run: pipguard install --yes -r requirements.txt
 ```
-
-!!! tip "Prefer GitHub Action"
-    For CI use, the dedicated GitHub Action is the cleanest integration:
-
-    ```yaml
-    - name: Secure pip install
-      uses: pipguard/action@v1
-      with:
-        requirements: requirements.txt
-    ```
 
 ## Upgrading
 
