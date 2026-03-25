@@ -1,9 +1,10 @@
 """Extract wheel and sdist archives into a temp directory for scanning."""
 
 import os
+import sys
 import tarfile
 import zipfile
-from typing import Generator, Optional, Tuple
+from typing import Generator, List, Optional, Tuple
 
 
 def extract_archive(archive_path: str, dest_dir: str) -> Optional[str]:
@@ -40,12 +41,26 @@ def extract_archive(archive_path: str, dest_dir: str) -> Optional[str]:
                     zf.extractall(extract_to)
             else:
                 with tarfile.open(archive_path, mode) as tf:
-                    tf.extractall(extract_to)
+                    if sys.version_info >= (3, 12):
+                        tf.extractall(extract_to, filter="data")
+                    else:
+                        tf.extractall(extract_to, members=_safe_tar_members(tf, extract_to))
             return extract_to
         except (tarfile.TarError, zipfile.BadZipFile, EOFError, OSError):
             return None
 
     return None
+
+
+def _safe_tar_members(tf: tarfile.TarFile, dest_dir: str) -> List[tarfile.TarInfo]:
+    """Filter tar members to prevent path traversal attacks (Python < 3.12)."""
+    real_dest = os.path.realpath(dest_dir)
+    safe = []
+    for member in tf.getmembers():
+        member_path = os.path.realpath(os.path.join(real_dest, member.name))
+        if member_path.startswith(real_dest + os.sep) or member_path == real_dest:
+            safe.append(member)
+    return safe
 
 
 def _is_sdist_zip(path: str) -> bool:
