@@ -28,3 +28,4 @@ def install_signal_handlers() -> None:
         sys.exit(1)
 
     signal.signal(signal.SIGINT, _handler)
+    signal.signal(signal.SIGTERM, _handler)
