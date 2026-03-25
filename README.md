@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/logo.png" width="80" alt="pipguard logo">
+  <img src="https://raw.githubusercontent.com/shenxianpeng/pipguard/main/docs/assets/logo.png" width="80" alt="pipguard logo">
 </p>
 
 # pipguard
@@ -17,7 +17,7 @@ pipguard install litellm==1.82.8   # Blocks the March 2026 attack. Exits 1.
 
 Zero configuration. Zero external dependencies. Pure stdlib.
 
-![pipguard demo](docs/assets/demo.gif)
+![pipguard demo](https://raw.githubusercontent.com/shenxianpeng/pipguard/main/docs/assets/demo.gif)
 
 ---
 
@@ -63,7 +63,7 @@ pipguard install -r requirements.txt
 pipguard install --yes -r requirements.txt
 
 # Allow a known-legitimate package that accesses credentials
-pipguard install --allow paramiko paramiko
+pipguard install --allow paramiko -r requirements.txt
 
 # Override for known false-positives (use with care)
 pipguard install --force my-trusted-internal-pkg
