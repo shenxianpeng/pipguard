@@ -11,13 +11,20 @@ requires-python = ">=3.9"
 authors = [
   { name="Xianpeng Shen", email="xianpeng.shen@gmail.com" }
 ]
-license = { text="MIT" }
+license = "MIT"
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
 ]
 
 [project.scripts]
@@ -32,6 +39,9 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+[tool.setuptools.packages.find]
+include = ["pipguard*"]
 
 [tool.setuptools_scm]
 # Derives version from git tags: v0.2.0 → 0.2.0
