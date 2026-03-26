@@ -25,7 +25,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install MkDocs
-        run: pip install mkdocs==1.6.1 mkdocs-material==9.7.6. # Pinning versions to avoid potential security issues
+        run: pip install mkdocs==1.6.1 mkdocs-material==9.7.6 # Pinning versions to avoid potential security issues
 
       - name: Build and deploy
         run: mkdocs gh-deploy --force
