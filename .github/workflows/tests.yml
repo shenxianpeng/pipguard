@@ -20,7 +20,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install pytest pytest-cov
+        run: pip install pytest==9.0.2 pytest-cov==7.1.0 # Pinning versions to avoid potential security issues
 
       - name: Run tests
         run: pytest --cov=pipguard --cov-report=xml --cov-report=term-missing
