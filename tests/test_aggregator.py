@@ -167,7 +167,7 @@ class TestCheckPackageNameForHomoglyph:
         assert not is_allowlisted("b\u043eto3")
 
 
-class TestNormalizePackageNameKFC:
+class TestNormalizePackageNameNFKC:
     """TODO-2: NFKC normalization in normalize_package_name."""
 
     def test_nfkc_fullwidth_digit(self):

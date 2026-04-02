@@ -63,10 +63,10 @@ def _scan_one_package(
     pkg_name = _pkg_name_from_filename(archive_path)
 
     # Homoglyph / non-ASCII package name check (TODO-2)
-    name_findings = []
+    all_findings: List[Finding] = []
     homoglyph = check_package_name_for_homoglyph(pkg_name)
     if homoglyph:
-        name_findings.append(homoglyph)
+        all_findings.append(homoglyph)
 
     extract_dir = extract_archive(archive_path, tmp_dir)
     if extract_dir is None:
@@ -74,7 +74,7 @@ def _scan_one_package(
         return PackageScanResult(
             package_name=pkg_name,
             version="",
-            findings=name_findings + [Finding(
+            findings=all_findings + [Finding(
                 level=RiskLevel.MEDIUM,
                 file_path=archive_path,
                 line=0,
@@ -82,7 +82,6 @@ def _scan_one_package(
             )],
         )
 
-    all_findings: List[Finding] = list(name_findings)
     has_scannable = False
     for filepath, is_hook in collect_scannable_files(extract_dir):
         has_scannable = True
