@@ -79,6 +79,12 @@ because sdists execute build scripts. To opt in:
 pipguard install --allow-sdist some-package
 ```
 
+!!! danger "sdist installs execute arbitrary code"
+    `--allow-sdist` bypasses a hard safety boundary. Even though pipguard runs AST scanning on
+    `setup.py`, `pip install` will still **execute** setup.py and any build-backend code at
+    install time. pipguard's AST scan does **NOT** prevent this.
+    Never use `--allow-sdist` in automated pipelines without explicit review.
+
 ## All Flags
 
 | Flag | Description |
@@ -87,7 +93,7 @@ pipguard install --allow-sdist some-package
 | `--yes` / `-y` | CI mode — no prompts, exit 1 on CRITICAL/HIGH |
 | `--allow PKG` | Add package to per-invocation allowlist (HIGH→MEDIUM) |
 | `--force PKG` | Bypass all checks for a specific package |
-| `--allow-sdist` | Allow sdist fallback (with warning) |
+| `--allow-sdist` | Allow sdist fallback (DANGER: executes arbitrary code — AST scan does NOT prevent this) |
 
 ## Exit Codes
 

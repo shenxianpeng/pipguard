@@ -103,8 +103,9 @@ signatures. pipguard asks a different question:
 | Level | What triggers it | Action |
 |-------|-----------------|--------|
 | <span class="pg-badge pg-badge-critical">CRITICAL</span> | `.pth` executable code; `eval(base64.b64decode(...))` | Block (exit 1) |
-| <span class="pg-badge pg-badge-high">HIGH</span> | Reads `~/.ssh`, `~/.aws` in install hooks; `shell=True`; `os.system()` | Block (exit 1) |
-| <span class="pg-badge pg-badge-medium">MEDIUM</span> | Network in runtime; sensitive env vars | Warn + confirm |
+| <span class="pg-badge pg-badge-high">HIGH</span> | Non-ASCII package name (homoglyph); reads `~/.ssh`, `~/.aws` in install hooks; `shell=True`; `os.system()` | Block (exit 1) |
+| <span class="pg-badge pg-badge-medium">MEDIUM</span> | Binary-only wheel; network in runtime; sensitive env vars | Warn + confirm |
+| LOW | Compiled binary extension in mixed wheel; dynamic imports | Warn + confirm |
 | CLEAN | None of the above | Install silently |
 
 [Full risk level reference →](risk-levels.md)

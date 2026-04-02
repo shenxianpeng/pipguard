@@ -5,7 +5,7 @@ to be actionable months from now.
 
 ---
 
-## TODO-1: C Extension / Binary .so Scanning
+## ✅ TODO-1: C Extension / Binary .so Scanning (DONE — v0.2)
 
 **What:** Add detection and warning for wheels containing compiled binary extensions
 (`.so`, `.pyd`, `.dylib`). Phase 1 AST scanning is completely blind to payloads
@@ -29,7 +29,7 @@ the AST scan runs on the Python parts and misses the binary parts.
 
 ---
 
-## TODO-2: Homoglyph / Unicode Package Name Attack
+## ✅ TODO-2: Homoglyph / Unicode Package Name Attack (DONE — v0.2)
 
 **What:** Normalize package names before allowlist comparison using Unicode NFKC
 normalization + ASCII-only enforcement. A package name `bото3` (with Cyrillic `о`)
@@ -78,7 +78,7 @@ real-time feed that could be consumed without building the infrastructure from s
 
 ---
 
-## TODO-4: Document `--allow-sdist` Security Semantics
+## ✅ TODO-4: Document `--allow-sdist` Security Semantics (DONE — v0.2)
 
 **What:** README and `--help` currently say "WARNING: reduces security guarantee". In fact, `--allow-sdist` **destroys** the security guarantee, not merely weakens it. Even though pipguard runs AST scanning on Python source files, `pip install` will still execute arbitrary code in `setup.py` / build-backend during installation. AST scanning only covers the **static content** of setup.py and cannot prevent runtime-generated payloads.
 
@@ -94,7 +94,7 @@ real-time feed that could be consumed without building the infrastructure from s
 
 ---
 
-## TODO-5: Gate Behavior Decision for Binary-Only Packages
+## ✅ TODO-5: Gate Behavior Decision for Binary-Only Packages (DONE — v0.2)
 
 **What:** Currently, binary-only packages (wheels with no `.py` source) are shown as `[UNKNOWN]` but their `effective_level = CLEAN`, the gate does not block, and installation continues silently. This is fail-open behavior.
 
