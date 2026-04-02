@@ -424,6 +424,26 @@ class TestScanOnePackage:
             )
         assert result.is_binary_only is True
 
+    def test_homoglyph_package_name_adds_finding(self, tmp_path):
+        """Non-ASCII package name produces a HIGH homoglyph finding (cli.py:69)."""
+        from pipguard.cli import _scan_one_package
+        extract_dir = tmp_path / "extracted"
+        extract_dir.mkdir()
+        (extract_dir / "mod.py").write_text("x = 1\n")
+
+        # Filename with Cyrillic 'о' (U+043E) mimicking 'boto3'
+        whl_name = "b\u043eto3-1.0-py3-none-any.whl"
+        with patch("pipguard.cli.extract_archive", return_value=str(extract_dir)):
+            result = _scan_one_package(
+                str(tmp_path / whl_name),
+                str(tmp_path),
+                [],
+            )
+        from pipguard.models import RiskLevel
+        assert any(f.level == RiskLevel.HIGH for f in result.findings), (
+            "Homoglyph package name must produce a HIGH finding"
+        )
+
 
 class TestConfirmInstall:
     def test_returns_false_on_eoferror(self):

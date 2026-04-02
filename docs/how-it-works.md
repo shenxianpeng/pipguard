@@ -75,6 +75,7 @@ pipguard uses Python's built-in `ast` module — no third-party dependencies —
 
     | Pattern | Example |
     |---------|---------|
+    | Non-ASCII character in package name | `bоto3` with Cyrillic `о` — possible homoglyph/typosquatting attack |
     | Credential path read in install hooks | `open('~/.ssh/id_rsa')` in `setup.py` |
     | Shell subprocess in install hooks | `subprocess.run(..., shell=True)` |
     | `os.system()` / `os.popen()` in install hooks | `os.system('curl ...')` |
@@ -83,6 +84,7 @@ pipguard uses Python's built-in `ast` module — no third-party dependencies —
 
     | Pattern | Example |
     |---------|---------|
+    | Binary-only wheel (no Python source) | Wheel with only `.so` / `.pyd` / `.dylib` files |
     | Network in runtime code | `urllib.request.urlopen(...)` in `utils.py` |
     | Sensitive env var access | `os.environ.get('AWS_SECRET_ACCESS_KEY')` |
 
@@ -90,8 +92,36 @@ pipguard uses Python's built-in `ast` module — no third-party dependencies —
 
     | Pattern | Example |
     |---------|---------|
+    | Compiled binary extension in mixed wheel | `.so` / `.pyd` / `.dylib` alongside `.py` source |
     | Dynamic imports | `importlib.import_module(name)` |
     | `__import__()` | `__import__(variable)` |
+
+## Homoglyph / Typosquatting Detection
+
+Before scanning archive contents, pipguard checks the package name itself for
+non-ASCII characters (e.g. Cyrillic `о` substituted for Latin `o`). Any such
+character produces a **HIGH** finding regardless of what the package contains:
+
+```
+bоto3   ← Cyrillic 'о' (U+043E) in position 1
+↑ visually identical to boto3, but a different string
+```
+
+Package names are also NFKC-normalized before allowlist comparison, so a
+homoglyph name cannot bypass the allowlist by mimicking a trusted package.
+
+## Binary Extension Scanning
+
+pipguard detects compiled binary extension files (`.so`, `.pyd`, `.dylib`) in
+extracted wheels. Static AST scanning cannot inspect these files, so pipguard
+flags them explicitly:
+
+- **Mixed wheel** (`.py` source + binary extensions): each extension file
+  generates a **LOW** finding — the scanner covered the Python parts but is
+  blind to any payload in compiled code.
+- **Binary-only wheel** (no `.py` source at all): a single **MEDIUM** finding
+  is emitted, and the confirmation gate fires. pipguard's core scan promise
+  cannot be fulfilled for packages with no Python source.
 
 ## Seed Allowlist
 
@@ -111,6 +141,6 @@ pipguard ships with a seed allowlist that reduces their finding from HIGH to MED
     These are known limitations of the current static-analysis approach.
 
 - **Obfuscation** — multi-layer obfuscation (e.g. `exec(compile(...))` wrapped multiple times) may evade detection
-- **C extensions** — `.so` / `.pyd` binaries are opaque to AST scanning (flagged as UNKNOWN)
+- **C extensions** — `.so` / `.pyd` binaries are opaque to AST scanning; flagged as LOW (mixed) or MEDIUM (binary-only) to surface the blind spot
 - **Python/pip only** — no npm, cargo, or go module support
 - **Phase 2 (in design)** — seccomp/eBPF sandbox for capability-level interception at runtime

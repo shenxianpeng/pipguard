@@ -23,6 +23,7 @@ found during static AST analysis.
 
 | Trigger | Scope | Why |
 |---------|-------|-----|
+| Non-ASCII character in package name | Name check (pre-scan) | Possible homoglyph / typosquatting attack (e.g. `bоto3` with Cyrillic `о` instead of Latin `o`). |
 | Reads credential paths (`~/.ssh`, `~/.aws`, `~/.kube`, `~/.gnupg`) | Install hooks only | A package reading your SSH keys during `pip install` is an attack, not a feature. |
 | `subprocess.run(..., shell=True)` | Install hooks only | Shell injection risk; no legitimate build script needs `shell=True`. |
 | `os.system()` / `os.popen()` | Install hooks only | Arbitrary shell execution at install time. |
@@ -38,15 +39,17 @@ found during static AST analysis.
 
 | Trigger | Notes |
 |---------|-------|
+| Binary-only wheel (no Python source) | Wheel contains only `.so` / `.pyd` / `.dylib` files — AST scan cannot verify contents. Confirmation gate fires; use `--yes` to proceed. |
 | Network calls in runtime `.py` files | Common in legitimate packages; shown for transparency |
 | Sensitive env var access (`*TOKEN*`, `*KEY*`, `*SECRET*`, `*PASSWORD*`, `*CREDENTIAL*`) | Flagged in runtime code |
 
 ## LOW
 
-**Action: Warn (shown in summary). Does not block.**
+**Action: Warn (shown in summary). Confirmation prompt fires (skippable with `--yes`).**
 
 | Trigger | Notes |
 |---------|-------|
+| Compiled binary extension in mixed wheel | `.so` / `.pyd` / `.dylib` file present alongside Python source — AST scanner is blind to any payload in compiled code |
 | `importlib.import_module(variable)` | Dynamic imports can load arbitrary code |
 | `__import__(variable)` | Same concern as above |
 
