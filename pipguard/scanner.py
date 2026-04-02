@@ -254,6 +254,49 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
     return findings
 
 
+def scan_binary_extensions(
+    binary_files: List[str],
+    has_python_source: bool,
+) -> List[Finding]:
+    """
+    Generate findings for compiled binary extension files (.so, .pyd, .dylib).
+
+    When the package has Python source alongside binary extensions, each
+    extension file generates a LOW finding — the AST scanner is blind to any
+    payload embedded in compiled code (TODO-1).
+
+    When the package has NO Python source at all (binary-only), a single MEDIUM
+    finding is emitted because pipguard's core scan promise cannot be fulfilled.
+    """
+    if not binary_files:
+        return []
+
+    if not has_python_source:
+        # Binary-only: one MEDIUM finding summarising the whole package.
+        return [Finding(
+            level=RiskLevel.MEDIUM,
+            file_path=binary_files[0],
+            line=0,
+            description=(
+                "binary-only wheel — no Python source to scan; "
+                "cannot verify package contents"
+            ),
+        )]
+
+    # Mixed: Python source present, but compiled extensions also exist.
+    findings = []
+    for filepath in binary_files:
+        findings.append(Finding(
+            level=RiskLevel.LOW,
+            file_path=filepath,
+            line=0,
+            description=(
+                "compiled binary extension — cannot inspect for malicious code"
+            ),
+        ))
+    return findings
+
+
 def _call_name(node: ast.Call) -> str:
     """Extract a dotted name from a Call node's func attribute."""
     if isinstance(node.func, ast.Name):

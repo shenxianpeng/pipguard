@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pipguard.aggregator import (
     aggregate_findings,
+    check_package_name_for_homoglyph,
     is_allowlisted,
     normalize_package_name,
     SEED_ALLOWLIST,
@@ -105,7 +106,8 @@ class TestAggregateFindingsAllowlist:
     def test_binary_only_flag(self):
         result = aggregate_findings("mypkg", [], is_binary_only=True)
         assert result.is_binary_only is True
-        assert result.effective_level == RiskLevel.CLEAN
+        # TODO-5: binary-only packages are MEDIUM — confirmation gate fires
+        assert result.effective_level == RiskLevel.MEDIUM
 
     def test_extra_allow_reduces_high_to_medium(self):
         result = aggregate_findings(
@@ -137,3 +139,41 @@ class TestPackageScanResultMaxLevel:
     def test_max_level_empty_is_clean(self):
         result = PackageScanResult("pkg", "", findings=[])
         assert result.max_level == RiskLevel.CLEAN
+
+
+class TestCheckPackageNameForHomoglyph:
+    """TODO-2: Non-ASCII package names are flagged as possible homoglyph attacks."""
+
+    def test_ascii_name_returns_none(self):
+        assert check_package_name_for_homoglyph("boto3") is None
+        assert check_package_name_for_homoglyph("requests") is None
+        assert check_package_name_for_homoglyph("my-corp-sdk") is None
+
+    def test_cyrillic_o_in_name_is_high(self):
+        """'bоto3' with Cyrillic 'о' (U+043E) must produce a HIGH finding."""
+        finding = check_package_name_for_homoglyph("b\u043eto3")  # Cyrillic о
+        assert finding is not None
+        assert finding.level == RiskLevel.HIGH
+        assert "U+043E" in finding.description or "043E" in finding.description.upper()
+
+    def test_non_ascii_name_description_mentions_homoglyph(self):
+        finding = check_package_name_for_homoglyph("requ\u00e9sts")  # é
+        assert finding is not None
+        assert "homoglyph" in finding.description.lower() or "typosquat" in finding.description.lower()
+
+    def test_normalized_name_used_for_allowlist(self):
+        """NFKC-normalized homoglyph name must NOT match boto3 allowlist entry."""
+        # 'bоto3' with Cyrillic о normalizes differently than 'boto3'
+        assert not is_allowlisted("b\u043eto3")
+
+
+class TestNormalizePackageNameKFC:
+    """TODO-2: NFKC normalization in normalize_package_name."""
+
+    def test_nfkc_fullwidth_digit(self):
+        """Fullwidth digit U+FF11 ('１') normalises to ASCII '1'."""
+        assert normalize_package_name("boto\uff113") == "boto13"
+
+    def test_ascii_unchanged(self):
+        assert normalize_package_name("Requests") == "requests"
+        assert normalize_package_name("google_auth") == "google-auth"

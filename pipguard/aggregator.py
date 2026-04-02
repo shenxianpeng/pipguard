@@ -5,6 +5,7 @@ Allowlist reduces HIGH → MEDIUM only.
 """
 
 import sys
+import unicodedata
 from typing import List, Optional
 
 from .models import Finding, PackageScanResult, RiskLevel
@@ -48,8 +49,36 @@ def _color(text: str, level_name: str) -> str:
 
 
 def normalize_package_name(name: str) -> str:
-    """Normalize package name: lowercase, hyphens (PEP 503)."""
-    return name.lower().replace("_", "-")
+    """Normalize package name: NFKC Unicode normalization, lowercase, hyphens (PEP 503).
+
+    NFKC normalization collapses visually-identical Unicode characters (e.g.
+    Cyrillic 'о' → Latin 'o') before the comparison, making homoglyph-based
+    allowlist bypass attempts ineffective (TODO-2).
+    """
+    return unicodedata.normalize("NFKC", name).lower().replace("_", "-")
+
+
+def check_package_name_for_homoglyph(package_name: str) -> Optional[Finding]:
+    """Return a HIGH finding if the package name contains non-ASCII characters.
+
+    PyPI technically disallows non-ASCII in normalised names, but a package
+    published with a lookalike Unicode character (e.g. 'bоto3' with Cyrillic
+    'о') can visually impersonate a trusted package.  Any non-ASCII character
+    in the name is treated as a potential homoglyph / typosquatting attack
+    (TODO-2).
+    """
+    for ch in package_name:
+        if ord(ch) > 127:
+            return Finding(
+                level=RiskLevel.HIGH,
+                file_path=package_name,
+                line=0,
+                description=(
+                    f"package name contains non-ASCII character {ch!r} "
+                    f"(U+{ord(ch):04X}) — possible homoglyph/typosquatting attack"
+                ),
+            )
+    return None
 
 
 def is_allowlisted(package_name: str, extra_allow: Optional[List[str]] = None) -> bool:

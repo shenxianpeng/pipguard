@@ -6,6 +6,9 @@ import tarfile
 import zipfile
 from typing import Generator, List, Optional, Tuple
 
+# Compiled binary extension suffixes that cannot be AST-scanned
+BINARY_EXTENSIONS = frozenset({".so", ".pyd", ".dylib"})
+
 
 def extract_archive(archive_path: str, dest_dir: str) -> Optional[str]:
     """
@@ -107,3 +110,22 @@ def has_python_source(extract_dir: str) -> bool:
             if fname.endswith(".py"):
                 return True
     return False
+
+
+def collect_binary_extension_files(extract_dir: str) -> List[str]:
+    """
+    Walk an extracted package directory, returning paths to compiled binary
+    extension files (.so, .pyd, .dylib).
+
+    These files cannot be AST-scanned and represent a potential attack surface
+    that static analysis cannot cover (TODO-1).
+    """
+    result = []
+    skip_dirs = frozenset({"__pycache__", ".git", "tests", "test", ".tox"})
+    for root, dirs, files in os.walk(extract_dir):
+        dirs[:] = [d for d in dirs if d not in skip_dirs]
+        for fname in files:
+            _, ext = os.path.splitext(fname)
+            if ext in BINARY_EXTENSIONS:
+                result.append(os.path.join(root, fname))
+    return result

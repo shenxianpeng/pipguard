@@ -12,6 +12,8 @@ Critical security paths tested here (from eng review test plan):
   8. Dynamic import → LOW
   9. Clean setup.py → no findings
  10. Clean runtime module → no findings
+ 11. Binary-only wheel (.so only, no .py) → MEDIUM (TODO-1/5)
+ 12. Mixed wheel (.so + .py) → LOW per .so file (TODO-1)
 """
 
 import os
@@ -23,7 +25,12 @@ import pytest
 # Ensure pipguard package is importable from repo root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from pipguard.scanner import scan_pth_file, scan_python_file, is_install_hook_scope
+from pipguard.scanner import (
+    is_install_hook_scope,
+    scan_binary_extensions,
+    scan_pth_file,
+    scan_python_file,
+)
 from pipguard.models import RiskLevel
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
@@ -279,3 +286,61 @@ class TestIsInstallHookScope:
 
     def test_init_is_not_hook(self):
         assert not is_install_hook_scope("/pkg/__init__.py")
+
+
+# ── scan_binary_extensions ───────────────────────────────────────────────────
+
+class TestScanBinaryExtensions:
+    """TODO-1: compiled binary extensions generate LOW/MEDIUM findings."""
+
+    def test_empty_list_returns_no_findings(self):
+        assert scan_binary_extensions([], has_python_source=True) == []
+        assert scan_binary_extensions([], has_python_source=False) == []
+
+    def test_so_with_python_source_is_low(self, tmp_path):
+        """Mixed wheel: .so alongside .py → LOW per extension file."""
+        so_file = tmp_path / "mypkg" / "_fast.cpython-311-x86_64-linux-gnu.so"
+        so_file.parent.mkdir(parents=True)
+        so_file.write_bytes(b"\x7fELF")
+        findings = scan_binary_extensions([str(so_file)], has_python_source=True)
+        assert len(findings) == 1
+        assert findings[0].level == RiskLevel.LOW
+        assert "cannot inspect" in findings[0].description
+
+    def test_pyd_with_python_source_is_low(self, tmp_path):
+        """Windows .pyd extension alongside .py → LOW."""
+        pyd_file = tmp_path / "_ext.pyd"
+        pyd_file.write_bytes(b"MZ")
+        findings = scan_binary_extensions([str(pyd_file)], has_python_source=True)
+        assert findings[0].level == RiskLevel.LOW
+
+    def test_binary_only_wheel_is_medium(self, tmp_path):
+        """Binary-only wheel (no .py source) → single MEDIUM finding."""
+        so_file = tmp_path / "_ext.so"
+        so_file.write_bytes(b"\x7fELF")
+        findings = scan_binary_extensions([str(so_file)], has_python_source=False)
+        assert len(findings) == 1
+        assert findings[0].level == RiskLevel.MEDIUM
+        assert "binary-only" in findings[0].description
+
+    def test_multiple_so_with_python_source_each_get_low(self, tmp_path):
+        """Each .so file gets its own LOW finding."""
+        files = []
+        for name in ("_a.so", "_b.so", "_c.so"):
+            p = tmp_path / name
+            p.write_bytes(b"\x7fELF")
+            files.append(str(p))
+        findings = scan_binary_extensions(files, has_python_source=True)
+        assert len(findings) == 3
+        assert all(f.level == RiskLevel.LOW for f in findings)
+
+    def test_binary_only_multiple_so_single_medium(self, tmp_path):
+        """Binary-only with multiple .so files → still just ONE MEDIUM finding."""
+        files = []
+        for name in ("_a.so", "_b.so"):
+            p = tmp_path / name
+            p.write_bytes(b"\x7fELF")
+            files.append(str(p))
+        findings = scan_binary_extensions(files, has_python_source=False)
+        assert len(findings) == 1
+        assert findings[0].level == RiskLevel.MEDIUM
