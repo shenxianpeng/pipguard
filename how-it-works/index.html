@@ -621,6 +621,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#homoglyph-typosquatting-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Homoglyph / Typosquatting Detection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#binary-extension-scanning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary Extension Scanning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#seed-allowlist" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -881,6 +903,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#homoglyph-typosquatting-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Homoglyph / Typosquatting Detection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#binary-extension-scanning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binary Extension Scanning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#seed-allowlist" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1009,6 +1053,10 @@
 </thead>
 <tbody>
 <tr>
+<td>Non-ASCII character in package name</td>
+<td><code>bоto3</code> with Cyrillic <code>о</code> — possible homoglyph/typosquatting attack</td>
+</tr>
+<tr>
 <td>Credential path read in install hooks</td>
 <td><code>open('~/.ssh/id_rsa')</code> in <code>setup.py</code></td>
 </tr>
@@ -1033,6 +1081,10 @@
 </thead>
 <tbody>
 <tr>
+<td>Binary-only wheel (no Python source)</td>
+<td>Wheel with only <code>.so</code> / <code>.pyd</code> / <code>.dylib</code> files</td>
+</tr>
+<tr>
 <td>Network in runtime code</td>
 <td><code>urllib.request.urlopen(...)</code> in <code>utils.py</code></td>
 </tr>
@@ -1053,6 +1105,10 @@
 </thead>
 <tbody>
 <tr>
+<td>Compiled binary extension in mixed wheel</td>
+<td><code>.so</code> / <code>.pyd</code> / <code>.dylib</code> alongside <code>.py</code> source</td>
+</tr>
+<tr>
 <td>Dynamic imports</td>
 <td><code>importlib.import_module(name)</code></td>
 </tr>
@@ -1065,6 +1121,27 @@
 </div>
 </div>
 </div>
+<h2 id="homoglyph-typosquatting-detection">Homoglyph / Typosquatting Detection<a class="headerlink" href="#homoglyph-typosquatting-detection" title="Permanent link">&para;</a></h2>
+<p>Before scanning archive contents, pipguard checks the package name itself for
+non-ASCII characters (e.g. Cyrillic <code>о</code> substituted for Latin <code>o</code>). Any such
+character produces a <strong>HIGH</strong> finding regardless of what the package contains:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bоto3   ← Cyrillic &#39;о&#39; (U+043E) in position 1
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>↑ visually identical to boto3, but a different string
+</span></code></pre></div>
+<p>Package names are also NFKC-normalized before allowlist comparison, so a
+homoglyph name cannot bypass the allowlist by mimicking a trusted package.</p>
+<h2 id="binary-extension-scanning">Binary Extension Scanning<a class="headerlink" href="#binary-extension-scanning" title="Permanent link">&para;</a></h2>
+<p>pipguard detects compiled binary extension files (<code>.so</code>, <code>.pyd</code>, <code>.dylib</code>) in
+extracted wheels. Static AST scanning cannot inspect these files, so pipguard
+flags them explicitly:</p>
+<ul>
+<li><strong>Mixed wheel</strong> (<code>.py</code> source + binary extensions): each extension file
+  generates a <strong>LOW</strong> finding — the scanner covered the Python parts but is
+  blind to any payload in compiled code.</li>
+<li><strong>Binary-only wheel</strong> (no <code>.py</code> source at all): a single <strong>MEDIUM</strong> finding
+  is emitted, and the confirmation gate fires. pipguard's core scan promise
+  cannot be fulfilled for packages with no Python source.</li>
+</ul>
 <h2 id="seed-allowlist">Seed Allowlist<a class="headerlink" href="#seed-allowlist" title="Permanent link">&para;</a></h2>
 <p>Some packages legitimately access credentials as part of their core purpose.
 pipguard ships with a seed allowlist that reduces their finding from HIGH to MEDIUM
@@ -1080,7 +1157,7 @@ pipguard ships with a seed allowlist that reduces their finding from HIGH to MED
 </div>
 <ul>
 <li><strong>Obfuscation</strong> — multi-layer obfuscation (e.g. <code>exec(compile(...))</code> wrapped multiple times) may evade detection</li>
-<li><strong>C extensions</strong> — <code>.so</code> / <code>.pyd</code> binaries are opaque to AST scanning (flagged as UNKNOWN)</li>
+<li><strong>C extensions</strong> — <code>.so</code> / <code>.pyd</code> binaries are opaque to AST scanning; flagged as LOW (mixed) or MEDIUM (binary-only) to surface the blind spot</li>
 <li><strong>Python/pip only</strong> — no npm, cargo, or go module support</li>
 <li><strong>Phase 2 (in design)</strong> — seccomp/eBPF sandbox for capability-level interception at runtime</li>
 </ul>

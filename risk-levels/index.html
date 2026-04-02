@@ -915,6 +915,11 @@ Only <code>--force</code> bypasses CRITICAL — use with extreme caution.</p>
 </thead>
 <tbody>
 <tr>
+<td>Non-ASCII character in package name</td>
+<td>Name check (pre-scan)</td>
+<td>Possible homoglyph / typosquatting attack (e.g. <code>bоto3</code> with Cyrillic <code>о</code> instead of Latin <code>o</code>).</td>
+</tr>
+<tr>
 <td>Reads credential paths (<code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.kube</code>, <code>~/.gnupg</code>)</td>
 <td>Install hooks only</td>
 <td>A package reading your SSH keys during <code>pip install</code> is an attack, not a feature.</td>
@@ -948,6 +953,10 @@ It reading <code>~/.aws</code> in <code>setup.py</code> is not.</p>
 </thead>
 <tbody>
 <tr>
+<td>Binary-only wheel (no Python source)</td>
+<td>Wheel contains only <code>.so</code> / <code>.pyd</code> / <code>.dylib</code> files — AST scan cannot verify contents. Confirmation gate fires; use <code>--yes</code> to proceed.</td>
+</tr>
+<tr>
 <td>Network calls in runtime <code>.py</code> files</td>
 <td>Common in legitimate packages; shown for transparency</td>
 </tr>
@@ -958,7 +967,7 @@ It reading <code>~/.aws</code> in <code>setup.py</code> is not.</p>
 </tbody>
 </table>
 <h2 id="low">LOW<a class="headerlink" href="#low" title="Permanent link">&para;</a></h2>
-<p><strong>Action: Warn (shown in summary). Does not block.</strong></p>
+<p><strong>Action: Warn (shown in summary). Confirmation prompt fires (skippable with <code>--yes</code>).</strong></p>
 <table>
 <thead>
 <tr>
@@ -967,6 +976,10 @@ It reading <code>~/.aws</code> in <code>setup.py</code> is not.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>Compiled binary extension in mixed wheel</td>
+<td><code>.so</code> / <code>.pyd</code> / <code>.dylib</code> file present alongside Python source — AST scanner is blind to any payload in compiled code</td>
+</tr>
 <tr>
 <td><code>importlib.import_module(variable)</code></td>
 <td>Dynamic imports can load arbitrary code</td>

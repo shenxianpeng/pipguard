@@ -929,12 +929,17 @@ signatures. pipguard asks a different question:</p>
 </tr>
 <tr>
 <td><span class="pg-badge pg-badge-high">HIGH</span></td>
-<td>Reads <code>~/.ssh</code>, <code>~/.aws</code> in install hooks; <code>shell=True</code>; <code>os.system()</code></td>
+<td>Non-ASCII package name (homoglyph); reads <code>~/.ssh</code>, <code>~/.aws</code> in install hooks; <code>shell=True</code>; <code>os.system()</code></td>
 <td>Block (exit 1)</td>
 </tr>
 <tr>
 <td><span class="pg-badge pg-badge-medium">MEDIUM</span></td>
-<td>Network in runtime; sensitive env vars</td>
+<td>Binary-only wheel; network in runtime; sensitive env vars</td>
+<td>Warn + confirm</td>
+</tr>
+<tr>
+<td>LOW</td>
+<td>Compiled binary extension in mixed wheel; dynamic imports</td>
 <td>Warn + confirm</td>
 </tr>
 <tr>

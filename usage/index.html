@@ -1027,6 +1027,13 @@ Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
 because sdists execute build scripts. To opt in:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow-sdist<span class="w"> </span>some-package
 </span></code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title">sdist installs execute arbitrary code</p>
+<p><code>--allow-sdist</code> bypasses a hard safety boundary. Even though pipguard runs AST scanning on
+<code>setup.py</code>, <code>pip install</code> will still <strong>execute</strong> setup.py and any build-backend code at
+install time. pipguard's AST scan does <strong>NOT</strong> prevent this.
+Never use <code>--allow-sdist</code> in automated pipelines without explicit review.</p>
+</div>
 <h2 id="all-flags">All Flags<a class="headerlink" href="#all-flags" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1054,7 +1061,7 @@ because sdists execute build scripts. To opt in:</p>
 </tr>
 <tr>
 <td><code>--allow-sdist</code></td>
-<td>Allow sdist fallback (with warning)</td>
+<td>Allow sdist fallback (DANGER: executes arbitrary code — AST scan does NOT prevent this)</td>
 </tr>
 </tbody>
 </table>
