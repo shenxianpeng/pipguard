@@ -25,6 +25,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pipguard.extractor import (
+    collect_binary_extension_files,
     collect_scannable_files,
     extract_archive,
     has_python_source,
@@ -198,3 +199,49 @@ class TestHasPythonSource:
 
     def test_returns_false_for_empty_dir(self, tmp_path):
         assert has_python_source(str(tmp_path)) is False
+
+
+# ── collect_binary_extension_files ──────────────────────────────────────────
+
+class TestCollectBinaryExtensionFiles:
+    """TODO-1: collect_binary_extension_files enumerates .so/.pyd/.dylib files."""
+
+    def test_empty_dir_returns_empty(self, tmp_path):
+        assert collect_binary_extension_files(str(tmp_path)) == []
+
+    def test_py_only_returns_empty(self, tmp_path):
+        (tmp_path / "mod.py").write_text("x = 1\n")
+        assert collect_binary_extension_files(str(tmp_path)) == []
+
+    def test_so_file_returned(self, tmp_path):
+        so = tmp_path / "_ext.so"
+        so.write_bytes(b"\x7fELF")
+        result = collect_binary_extension_files(str(tmp_path))
+        assert str(so) in result
+
+    def test_pyd_file_returned(self, tmp_path):
+        pyd = tmp_path / "_ext.pyd"
+        pyd.write_bytes(b"MZ")
+        result = collect_binary_extension_files(str(tmp_path))
+        assert str(pyd) in result
+
+    def test_dylib_file_returned(self, tmp_path):
+        dylib = tmp_path / "libfoo.dylib"
+        dylib.write_bytes(b"\xcf\xfa\xed\xfe")
+        result = collect_binary_extension_files(str(tmp_path))
+        assert str(dylib) in result
+
+    def test_skips_test_directories(self, tmp_path):
+        """Binary extensions inside test directories are ignored."""
+        test_dir = tmp_path / "tests"
+        test_dir.mkdir()
+        (test_dir / "_ext.so").write_bytes(b"\x7fELF")
+        assert collect_binary_extension_files(str(tmp_path)) == []
+
+    def test_finds_nested_so_files(self, tmp_path):
+        pkg_dir = tmp_path / "mypkg"
+        pkg_dir.mkdir()
+        so = pkg_dir / "_fast.so"
+        so.write_bytes(b"\x7fELF")
+        result = collect_binary_extension_files(str(tmp_path))
+        assert str(so) in result

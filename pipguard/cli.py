@@ -18,13 +18,13 @@ import tempfile
 from typing import List, Optional
 
 from . import __version__
-from .aggregator import aggregate_findings, print_findings_report
+from .aggregator import aggregate_findings, check_package_name_for_homoglyph, print_findings_report
 from .cleanup import install_signal_handlers, register_temp_dir
 from .downloader import download_packages
-from .extractor import collect_scannable_files, extract_archive
+from .extractor import collect_binary_extension_files, collect_scannable_files, extract_archive
 from .installer import install_from_local
 from .models import Finding, PackageScanResult, RiskLevel
-from .scanner import scan_pth_file, scan_python_file
+from .scanner import scan_binary_extensions, scan_pth_file, scan_python_file
 
 
 # ── Package name extraction ──────────────────────────────────────────────────
@@ -62,13 +62,19 @@ def _scan_one_package(
     """Scan a single downloaded archive. Designed for parallel execution."""
     pkg_name = _pkg_name_from_filename(archive_path)
 
+    # Homoglyph / non-ASCII package name check (TODO-2)
+    all_findings: List[Finding] = []
+    homoglyph = check_package_name_for_homoglyph(pkg_name)
+    if homoglyph:
+        all_findings.append(homoglyph)
+
     extract_dir = extract_archive(archive_path, tmp_dir)
     if extract_dir is None:
         from .models import Finding
         return PackageScanResult(
             package_name=pkg_name,
             version="",
-            findings=[Finding(
+            findings=all_findings + [Finding(
                 level=RiskLevel.MEDIUM,
                 file_path=archive_path,
                 line=0,
@@ -76,7 +82,6 @@ def _scan_one_package(
             )],
         )
 
-    all_findings = []
     has_scannable = False
     for filepath, is_hook in collect_scannable_files(extract_dir):
         has_scannable = True
@@ -85,9 +90,16 @@ def _scan_one_package(
         else:
             all_findings.extend(scan_python_file(filepath, is_hook=is_hook))
 
+    # Binary extension scanning (TODO-1)
+    binary_files = collect_binary_extension_files(extract_dir)
+    if binary_files:
+        all_findings.extend(
+            scan_binary_extensions(binary_files, has_python_source=has_scannable)
+        )
+
     if not has_scannable:
         return aggregate_findings(
-            pkg_name, [], extra_allow=extra_allow, is_binary_only=True
+            pkg_name, all_findings, extra_allow=extra_allow, is_binary_only=True
         )
 
     return aggregate_findings(pkg_name, all_findings, extra_allow=extra_allow)
@@ -199,7 +211,9 @@ def cmd_install(args) -> int:
         for name in sdist_rejects:
             print(f"   • {name}", file=sys.stderr)
         print(
-            "\n   Use --allow-sdist to proceed (WARNING: reduces security guarantee).\n",
+            "\n   Use --allow-sdist to proceed "
+            "(DANGER: sdist install EXECUTES arbitrary code — "
+            "pipguard's AST scan does NOT prevent this).\n",
             file=sys.stderr,
         )
         return 2
@@ -322,7 +336,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     install.add_argument(
         "--allow-sdist", action="store_true",
-        help="Allow sdist packages (WARNING: pip may execute code during install)",
+        help=(
+            "Allow sdist packages "
+            "(DANGER: sdist install EXECUTES arbitrary code — "
+            "pipguard's AST scan does NOT prevent this)"
+        ),
     )
     return parser
 

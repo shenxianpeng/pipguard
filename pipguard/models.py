@@ -49,8 +49,15 @@ class PackageScanResult:
 
     @property
     def effective_level(self) -> RiskLevel:
-        """Level after applying allowlist: HIGH→MEDIUM for allowlisted, CRITICAL never reduced."""
+        """Level after applying allowlist: HIGH→MEDIUM for allowlisted, CRITICAL never reduced.
+
+        Binary-only packages with no other findings are elevated to MEDIUM so
+        the confirmation gate fires — pipguard's scan promise cannot be
+        fulfilled for packages with no Python source (TODO-5, option A).
+        """
         level = self.max_level
         if self.is_allowlisted and level == RiskLevel.HIGH:
+            return RiskLevel.MEDIUM
+        if self.is_binary_only and level == RiskLevel.CLEAN:
             return RiskLevel.MEDIUM
         return level
