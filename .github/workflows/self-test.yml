@@ -1,0 +1,42 @@
+name: Self Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: '3.12'
+
+      - name: Install pipguard from source
+        run: pip install -e .
+
+      - name: Clean package is allowed (requests)
+        run: pipguard install requests --yes
+
+      - name: Verify requests is importable
+        run: python -c "import requests"
+
+      - name: Malicious package is blocked (litellm==1.82.8)
+        run: |
+          set +e
+          pipguard install litellm==1.82.8
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -eq 1 ]; then
+            echo "✅ PASS: litellm==1.82.8 correctly blocked (exit 1)"
+          else
+            echo "❌ FAIL: expected exit 1, got $exit_code"
+            exit 1
+          fi
