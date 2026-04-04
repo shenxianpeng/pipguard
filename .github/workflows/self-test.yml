@@ -28,14 +28,19 @@ jobs:
       - name: Verify requests is importable
         run: python -c "import requests"
 
-      - name: Malicious package is blocked (litellm==1.82.8)
+      - name: Malicious package is blocked (simulated .pth attack)
         run: |
+          # tests/fixtures/wheels/malicious_pth-1.0.0-py3-none-any.whl is a
+          # pre-built test wheel containing a .pth file with executable Python
+          # code — the same supply chain attack technique used in the real
+          # litellm 1.82.8 incident.  The original litellm==1.82.8 was removed
+          # from PyPI, so we use a local fixture to keep the test self-contained.
           set +e
-          pipguard install litellm==1.82.8
+          pipguard install tests/fixtures/wheels/malicious_pth-1.0.0-py3-none-any.whl
           exit_code=$?
           set -e
           if [ "$exit_code" -eq 1 ]; then
-            echo "✅ PASS: litellm==1.82.8 correctly blocked (exit 1)"
+            echo "✅ PASS: malicious-pth correctly blocked (exit 1)"
           else
             echo "❌ FAIL: expected exit 1, got $exit_code"
             exit 1
