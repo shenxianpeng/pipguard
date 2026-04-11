@@ -7,6 +7,7 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/pipguard)](https://pypi.org/project/pipguard/)
 [![codecov](https://codecov.io/gh/shenxianpeng/pipguard/graph/badge.svg)](https://codecov.io/gh/shenxianpeng/pipguard)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue)](https://shenxianpeng.github.io/pipguard/)
+[![Python Version](https://img.shields.io/pypi/pyversions/pipguard)](https://pypi.org/project/pipguard/)
 
 **Python supply chain security tool. Scan packages before installing them.**
 
