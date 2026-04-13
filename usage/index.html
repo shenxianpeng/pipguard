@@ -610,6 +610,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#default-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#allowing-known-legitimate-packages" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -955,6 +966,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#default-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#allowing-known-legitimate-packages" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1035,7 +1057,10 @@
 <h3 id="install-a-single-package">Install a single package<a class="headerlink" href="#install-a-single-package" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>requests
 </span></code></pre></div>
-<p>pipguard will download, scan, and — if clean — install the package. No output means no findings.</p>
+<p>pipguard will download, scan, and install the package from the scanned local cache.
+By default, the report is summary-first: <code>CRITICAL</code> / <code>HIGH</code> / <code>MEDIUM</code> findings are
+expanded, <code>LOW</code> findings are collapsed to package-level counts, and <code>CLEAN</code> packages are
+shown only in the summary totals.</p>
 <h3 id="install-from-requirementstxt">Install from requirements.txt<a class="headerlink" href="#install-from-requirementstxt" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </span></code></pre></div>
@@ -1044,6 +1069,28 @@
 <p>In CI, you never want interactive prompts. Use <code>--yes</code> to suppress all confirmation prompts
 and have pipguard exit 1 automatically on CRITICAL or HIGH findings:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--yes<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</span></code></pre></div>
+<h2 id="default-output">Default Output<a class="headerlink" href="#default-output" title="Permanent link">&para;</a></h2>
+<p>Successful installs keep raw <code>pip install</code> logs quiet unless you opt in with
+<code>--show-pip-output</code>.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$ pipguard install some-package
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>📦 Downloading to /tmp/pipguard-abcd1234 ...
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>🔍 Scanning 5 package(s) ...
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Scan summary:
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  Total packages: 5
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  CRITICAL: 0  HIGH: 0  MEDIUM: 1  LOW: 2  CLEAN: 2
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>MEDIUM
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  [MEDIUM] jsonschema
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    [MEDIUM] jsonschema/validators.py:113
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>           Outbound network call (urllib.request.urlopen()) in runtime code
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>LOW
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>  [LOW] markupsafe — 1 finding
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>  [LOW] zipp — 1 finding
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>  Use --verbose to show LOW-level file details.
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>Proceed with installation? [y/N]
 </span></code></pre></div>
 <div class="pg-terminal">
   <div class="pg-terminal__bar">
@@ -1066,7 +1113,7 @@ and have pipguard exit 1 automatically on CRITICAL or HIGH findings:</p>
 <h2 id="allowing-known-legitimate-packages">Allowing Known-Legitimate Packages<a class="headerlink" href="#allowing-known-legitimate-packages" title="Permanent link">&para;</a></h2>
 <p>Some packages legitimately access credential stores (e.g. <code>paramiko</code> reads <code>~/.ssh</code>).
 Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow<span class="w"> </span>paramiko<span class="w"> </span>paramiko
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow<span class="w"> </span>paramiko<span class="w"> </span>paramiko
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">CRITICAL findings are never reduced</p>
@@ -1074,7 +1121,7 @@ Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
 </div>
 <h2 id="forcing-a-package-escape-hatch">Forcing a Package (Escape Hatch)<a class="headerlink" href="#forcing-a-package-escape-hatch" title="Permanent link">&para;</a></h2>
 <p>For known false-positives on fully-trusted internal packages:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--force<span class="w"> </span>my-trusted-internal-pkg
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--force<span class="w"> </span>my-trusted-internal-pkg
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Use with care</p>
@@ -1083,7 +1130,7 @@ Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
 <h2 id="allowing-sdist-packages">Allowing sdist Packages<a class="headerlink" href="#allowing-sdist-packages" title="Permanent link">&para;</a></h2>
 <p>By default pipguard exits with code 2 if a package falls back to sdist (source distribution),
 because sdists execute build scripts. To opt in:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow-sdist<span class="w"> </span>some-package
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow-sdist<span class="w"> </span>some-package
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">sdist installs execute arbitrary code</p>
@@ -1124,6 +1171,14 @@ Never use <code>--allow-sdist</code> in automated pipelines without explicit rev
 <tr>
 <td><code>--require-hashes</code></td>
 <td>Require hash-locked requirements entries (<code>--hash=...</code> or URL hash fragment)</td>
+</tr>
+<tr>
+<td><code>--verbose</code></td>
+<td>Show full scan details, including LOW findings and CLEAN package list</td>
+</tr>
+<tr>
+<td><code>--show-pip-output</code></td>
+<td>Show raw pip install output instead of the quiet default</td>
 </tr>
 <tr>
 <td><code>--policy FILE</code></td>

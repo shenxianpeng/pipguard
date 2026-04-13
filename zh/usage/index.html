@@ -969,7 +969,9 @@
 <h3 id="_3">安装单个包<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>requests
 </span></code></pre></div>
-<p>pipguard 会先下载并扫描，确认安全后再安装。若无风险，输出会非常简洁。</p>
+<p>pipguard 会先下载并扫描，再从已扫描的本地缓存安装。默认输出采用摘要优先：
+展开 <code>CRITICAL</code> / <code>HIGH</code> / <code>MEDIUM</code> 详情，<code>LOW</code> 仅显示包级计数，<code>CLEAN</code>
+只计入汇总。</p>
 <h3 id="requirementstxt">从 requirements.txt 安装<a class="headerlink" href="#requirementstxt" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </span></code></pre></div>
@@ -981,15 +983,19 @@
 <li><code>--yes</code>：自动确认 MEDIUM/LOW 风险（适合 CI）</li>
 <li><code>--allow pkg1,pkg2</code>：允许指定包将 HIGH 降级为 MEDIUM</li>
 <li><code>--allow-sdist</code>：允许 sdist（默认不允许）</li>
+<li><code>--verbose</code>：显示完整扫描明细，包括 LOW 文件详情与 CLEAN 包列表</li>
+<li><code>--show-pip-output</code>：显示原始 pip 安装输出</li>
 <li><code>--policy path/to/pipguard.toml</code>：使用策略文件</li>
 </ul>
 <h2 id="_5">输出与行为<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <ul>
 <li>检测到 <strong>CRITICAL/HIGH</strong>：阻断安装，退出码 <code>1</code></li>
 <li>检测到 <strong>MEDIUM/LOW</strong>：提示确认（或 <code>--yes</code> 自动继续）</li>
-<li>全部 <strong>CLEAN</strong>：静默完成安装，退出码 <code>0</code></li>
+<li>全部 <strong>CLEAN</strong>：在摘要中显示计数，退出码 <code>0</code></li>
 <li>扫描失败：退出码 <code>2</code></li>
 </ul>
+<p>默认会静默成功安装时的原始 <code>pip install</code> 日志；如需查看完整安装输出，
+可加 <code>--show-pip-output</code>。</p>
 <p>更多细节请参考：<a href="../risk-levels/">风险等级</a> 与 <a href="../exit-codes/">退出码</a>。</p>
 
 

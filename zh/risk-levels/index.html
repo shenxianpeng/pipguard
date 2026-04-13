@@ -976,10 +976,12 @@
 <p>示例：运行期网络访问、敏感环境变量读取、二进制-only wheel 等。</p>
 <h2 id="low">LOW<a class="headerlink" href="#low" title="Permanent link">&para;</a></h2>
 <p><strong>处理：提示确认或按策略继续。</strong></p>
-<p>示例：动态导入、混合型二进制扩展等弱风险信号。</p>
+<p>示例：动态导入、混合型二进制扩展等弱风险信号。
+默认输出中，LOW 只显示包名和命中数量；加 <code>--verbose</code> 才展开文件级明细。</p>
 <h2 id="clean">CLEAN<a class="headerlink" href="#clean" title="Permanent link">&para;</a></h2>
-<p><strong>处理：直接安装。</strong></p>
-<p>未命中任何风险规则。</p>
+<p><strong>处理：计入摘要并继续安装。</strong></p>
+<p>未命中任何风险规则。
+默认不会逐条列出 CLEAN 包；加 <code>--verbose</code> 可显示完整 CLEAN 列表。</p>
 
 
 

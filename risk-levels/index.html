@@ -1037,7 +1037,7 @@ It reading <code>~/.aws</code> in <code>setup.py</code> is not.</p>
 </tbody>
 </table>
 <h2 id="low">LOW<a class="headerlink" href="#low" title="Permanent link">&para;</a></h2>
-<p><strong>Action: Warn (shown in summary). Confirmation prompt fires (skippable with <code>--yes</code>).</strong></p>
+<p><strong>Action: Warn. Confirmation prompt fires (skippable with <code>--yes</code>).</strong></p>
 <table>
 <thead>
 <tr>
@@ -1060,10 +1060,13 @@ It reading <code>~/.aws</code> in <code>setup.py</code> is not.</p>
 </tr>
 </tbody>
 </table>
+<p>By default, LOW findings are shown as package-level counts in the summary output.
+Use <code>--verbose</code> to expand file-level LOW details.</p>
 <h2 id="clean">CLEAN<a class="headerlink" href="#clean" title="Permanent link">&para;</a></h2>
-<p><strong>Action: Install silently.</strong></p>
+<p><strong>Action: Included in summary totals; install proceeds.</strong></p>
 <p>No patterns matching CRITICAL, HIGH, MEDIUM, or LOW were found.
-The package installs without any output.</p>
+By default, CLEAN packages are counted but not listed individually. Use <code>--verbose</code>
+to print every CLEAN package line.</p>
 
 
 
