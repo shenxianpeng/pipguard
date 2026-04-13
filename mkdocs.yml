@@ -59,6 +59,27 @@ nav:
 
 plugins:
   - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: zh
+          name: 简体中文
+          build: true
+          nav_translations:
+            Home: 首页
+            Get Started: 快速开始
+            Installation: 安装
+            Usage: 用法
+            How It Works: 工作原理
+            Reference: 参考
+            Risk Levels: 风险级别
+            Exit Codes: 退出码
+            Seed Allowlist: 种子白名单
+            Policy as Code: 策略即代码
 
 markdown_extensions:
   - admonition
@@ -79,6 +100,13 @@ markdown_extensions:
       permalink: true
 
 extra:
+  alternate:
+    - name: English
+      link: /pipguard/
+      lang: en
+    - name: 简体中文
+      link: /pipguard/zh/
+      lang: zh
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/shenxianpeng/pipguard
