@@ -105,6 +105,20 @@ class TestScanPythonFileCritical:
         findings = scan_python_file(str(src), is_hook=False)
         assert any(f.level == RiskLevel.CRITICAL for f in findings)
 
+    def test_exec_and_b64decode_in_unrelated_calls_not_critical(self, tmp_path):
+        """Avoid false positives when exec() and b64decode() are unrelated."""
+        src = tmp_path / "payload.py"
+        src.write_text(
+            "exec('print(1)')\n"
+            "import base64\n"
+            "decoded = base64.b64decode(b'cHJpbnQoImhpIik=')\n"
+        )
+        findings = scan_python_file(str(src), is_hook=False)
+        assert not any(
+            f.description == "exec/eval on base64-decoded content — obfuscated payload pattern"
+            for f in findings
+        )
+
     def test_network_in_install_hook_is_critical(self, tmp_path):
         """Network call inside setup.py = CRITICAL (install hook scope)."""
         setup = tmp_path / "setup.py"

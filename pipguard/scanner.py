@@ -163,26 +163,51 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
             ),
         ))
 
-    # Text-level check: eval/exec on base64-decoded content (obfuscated payload)
-    if re.search(r"b64decode\s*\(", source):
-        if re.search(r"(?:exec|eval)\s*\(.*b64decode", source, re.DOTALL):
+    try:
+        tree = ast.parse(source, filename=filepath)
+    except SyntaxError:
+        # Text-level fallback for malformed files where AST parsing fails.
+        # Keep this intentionally strict to avoid false positives from
+        # unrelated exec/eval and b64decode usage in the same file.
+        if re.search(r"(?:exec|eval)\s*\(\s*(?:base64\.)?b64decode\s*\(", source):
             findings.append(Finding(
                 level=RiskLevel.CRITICAL,
                 file_path=filepath,
                 line=0,
-                description="exec/eval on base64-decoded content — obfuscated payload pattern",
+                description=(
+                    "exec/eval on base64-decoded content — "
+                    "obfuscated payload pattern"
+                ),
             ))
-
-    try:
-        tree = ast.parse(source, filename=filepath)
-    except SyntaxError:
-        # Cannot parse — return what we found at text level
         return findings
 
     aliases = _build_alias_map(tree)
 
     for node in ast.walk(tree):
         lineno = getattr(node, "lineno", 0)
+
+        # ── Obfuscated payload pattern: exec/eval(base64.b64decode(...)) ───────
+        if isinstance(node, ast.Call):
+            name = _resolved_call_name(node, aliases)
+            if name in ("exec", "eval"):
+                for arg in node.args:
+                    for sub in ast.walk(arg):
+                        if isinstance(sub, ast.Call):
+                            sub_name = _resolved_call_name(sub, aliases)
+                            if sub_name and sub_name.endswith("b64decode"):
+                                findings.append(Finding(
+                                    level=RiskLevel.CRITICAL,
+                                    file_path=filepath,
+                                    line=lineno,
+                                    description=(
+                                        "exec/eval on base64-decoded content — "
+                                        "obfuscated payload pattern"
+                                    ),
+                                ))
+                                break
+                    else:
+                        continue
+                    break
 
         # ── Credential path access ──────────────────────────────────────────────
         if isinstance(node, ast.Constant) and isinstance(node.value, str):
