@@ -1,39 +1,129 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
     <url>
-         <loc>https://shenxianpeng.github.io/pipguard/</loc>
-         <lastmod>2026-04-13</lastmod>
+        <loc>https://shenxianpeng.github.io/pipguard/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/"/>
     </url>
     <url>
-         <loc>https://shenxianpeng.github.io/pipguard/allowlist/</loc>
-         <lastmod>2026-04-13</lastmod>
+        <loc>https://shenxianpeng.github.io/pipguard/allowlist/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/allowlist/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/allowlist/"/>
     </url>
     <url>
-         <loc>https://shenxianpeng.github.io/pipguard/exit-codes/</loc>
-         <lastmod>2026-04-13</lastmod>
+        <loc>https://shenxianpeng.github.io/pipguard/exit-codes/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/exit-codes/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/exit-codes/"/>
     </url>
     <url>
-         <loc>https://shenxianpeng.github.io/pipguard/how-it-works/</loc>
-         <lastmod>2026-04-13</lastmod>
+        <loc>https://shenxianpeng.github.io/pipguard/how-it-works/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/how-it-works/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/how-it-works/"/>
     </url>
     <url>
-         <loc>https://shenxianpeng.github.io/pipguard/installation/</loc>
-         <lastmod>2026-04-13</lastmod>
+        <loc>https://shenxianpeng.github.io/pipguard/installation/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/installation/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/installation/"/>
     </url>
     <url>
-         <loc>https://shenxianpeng.github.io/pipguard/policy/</loc>
-         <lastmod>2026-04-13</lastmod>
+        <loc>https://shenxianpeng.github.io/pipguard/policy/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/policy/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/policy/"/>
     </url>
     <url>
-         <loc>https://shenxianpeng.github.io/pipguard/risk-levels/</loc>
-         <lastmod>2026-04-13</lastmod>
+        <loc>https://shenxianpeng.github.io/pipguard/risk-levels/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/risk-levels/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/risk-levels/"/>
     </url>
     <url>
-         <loc>https://shenxianpeng.github.io/pipguard/security-gap-assessment/</loc>
-         <lastmod>2026-04-13</lastmod>
+        <loc>https://shenxianpeng.github.io/pipguard/security-gap-assessment/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/security-gap-assessment/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/security-gap-assessment/"/>
     </url>
     <url>
-         <loc>https://shenxianpeng.github.io/pipguard/usage/</loc>
-         <lastmod>2026-04-13</lastmod>
+        <loc>https://shenxianpeng.github.io/pipguard/usage/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/usage/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/usage/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/allowlist/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/allowlist/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/allowlist/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/exit-codes/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/exit-codes/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/exit-codes/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/how-it-works/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/how-it-works/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/how-it-works/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/installation/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/installation/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/installation/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/policy/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/policy/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/policy/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/risk-levels/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/risk-levels/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/risk-levels/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/security-gap-assessment/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/security-gap-assessment/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/security-gap-assessment/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/usage/</loc>
+        <lastmod>2026-04-13</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/usage/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/usage/"/>
     </url>
 </urlset>

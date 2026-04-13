@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="en" class="no-js">
+<html lang="zh" class="no-js">
   <head>
     
       <meta charset="utf-8">
@@ -10,35 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://shenxianpeng.github.io/pipguard/how-it-works/">
+        <link rel="canonical" href="https://shenxianpeng.github.io/pipguard/zh/security-gap-assessment/">
       
       
-        <link rel="prev" href="../usage/">
-      
-      
-        <link rel="next" href="../risk-levels/">
       
       
         
-          <link rel="alternate" href="./" hreflang="en">
+          <link rel="alternate" href="../../security-gap-assessment/" hreflang="en">
         
-          <link rel="alternate" href="../zh/how-it-works/" hreflang="zh">
+          <link rel="alternate" href="./" hreflang="zh">
         
       
       
-      <link rel="icon" href="../assets/favicon.png">
+      <link rel="icon" href="../../assets/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>How It Works - pipguard</title>
+        <title>pipguard 现状评估与改进建议（功能与检查能力） - pipguard</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -57,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -89,8 +85,8 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-it-works" class="md-skip">
-          Skip to content
+        <a href="#pipguard" class="md-skip">
+          跳转至
         </a>
       
     </div>
@@ -104,10 +100,10 @@
   
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="pipguard" class="md-header__button md-logo" aria-label="pipguard" data-md-component="logo">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../" title="pipguard" class="md-header__button md-logo" aria-label="pipguard" data-md-component="logo">
       
-  <img src="../assets/logo.svg" alt="logo">
+  <img src="../../assets/logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -124,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              How It Works
+              pipguard 现状评估与改进建议（功能与检查能力）
             
           </span>
         </div>
@@ -164,20 +160,20 @@
       <div class="md-header__option">
   <div class="md-select">
     
-    <button class="md-header__button md-icon" aria-label="Select language">
+    <button class="md-header__button md-icon" aria-label="选择当前语言">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
     </button>
     <div class="md-select__inner">
       <ul class="md-select__list">
         
           <li class="md-select__item">
-            <a href="./" hreflang="en" class="md-select__link">
+            <a href="../../security-gap-assessment/" hreflang="en" class="md-select__link">
               English
             </a>
           </li>
         
           <li class="md-select__item">
-            <a href="../zh/how-it-works/" hreflang="zh" class="md-select__link">
+            <a href="./" hreflang="zh" class="md-select__link">
               简体中文
             </a>
           </li>
@@ -198,16 +194,16 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
-      <nav class="md-search__options" aria-label="Search">
+      <nav class="md-search__options" aria-label="查找">
         
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
           
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
@@ -220,7 +216,7 @@
       <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            Initializing search
+            正在初始化搜索引擎
           </div>
           <ol class="md-search-result__list" role="presentation"></ol>
         </div>
@@ -232,7 +228,7 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/shenxianpeng/pipguard" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/shenxianpeng/pipguard" title="前往仓库" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
@@ -247,7 +243,7 @@
   
     
       
-<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
       
@@ -257,7 +253,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../" class="md-tabs__link">
         
   
   
@@ -294,11 +290,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../how-it-works/" class="md-tabs__link">
         
   
   
@@ -357,18 +351,18 @@
   
 
 
-<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="pipguard" class="md-nav__button md-logo" aria-label="pipguard" data-md-component="logo">
+    <a href="../" title="pipguard" class="md-nav__button md-logo" aria-label="pipguard" data-md-component="logo">
       
-  <img src="../assets/logo.svg" alt="logo">
+  <img src="../../assets/logo.svg" alt="logo">
 
     </a>
     pipguard
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/shenxianpeng/pipguard" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/shenxianpeng/pipguard" title="前往仓库" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
@@ -388,7 +382,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -527,37 +521,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    How It Works
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../how-it-works/" class="md-nav__link">
         
   
   
@@ -573,131 +540,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-pre-install" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why Pre-Install?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#toctou-safety" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TOCTOU Safety
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ast-scanning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AST Scanning
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="AST Scanning">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-gets-flagged" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What gets flagged
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#homoglyph-typosquatting-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Homoglyph / Typosquatting Detection
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#binary-extension-scanning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Binary Extension Scanning
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#seed-allowlist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Seed Allowlist
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#limitations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Limitations
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -886,7 +728,7 @@
                   <div class="md-sidebar__inner">
                     
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+<nav class="md-nav md-nav--secondary" aria-label="目录">
   
   
   
@@ -895,15 +737,15 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      目录
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        1) 当前做得好的地方（功能层）
       
     </span>
   </a>
@@ -911,10 +753,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-pre-install" class="md-nav__link">
+  <a href="#2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why Pre-Install?
+        2) 当前不足（检查能力层）
       
     </span>
   </a>
@@ -922,10 +764,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#toctou-safety" class="md-nav__link">
+  <a href="#21" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TOCTOU Safety
+        2.1 可被绕过的“代码语义”攻击
       
     </span>
   </a>
@@ -933,38 +775,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ast-scanning" class="md-nav__link">
+  <a href="#22" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AST Scanning
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="AST Scanning">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-gets-flagged" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What gets flagged
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#homoglyph-typosquatting-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Homoglyph / Typosquatting Detection
+        2.2 包管理与供应链元数据攻击面
       
     </span>
   </a>
@@ -972,10 +786,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#binary-extension-scanning" class="md-nav__link">
+  <a href="#23" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Binary Extension Scanning
+        2.3 二进制与原生扩展盲区
       
     </span>
   </a>
@@ -983,10 +797,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#seed-allowlist" class="md-nav__link">
+  <a href="#24" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Seed Allowlist
+        2.4 运行时攻击能力未覆盖
       
     </span>
   </a>
@@ -994,10 +808,76 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limitations" class="md-nav__link">
+  <a href="#3-attack" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limitations
+        3) 典型“仍可能防不住”的 attack 列表
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) 改进建议（按落地阶段）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段 A（1~2 周，可快速提升检出率）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段 B（2~6 周，构建企业可用能力）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        阶段 C（中期方向，能力跃迁）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5) 建议的目标指标（便于衡量改进效果）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) 总结（给当前项目的判断）
       
     </span>
   </a>
@@ -1024,210 +904,238 @@
   
 
 
-<h1 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h1>
-<p>pipguard's design has one rule: <strong>code must never execute during scanning</strong>.</p>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipguard install X
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>       │
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>       ▼
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pip download --prefer-binary X    ← downloads wheel/sdist, no code execution
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>       │
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>       ▼
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Detect sdist fallback             ← exit 2 if sdist detected (unless --allow-sdist)
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>       │
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>       ▼
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>Extract archive (zipfile/tarfile) ← never executes code
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>       │
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>       ▼
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>AST scan all .py files            ← parallel, ThreadPoolExecutor
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  setup.py, pyproject.toml, *.pth ← CRITICAL/HIGH scope
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>  all other .py                   ← MEDIUM/LOW scope
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>       │
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>       ▼
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>Risk scoring:
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>  CRITICAL → block (exit 1)
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  HIGH     → block (exit 1)
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  MEDIUM   → warn + confirm
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>  LOW      → warn + confirm
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  CLEAN    → install silently
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>       │
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>       ▼
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>pip install --no-index            ← installs FROM SCANNED FILES (TOCTOU-safe)
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    --find-links /tmp/pipguard-XX
-</span></code></pre></div>
-<h2 id="why-pre-install">Why Pre-Install?<a class="headerlink" href="#why-pre-install" title="Permanent link">&para;</a></h2>
-<p>Classical security tools (pip-audit, Safety, GuardDog) work post-hoc — they check installed packages against known-bad signature databases. This means:</p>
+<h1 id="pipguard">pipguard 现状评估与改进建议（功能与检查能力）<a class="headerlink" href="#pipguard" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>评估时间：2026-04-13
+评估范围：当前仓库主流程（download → extract → AST scan → gated install）</p>
+</blockquote>
+<h2 id="1">1) 当前做得好的地方（功能层）<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Zero-day blind spot</strong> — a new attack not yet in the database walks straight through</li>
-<li><strong>Race condition</strong> — the malicious code has already run by the time the tool checks</li>
+<li><strong>默认阻断安装期高危行为</strong>：</li>
+<li>对 install-hook 范围（<code>setup.py</code>/<code>pyproject.toml</code>/<code>.pth</code>）的网络调用、动态执行、shell 执行等行为设置为 HIGH/CRITICAL，默认阻断。  </li>
+<li><strong>对 <code>.pth</code> autorun 攻击有针对性防护</strong>：</li>
+<li>单独扫描 <code>.pth</code>，检测可执行语句，直接 CRITICAL。  </li>
+<li><strong>具备 TOCTOU 防护思路</strong>：</li>
+<li>安装阶段使用 <code>pip install --no-index --find-links</code> 从“已扫描目录”安装，避免二次拉取被替换。  </li>
+<li><strong>对二进制盲区有显式提示</strong>：</li>
+<li>二进制扩展（<code>.so/.pyd/.dylib</code>）会被标记为 LOW；纯二进制轮子会触发 MEDIUM。  </li>
+<li><strong>工程质量基础较稳</strong>：</li>
+<li>当前测试通过率高（187 passed, 1 skipped），说明已有行为在现有规则下较稳定。  </li>
 </ol>
-<p>pipguard reverses the order. It asks: <em>does this code do something that </em><em>any</em><em> pip install should be allowed to do?</em></p>
-<p>Regardless of whether the package is on any watchlist, the answer to "reads <code>~/.ssh/id_rsa</code> and sends it over a network" is always <strong>no</strong>.</p>
-<h2 id="toctou-safety">TOCTOU Safety<a class="headerlink" href="#toctou-safety" title="Permanent link">&para;</a></h2>
-<p>A subtle attack vector: scan a clean file, then swap it for a malicious one before install.</p>
-<p>pipguard counters this by:</p>
+<h2 id="2">2) 当前不足（检查能力层）<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
+<h2 id="21">2.1 可被绕过的“代码语义”攻击<a class="headerlink" href="#21" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Downloading the archive to a temp directory</li>
-<li>Scanning the files <strong>in place</strong> in that temp directory</li>
-<li>Running <code>pip install --no-index --find-links /tmp/pipguard-XX</code> — installing the exact files that were scanned</li>
-</ol>
-<p>The archive is never re-downloaded or re-extracted after scanning.</p>
-<h2 id="ast-scanning">AST Scanning<a class="headerlink" href="#ast-scanning" title="Permanent link">&para;</a></h2>
-<p>pipguard uses Python's built-in <code>ast</code> module — no third-party dependencies — to parse <code>.py</code> files into abstract syntax trees and walk the nodes looking for dangerous patterns.</p>
-<h3 id="what-gets-flagged">What gets flagged<a class="headerlink" href="#what-gets-flagged" title="Permanent link">&para;</a></h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:4"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">CRITICAL</label><label for="__tabbed_1_2">HIGH</label><label for="__tabbed_1_3">MEDIUM</label><label for="__tabbed_1_4">LOW</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>.pth</code> file with executable Python</td>
-<td><code>import os; os.system(...)</code> in <code>.pth</code></td>
-</tr>
-<tr>
-<td>Obfuscated eval</td>
-<td><code>eval(base64.b64decode(...))</code></td>
-</tr>
-<tr>
-<td>Network in <code>setup.py</code> / install hooks</td>
-<td><code>urllib.request.urlopen(...)</code> in <code>setup.py</code></td>
-</tr>
-<tr>
-<td>Shell/subprocess execution in install hooks</td>
-<td><code>os.system(...)</code>, <code>subprocess.run(..., shell=True)</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="tabbed-block">
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Non-ASCII character in package name</td>
-<td><code>bоto3</code> with Cyrillic <code>о</code> — possible homoglyph/typosquatting attack</td>
-</tr>
-<tr>
-<td>Credential path read in install hooks</td>
-<td><code>open('~/.ssh/id_rsa')</code> in <code>setup.py</code></td>
-</tr>
-<tr>
-<td>Subprocess execution in install hooks</td>
-<td><code>subprocess.run([...])</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="tabbed-block">
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Binary-only wheel (no Python source)</td>
-<td>Wheel with only <code>.so</code> / <code>.pyd</code> / <code>.dylib</code> files</td>
-</tr>
-<tr>
-<td>Network in runtime code</td>
-<td><code>urllib.request.urlopen(...)</code> in <code>utils.py</code></td>
-</tr>
-<tr>
-<td>Sensitive env var access</td>
-<td><code>os.environ.get('AWS_SECRET_ACCESS_KEY')</code></td>
-</tr>
-<tr>
-<td>Large source file over 1MB</td>
-<td>scanner emits confidence-reduction warning</td>
-</tr>
-<tr>
-<td>Binary IOC string hit</td>
-<td><code>.so</code> contains <code>https://...</code> or <code>/bin/sh</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="tabbed-block">
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Compiled binary extension in mixed wheel</td>
-<td><code>.so</code> / <code>.pyd</code> / <code>.dylib</code> alongside <code>.py</code> source</td>
-</tr>
-<tr>
-<td>Dynamic imports</td>
-<td><code>importlib.import_module(name)</code></td>
-</tr>
-<tr>
-<td><code>__import__()</code></td>
-<td><code>__import__(variable)</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<p>Binary files are also scanned with lightweight IOC string matching (first 2MB) to
-surface obvious credential-path or exfiltration indicators.</p>
-<h2 id="homoglyph-typosquatting-detection">Homoglyph / Typosquatting Detection<a class="headerlink" href="#homoglyph-typosquatting-detection" title="Permanent link">&para;</a></h2>
-<p>Before scanning archive contents, pipguard checks the package name itself for
-non-ASCII characters (e.g. Cyrillic <code>о</code> substituted for Latin <code>o</code>). Any such
-character produces a <strong>HIGH</strong> finding regardless of what the package contains:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bоto3   ← Cyrillic &#39;о&#39; (U+043E) in position 1
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>↑ visually identical to boto3, but a different string
-</span></code></pre></div>
-<p>Package names are also NFKC-normalized before allowlist comparison, so a
-homoglyph name cannot bypass the allowlist by mimicking a trusted package.</p>
-<h2 id="binary-extension-scanning">Binary Extension Scanning<a class="headerlink" href="#binary-extension-scanning" title="Permanent link">&para;</a></h2>
-<p>pipguard detects compiled binary extension files (<code>.so</code>, <code>.pyd</code>, <code>.dylib</code>) in
-extracted wheels. Static AST scanning cannot inspect these files, so pipguard
-flags them explicitly:</p>
+<li><strong>别名/包装调用绕过（高优先级）</strong></li>
+<li>
+<p>当前网络检测依赖固定函数名（如 <code>requests.get</code> / <code>urllib.request.urlopen</code>），
+     若攻击者写成：</p>
 <ul>
-<li><strong>Mixed wheel</strong> (<code>.py</code> source + binary extensions): each extension file
-  generates a <strong>LOW</strong> finding — the scanner covered the Python parts but is
-  blind to any payload in compiled code.</li>
-<li><strong>Binary-only wheel</strong> (no <code>.py</code> source at all): a single <strong>MEDIUM</strong> finding
-  is emitted, and the confirmation gate fires. pipguard's core scan promise
-  cannot be fulfilled for packages with no Python source.</li>
+<li><code>import requests as r; r.get(...)</code></li>
+<li><code>fn = requests.get; fn(...)</code></li>
+<li><code>getattr(requests, "get")(... )</code>
+ 很可能漏报。  </li>
 </ul>
-<h2 id="seed-allowlist">Seed Allowlist<a class="headerlink" href="#seed-allowlist" title="Permanent link">&para;</a></h2>
-<p>Some packages legitimately access credentials as part of their core purpose.
-pipguard ships with a seed allowlist that reduces their finding from HIGH to MEDIUM
-(CRITICAL is <strong>never</strong> reduced):</p>
-<p><code>keyring</code>, <code>keyrings.alt</code>, <code>boto3</code>, <code>botocore</code>, <code>awscli</code>, <code>paramiko</code>,
-<code>google-auth</code>, <code>google-cloud-storage</code>, <code>google-cloud-bigquery</code>,
-<code>google-cloud-core</code>, <code>azure-identity</code></p>
-<p><a href="../allowlist/">Full allowlist reference →</a></p>
-<h2 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h2>
-<div class="admonition note">
-<p class="admonition-title">Phase 1 scope</p>
-<p>These are known limitations of the current static-analysis approach.</p>
-</div>
+</li>
+<li>
+<p><strong>反射与动态属性访问绕过</strong></p>
+</li>
+<li>如 <code>getattr(os, "system")("...")</code>、<code>__import__("socket")</code> 后再动态调用。</li>
+<li>
+<p>目前主要覆盖直接调用路径，反射链可规避规则。  </p>
+</li>
+<li>
+<p><strong>敏感路径检测偏字面量匹配</strong></p>
+</li>
+<li>
+<p>目前对凭据路径更多基于字符串常量包含关系，
+     对 <code>os.path.join(os.path.expanduser("~"), ".ssh", key_name)</code> 这类组合构造不够强。  </p>
+</li>
+<li>
+<p><strong>命令执行检测范围有限</strong></p>
+</li>
+<li>已覆盖 <code>os.system/os.popen</code>、<code>subprocess.*(shell=True)</code>，</li>
+<li>
+<p>但对 <code>subprocess.Popen(["bash","-c", ...])</code>（shell=False）或 <code>pty</code>/<code>ctypes</code> 触发执行，覆盖不足。  </p>
+</li>
+<li>
+<p><strong>大文件跳过策略可被利用</strong></p>
+</li>
+<li>单文件 &gt;1MB 直接跳过 AST 扫描，攻击者可将恶意逻辑藏入超大脚本文件实现规避。  </li>
+</ol>
+<h2 id="22">2.2 包管理与供应链元数据攻击面<a class="headerlink" href="#22" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>requirements 生态支持面偏窄</strong></li>
+<li>
+<p>当前对 VCS/直接 URL/本地路径依赖基本是“不支持即退出”，
+     在真实企业依赖结构中常见，导致工具“用不起来”，进而被绕过（团队直接不用 pipguard）。  </p>
+</li>
+<li>
+<p><strong>缺少完整性校验闭环</strong></p>
+</li>
+<li>当前核心是“行为扫描”，但缺失：<ul>
+<li>强制 hash-pinning（<code>--require-hashes</code> 级别）</li>
+<li>与锁文件/制品仓库的一致性验证</li>
+</ul>
+</li>
+<li>
+<p>这会让“同名不同内容”的供应链攻击仍有操作空间。  </p>
+</li>
+<li>
+<p><strong>对 wheel 内元数据和构建后门检查不足</strong></p>
+</li>
+<li>如 <code>entry_points</code>, <code>console_scripts</code>, <code>.dist-info</code> 元数据滥用、
+     或安装后触发链（首次 import 执行）缺乏专项规则。  </li>
+</ol>
+<h2 id="23">2.3 二进制与原生扩展盲区<a class="headerlink" href="#23" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>二进制代码不可见</strong>（项目已识别但未真正解决）</li>
+<li>目前只是“提示风险”，无法分析 C/Rust 扩展真实行为。  </li>
+<li><strong>纯二进制包仅 MEDIUM</strong></li>
+<li>对高安全场景（CI/CD、生产镜像构建）不够严格，建议可配置为默认阻断。  </li>
+</ol>
+<h2 id="24">2.4 运行时攻击能力未覆盖<a class="headerlink" href="#24" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>仅静态扫描，缺少行为沙箱</strong></li>
+<li>无法捕捉“静态看起来安全，但运行期解密/下载二阶段 payload”的攻击。  </li>
+<li><strong>缺少系统调用/网络/DNS 实时拦截</strong></li>
+<li>不能在安装进程中基于能力策略阻断如 <code>connect/open/read ~/.ssh</code> 等实际操作。  </li>
+</ol>
+<h2 id="3-attack">3) 典型“仍可能防不住”的 attack 列表<a class="headerlink" href="#3-attack" title="Permanent link">&para;</a></h2>
+<p>按现实风险优先级排序：</p>
+<ol>
+<li><strong>Alias + 反射混淆 exfiltration</strong>  </li>
+<li>
+<p>使用别名/<code>getattr</code>/变量间接调用网络与文件读取，绕过函数名匹配。</p>
+</li>
+<li>
+<p><strong>大型单文件载荷（&gt;1MB）隐藏恶意逻辑</strong>  </p>
+</li>
+<li>
+<p>利用扫描上限跳过解析。  </p>
+</li>
+<li>
+<p><strong>纯二进制 wheel 内置恶意逻辑</strong>  </p>
+</li>
+<li>
+<p>通过 native 扩展直接执行系统调用/网络发送。  </p>
+</li>
+<li>
+<p><strong>安装后延迟触发（post-install / first-import）</strong>  </p>
+</li>
+<li>
+<p>不在 install hook 里做坏事，而在首次 import 时执行。  </p>
+</li>
+<li>
+<p><strong>利用合法能力组合达成恶意目标</strong>  </p>
+</li>
+<li>
+<p>比如不直接访问敏感路径，而先调用系统工具间接读取并 exfiltrate。  </p>
+</li>
+<li>
+<p><strong>多层字符串拼接 + 解码 + exec 链</strong>  </p>
+</li>
+<li>超出当前 b64 + exec 的单层模式规则。  </li>
+</ol>
+<h2 id="4">4) 改进建议（按落地阶段）<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<h2 id="a12">阶段 A（1~2 周，可快速提升检出率）<a class="headerlink" href="#a12" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>引入“简单数据流/别名追踪”</strong></li>
+<li>在 AST 层维护轻量符号表：<ul>
+<li>跟踪 <code>import x as y</code></li>
+<li>跟踪 <code>fn = requests.get</code> 这类一跳赋值</li>
+</ul>
+</li>
+<li>
+<p>将调用点还原到 canonical API，再匹配规则。  </p>
+</li>
+<li>
+<p><strong>扩展危险调用规则库</strong></p>
+</li>
+<li>
+<p>增补 <code>getattr(..., "system")</code>、<code>Popen(["bash","-c"])</code>、<code>shlex</code>/<code>pty</code>/<code>ctypes</code> 常见链路。  </p>
+</li>
+<li>
+<p><strong>优化大文件策略</strong></p>
+</li>
+<li>
+<p>不再“直接跳过”，改成：</p>
 <ul>
-<li><strong>Obfuscation</strong> — multi-layer obfuscation (e.g. <code>exec(compile(...))</code> wrapped multiple times) may evade detection</li>
-<li><strong>C extensions</strong> — <code>.so</code> / <code>.pyd</code> binaries are opaque to AST scanning; flagged as LOW (mixed) or MEDIUM (binary-only) to surface the blind spot</li>
-<li><strong>Python/pip only</strong> — no npm, cargo, or go module support</li>
-<li><strong>Phase 2 (in design)</strong> — seccomp/eBPF sandbox for capability-level interception at runtime</li>
+<li>分块抽样 + 关键 token 扫描</li>
+<li>并给出 MEDIUM/HIGH “未完全扫描”告警。  </li>
+</ul>
+</li>
+<li>
+<p><strong>提高 install-hook 严格性（默认 deny）</strong></p>
+</li>
+<li>install-hook 里除白名单操作外，网络/命令执行默认 CRITICAL。  </li>
+</ol>
+<h2 id="b26">阶段 B（2~6 周，构建企业可用能力）<a class="headerlink" href="#b26" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>增强供应链完整性功能</strong></li>
+<li>支持 requirements hash 校验模式；</li>
+<li>
+<p>生成并验证 lock 清单（包名+版本+hash）。  </p>
+</li>
+<li>
+<p><strong>引入可配置策略文件（policy-as-code）</strong></p>
+</li>
+<li>
+<p>例如 <code>pipguard.toml</code>：</p>
+<ul>
+<li>CI 中 <code>binary_only = block</code></li>
+<li>允许域名白名单</li>
+<li>禁止 install-hook 网络。  </li>
+</ul>
+</li>
+<li>
+<p><strong>支持更多依赖来源但保持安全默认</strong></p>
+</li>
+<li>VCS/URL 依赖可“受限支持”：必须 pin commit/hash，否则阻断。  </li>
+</ol>
+<h2 id="c">阶段 C（中期方向，能力跃迁）<a class="headerlink" href="#c" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>运行时沙箱（seccomp/eBPF/容器隔离）</strong></li>
+<li>
+<p>将安装过程放入隔离环境，按能力策略拦截：</p>
+<ul>
+<li>文件读（<code>~/.ssh</code>, <code>~/.aws</code>）</li>
+<li>网络连接（任意外连或非白名单域名）</li>
+<li>子进程执行。  </li>
+</ul>
+</li>
+<li>
+<p><strong>二进制扩展强化审计</strong></p>
+</li>
+<li>对 <code>.so/.pyd</code> 做静态特征扫描（导入符号、可疑字符串、网络 API 引用）；</li>
+<li>与签名可信源（内部仓库）结合。  </li>
+</ol>
+<h2 id="5">5) 建议的目标指标（便于衡量改进效果）<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>检测能力指标</strong></li>
+<li>恶意样本集检出率（TPR）</li>
+<li>
+<p>绕过样本集检出率（Alias/Reflection/Obfuscation）</p>
+</li>
+<li>
+<p><strong>误报指标</strong></p>
+</li>
+<li>Top 100 常用包误报率（FPR）</li>
+<li>
+<p>允许列表依赖比例（越低越好）</p>
+</li>
+<li>
+<p><strong>工程指标</strong></p>
+</li>
+<li>扫描耗时（P50/P95）</li>
+<li>CI 接入成功率（项目可落地率）</li>
+</ol>
+<h2 id="6">6) 总结（给当前项目的判断）<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>定位判断</strong>：pipguard 目前是一个“方向正确、基础扎实”的 <strong>Phase-1 静态防线</strong>，
+  在防范“明显安装期恶意行为”方面有实际价值。  </li>
+<li><strong>核心短板</strong>：对“语义绕过、二进制 payload、运行时动态行为”防护不足。  </li>
+<li><strong>优先级建议</strong>：先做 <strong>别名/数据流增强 + 大文件策略 + policy 化</strong>，
+  再推进运行时沙箱，能在不大幅牺牲性能的情况下显著提升真实防护强度。  </li>
 </ul>
 
 
@@ -1252,51 +1160,13 @@ pipguard ships with a seed allowlist that reduces their finding from HIGH to MED
           <button type="button" class="md-top md-icon" data-md-component="top" hidden>
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
-  Back to top
+  回到页面顶部
 </button>
         
       </main>
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../usage/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Usage">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Usage
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../risk-levels/" class="md-footer__link md-footer__link--next" aria-label="Next: Risk Levels">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Risk Levels
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
@@ -1352,10 +1222,10 @@ pipguard ships with a seed allowlist that reduces their finding from HIGH to MED
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.top", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.footer", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.top", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.footer", "content.code.copy", "content.code.annotate", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
