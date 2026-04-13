@@ -59,6 +59,16 @@ nav:
 
 plugins:
   - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: zh
+          name: 简体中文
+          build: true
 
 markdown_extensions:
   - admonition
@@ -79,6 +89,13 @@ markdown_extensions:
       permalink: true
 
 extra:
+  alternate:
+    - name: English
+      link: /pipguard/
+      lang: en
+    - name: 简体中文
+      link: /pipguard/zh/
+      lang: zh
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/shenxianpeng/pipguard
