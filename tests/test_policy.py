@@ -9,13 +9,16 @@ def test_load_policy_defaults_when_missing(tmp_path):
 
 
 def test_load_policy_install_and_intel_sections(tmp_path):
-    p = tmp_path / "pipguard-policy.toml"
+    p = tmp_path / "pipguard.toml"
     p.write_text(
         "[install]\n"
         "require_hashes = true\n"
         "allow_vcs_pinned = false\n"
         "allow_direct_url_pinned = false\n"
         "binary_only = 'block'\n"
+        "\n"
+        "[allowlist]\n"
+        "seed = ['corp-auth-sdk', 'internal-keyring']\n"
         "\n"
         "[intel]\n"
         "feed = 'feed.json'\n"
@@ -28,10 +31,11 @@ def test_load_policy_install_and_intel_sections(tmp_path):
     assert policy.binary_only == "block"
     assert policy.intel_feed == "feed.json"
     assert policy.intel_enforce is True
+    assert policy.seed_allowlist == ["corp-auth-sdk", "internal-keyring"]
 
 
 def test_load_policy_invalid_binary_only_falls_back(tmp_path):
-    p = tmp_path / "pipguard-policy.toml"
+    p = tmp_path / "pipguard.toml"
     p.write_text("[install]\nbinary_only = 'weird'\n")
     policy = load_policy(str(p))
     assert policy.binary_only == "prompt"

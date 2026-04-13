@@ -5,13 +5,13 @@ pipguard can load an optional policy file to enforce organization-wide defaults.
 Default path:
 
 ```text
-./pipguard-policy.toml
+./pipguard.toml
 ```
 
 Or pass explicitly:
 
 ```bash
-pipguard install --policy ./security/pipguard-policy.toml -r requirements.txt
+pipguard install --policy ./security/pipguard.toml -r requirements.txt
 ```
 
 ## Example
@@ -22,6 +22,9 @@ require_hashes = true
 allow_vcs_pinned = true
 allow_direct_url_pinned = true
 binary_only = "block"  # prompt | block | allow
+
+[allowlist]
+seed = ["my-internal-auth-lib", "corp-keyring"]
 
 [intel]
 feed = "https://example.org/pipguard-feed.json"
@@ -42,3 +45,8 @@ enforce = true
 
 - `feed` (string): local file path or HTTPS URL to a JSON denylist feed.
 - `enforce` (bool): if `true`, block packages in the feed before scan/install.
+
+`[allowlist]` section:
+
+- `seed` (list[string]): project-level seed allowlist entries. These are merged with
+  the built-in seed allowlist and `--allow` CLI flags.

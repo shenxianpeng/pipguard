@@ -185,8 +185,8 @@ class TestBuildParser:
 
     def test_policy_flag(self):
         parser = build_parser()
-        args = parser.parse_args(["install", "--policy", "pipguard-policy.toml", "requests"])
-        assert args.policy == "pipguard-policy.toml"
+        args = parser.parse_args(["install", "--policy", "pipguard.toml", "requests"])
+        assert args.policy == "pipguard.toml"
 
     def test_intel_flags(self):
         parser = build_parser()
@@ -319,10 +319,41 @@ class TestCmdInstallGate:
         assert rc == 2
         mock_install.assert_not_called()
 
+    @patch("pipguard.cli.load_policy")
+    def test_policy_seed_allowlist_is_applied(
+        self,
+        mock_load_policy,
+        mock_sig,
+        mock_reg,
+        mock_dl,
+        mock_scan,
+        mock_report,
+        mock_install,
+        tmp_path,
+    ):
+        mock_dl.return_value = ([str(tmp_path / "corp-auth-sdk-1.0-py3-none-any.whl")], [])
+        mock_scan.return_value = PackageScanResult(
+            package_name="corp-auth-sdk",
+            version="",
+            findings=[Finding(level=RiskLevel.HIGH, file_path="f.py", line=1, description="test")],
+            is_allowlisted=True,
+        )
+        mock_load_policy.return_value = types.SimpleNamespace(
+            require_hashes=False,
+            allow_vcs_pinned=True,
+            allow_direct_url_pinned=True,
+            binary_only="prompt",
+            intel_feed="",
+            intel_enforce=False,
+            seed_allowlist=["corp-auth-sdk"],
+        )
+        rc = cmd_install(_make_args(packages=["corp-auth-sdk"], yes=True))
+        assert rc == 0
+
     def test_policy_blocks_binary_only_wheel(
         self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
     ):
-        policy = tmp_path / "pipguard-policy.toml"
+        policy = tmp_path / "pipguard.toml"
         policy.write_text("[install]\nbinary_only = 'block'\n")
         mock_dl.return_value = ([str(tmp_path / "binpkg-1.0-py3-none-any.whl")], [])
         mock_scan.return_value = PackageScanResult(

@@ -240,7 +240,7 @@ def cmd_install(args) -> int:
 
     packages: List[str] = args.packages or []
     requirements_file: Optional[str] = getattr(args, "r", None)
-    extra_allow: List[str] = args.allow or []
+    extra_allow: List[str] = [*(policy.seed_allowlist or []), *(args.allow or [])]
 
     if not packages and not requirements_file:
         print("Error: specify package(s) or -r requirements.txt", file=sys.stderr)
@@ -448,8 +448,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Require hashes for all requirements entries (also configurable in policy)",
     )
     install.add_argument(
-        "--policy", metavar="pipguard-policy.toml",
-        help="Path to policy file (default: ./pipguard-policy.toml if present)",
+        "--policy", metavar="pipguard.toml",
+        help="Path to policy file (default: ./pipguard.toml if present)",
     )
     install.add_argument(
         "--intel-feed", metavar="FILE_OR_URL",
