@@ -1,66 +1,45 @@
-> 本页面提供中文入口，内容将持续完善。
+# 风险等级
 
-# Risk Levels
-
-pipguard assigns every scanned package one of five risk levels based on patterns
-found during static AST analysis.
+pipguard 会基于静态 AST 分析结果，为每个包分配以下五个等级之一。
 
 ## CRITICAL
 
-**Action: Block immediately. Exit 1. No confirmation prompt.**
+**处理：立即阻断，退出码 1，不提示确认。**
 
-| Trigger | Why it's CRITICAL |
-|---------|------------------|
-| `.pth` file containing executable Python code | `.pth` files are executed automatically at Python interpreter startup — before any user code runs. Any executable content is unambiguously malicious. |
-| `eval(base64.b64decode(...))` in any file | Classic obfuscated payload pattern. Legitimate packages never need this. |
-| Network calls (`urllib`, `httpx`, `requests`, `socket`) in `setup.py` or install hooks | Build-time network calls have no legitimate use case. The March 2026 litellm attack used this to exfiltrate data. |
-| Shell/subprocess execution in install hooks (`os.system`, `os.popen`, shell execution via `subprocess`) | Install-time command execution is a high-confidence attacker primitive and is blocked by default. |
+| 触发条件 | 为什么是 CRITICAL |
+|---|---|
+| `.pth` 中存在可执行 Python 代码 | `.pth` 会在解释器启动时自动执行，风险极高 |
+| 任意文件出现 `eval(base64.b64decode(...))` | 典型混淆恶意载荷模式 |
+| `setup.py`/安装钩子中发生网络调用 | 安装期联网通常无正当必要 |
+| 安装钩子执行 shell/subprocess 命令 | 攻击者常用执行原语 |
 
-!!! danger "CRITICAL is never reduced"
-    The `--allow` flag and the seed allowlist do **not** reduce CRITICAL findings.
-    Only `--force` bypasses CRITICAL — use with extreme caution.
+!!! danger "CRITICAL 永不降级"
+    `--allow` 与内置 allowlist 都不会降低 CRITICAL 风险。
 
 ## HIGH
 
-**Action: Block. Exit 1. No confirmation prompt.**
+**处理：阻断安装，退出码 1。**
 
-| Trigger | Scope | Why |
-|---------|-------|-----|
-| Non-ASCII character in package name | Name check (pre-scan) | Possible homoglyph / typosquatting attack (e.g. `bоto3` with Cyrillic `о` instead of Latin `o`). |
-| Reads credential paths (`~/.ssh`, `~/.aws`, `~/.kube`, `~/.gnupg`) | Install hooks only | A package reading your SSH keys during `pip install` is an attack, not a feature. |
-| Direct subprocess execution (non-shell) | Install hooks only | Elevated risk in install-time context; surfaced as HIGH for manual review. |
-| Binary IOC credential markers (`/.ssh/id_rsa`, `/.aws/credentials`) | Binary extension scan | Heuristic binary content includes hard-coded credential path indicators. |
+常见场景：
 
-!!! warning "HIGH in runtime code"
-    If the same patterns appear in *runtime* code (not install hooks), the finding is
-    downgraded to MEDIUM. `boto3` legitimately reads `~/.aws` at runtime — that's fine.
-    It reading `~/.aws` in `setup.py` is not.
+- 同形异义（homoglyph）包名
+- 安装阶段读取敏感文件（如 `~/.ssh`、`~/.aws`）
+- 可疑命令执行模式
 
 ## MEDIUM
 
-**Action: Warn and prompt for confirmation. (`--yes` skips prompt and proceeds.)**
+**处理：默认提示确认；`--yes` 时继续。**
 
-| Trigger | Notes |
-|---------|-------|
-| Binary-only wheel (no Python source) | Wheel contains only `.so` / `.pyd` / `.dylib` files — AST scan cannot verify contents. Confirmation gate fires; use `--yes` to proceed. |
-| Network calls in runtime `.py` files | Common in legitimate packages; shown for transparency |
-| Sensitive env var access (`*TOKEN*`, `*KEY*`, `*SECRET*`, `*PASSWORD*`, `*CREDENTIAL*`) | Flagged in runtime code |
-| Large source file over 1MB | Scanner continues, but emits confidence-reduction warning for manual review |
-| Binary IOC string indicators (`https://`, `/bin/sh`, `socket`) | Heuristic binary scan detected suspicious runtime/exfil primitives |
+示例：运行期网络访问、敏感环境变量读取、二进制-only wheel 等。
 
 ## LOW
 
-**Action: Warn (shown in summary). Confirmation prompt fires (skippable with `--yes`).**
+**处理：提示确认或按策略继续。**
 
-| Trigger | Notes |
-|---------|-------|
-| Compiled binary extension in mixed wheel | `.so` / `.pyd` / `.dylib` file present alongside Python source — AST scanner is blind to any payload in compiled code |
-| `importlib.import_module(variable)` | Dynamic imports can load arbitrary code |
-| `__import__(variable)` | Same concern as above |
+示例：动态导入、混合型二进制扩展等弱风险信号。
 
 ## CLEAN
 
-**Action: Install silently.**
+**处理：直接安装。**
 
-No patterns matching CRITICAL, HIGH, MEDIUM, or LOW were found.
-The package installs without any output.
+未命中任何风险规则。

@@ -1,110 +1,41 @@
-> 本页面提供中文入口，内容将持续完善。
+# 使用说明
 
-# Usage
+![pipguard 演示](assets/demo.gif)
 
-![pipguard demo](assets/demo.gif)
+## 基本用法
 
-## Basic Usage
-
-### Install a single package
+### 安装单个包
 
 ```bash
 pipguard install requests
 ```
 
-pipguard will download, scan, and — if clean — install the package. No output means no findings.
+pipguard 会先下载并扫描，确认安全后再安装。若无风险，输出会非常简洁。
 
-### Install from requirements.txt
+### 从 requirements.txt 安装
 
 ```bash
 pipguard install -r requirements.txt
 ```
 
-Scans all packages in the file. Blocks on first CRITICAL or HIGH finding.
-
-## CI Mode
-
-In CI, you never want interactive prompts. Use `--yes` to suppress all confirmation prompts
-and have pipguard exit 1 automatically on CRITICAL or HIGH findings:
+### 非交互模式（CI 推荐）
 
 ```bash
 pipguard install --yes -r requirements.txt
 ```
 
-<div class="pg-terminal">
-  <div class="pg-terminal__bar">
-    <div class="pg-terminal__dot"></div>
-    <div class="pg-terminal__dot"></div>
-    <div class="pg-terminal__dot"></div>
-    <span class="pg-terminal__title">GitHub Actions</span>
-  </div>
-  <div class="pg-terminal__body">
-    <div><span class="t-dollar">$</span><span class="t-cmd">pipguard install --yes -r requirements.txt</span></div>
-    <div>&nbsp;</div>
-    <div><span class="t-ok">✓ requests==2.31.0</span></div>
-    <div><span class="t-ok">✓ numpy==1.26.3</span></div>
-    <div><span class="t-block">✗ litellm==1.82.8  CRITICAL — .pth autorun, reads ~/.ssh/id_rsa</span></div>
-    <div>&nbsp;</div>
-    <div><span class="t-block">Process exited with code 1</span></div>
-  </div>
-</div>
+## 常用参数
 
-## Allowing Known-Legitimate Packages
+- `--yes`：自动确认 MEDIUM/LOW 风险（适合 CI）
+- `--allow pkg1,pkg2`：允许指定包将 HIGH 降级为 MEDIUM
+- `--allow-sdist`：允许 sdist（默认不允许）
+- `--policy path/to/pipguard.toml`：使用策略文件
 
-Some packages legitimately access credential stores (e.g. `paramiko` reads `~/.ssh`).
-Use `--allow` to reduce their finding from HIGH to MEDIUM:
+## 输出与行为
 
-```bash
-pipguard install --allow paramiko paramiko
-```
+- 检测到 **CRITICAL/HIGH**：阻断安装，退出码 `1`
+- 检测到 **MEDIUM/LOW**：提示确认（或 `--yes` 自动继续）
+- 全部 **CLEAN**：静默完成安装，退出码 `0`
+- 扫描失败：退出码 `2`
 
-!!! warning "CRITICAL findings are never reduced"
-    `--allow` only reduces HIGH → MEDIUM. CRITICAL findings always block, regardless of flags.
-
-## Forcing a Package (Escape Hatch)
-
-For known false-positives on fully-trusted internal packages:
-
-```bash
-pipguard install --force my-trusted-internal-pkg
-```
-
-!!! danger "Use with care"
-    `--force` bypasses all checks and logs a warning. Never use in CI without code review.
-
-## Allowing sdist Packages
-
-By default pipguard exits with code 2 if a package falls back to sdist (source distribution),
-because sdists execute build scripts. To opt in:
-
-```bash
-pipguard install --allow-sdist some-package
-```
-
-!!! danger "sdist installs execute arbitrary code"
-    `--allow-sdist` bypasses a hard safety boundary. Even though pipguard runs AST scanning on
-    `setup.py`, `pip install` will still **execute** setup.py and any build-backend code at
-    install time. pipguard's AST scan does **NOT** prevent this.
-    Never use `--allow-sdist` in automated pipelines without explicit review.
-
-## All Flags
-
-| Flag | Description |
-|------|-------------|
-| `-r FILE` | Install from requirements file |
-| `--yes` / `-y` | CI mode — no prompts, exit 1 on CRITICAL/HIGH |
-| `--allow PKG` | Add package to per-invocation allowlist (HIGH→MEDIUM) |
-| `--force PKG` | Bypass all checks for a specific package |
-| `--allow-sdist` | Allow sdist fallback (DANGER: executes arbitrary code — AST scan does NOT prevent this) |
-| `--require-hashes` | Require hash-locked requirements entries (`--hash=...` or URL hash fragment) |
-| `--policy FILE` | Load policy file (default: `./pipguard.toml` if present) |
-| `--intel-feed FILE_OR_URL` | Threat-intel JSON feed containing blocked package versions |
-| `--enforce-intel` | Enforce intel feed denylist and block matching packages |
-
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | Clean — all packages installed |
-| `1` | Blocked — CRITICAL or HIGH risk detected |
-| `2` | Scan error — download failed or unsupported format |
+更多细节请参考：[风险等级](risk-levels.md) 与 [退出码](exit-codes.md)。

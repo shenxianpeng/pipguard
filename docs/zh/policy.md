@@ -1,54 +1,32 @@
-> 本页面提供中文入口，内容将持续完善。
+# 策略即代码（Policy as Code）
 
-# Policy as Code
+pipguard 支持加载可选策略文件，用于在团队或组织范围内统一安全默认值。
 
-pipguard can load an optional policy file to enforce organization-wide defaults.
-
-Default path:
+默认路径：
 
 ```text
 ./pipguard.toml
 ```
 
-Or pass explicitly:
+也可以显式指定：
 
 ```bash
 pipguard install --policy ./security/pipguard.toml -r requirements.txt
 ```
 
-## Example
+## 示例
 
-```toml
+```toml title="pipguard.toml"
 [install]
-require_hashes = true
-allow_vcs_pinned = true
-allow_direct_url_pinned = true
-binary_only = "block"  # prompt | block | allow
+yes = true
+allow_sdist = false
 
 [allowlist]
-seed = ["my-internal-auth-lib", "corp-keyring"]
-
-[intel]
-feed = "https://example.org/pipguard-feed.json"
-enforce = true
+packages = ["boto3", "botocore"]
 ```
 
-## Keys
+## 建议
 
-- `require_hashes` (bool): enforce hash-locked dependencies.
-- `allow_vcs_pinned` (bool): allow VCS requirements only when pinned to commit hash.
-- `allow_direct_url_pinned` (bool): allow direct URL dependencies only with hash fragment.
-- `binary_only` (string): behavior when binary-only wheel is detected:
-  - `prompt` (default): keep MEDIUM behavior.
-  - `block`: fail installation (exit 1).
-  - `allow`: do not enforce additional binary-only policy block.
-
-`[intel]` section:
-
-- `feed` (string): local file path or HTTPS URL to a JSON denylist feed.
-- `enforce` (bool): if `true`, block packages in the feed before scan/install.
-
-`[allowlist]` section:
-
-- `seed` (list[string]): project-level seed allowlist entries. These are merged with
-  the built-in seed allowlist and `--allow` CLI flags.
+- 在 CI 中强制使用同一份策略文件
+- 仅将确有业务必要的包加入 allowlist
+- 对策略改动走代码评审流程

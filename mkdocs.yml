@@ -61,6 +61,18 @@ plugins:
   - search
   - i18n:
       docs_structure: folder
+      nav_translations:
+        zh:
+          Home: 首页
+          Get Started: 快速开始
+          Installation: 安装指南
+          Usage: 使用说明
+          How It Works: 工作原理
+          Reference: 参考
+          Risk Levels: 风险等级
+          Exit Codes: 退出码
+          Seed Allowlist: 种子允许列表
+          Policy as Code: 策略即代码
       languages:
         - locale: en
           default: true

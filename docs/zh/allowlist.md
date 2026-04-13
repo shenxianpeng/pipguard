@@ -1,47 +1,24 @@
-> 本页面提供中文入口，内容将持续完善。
+# 种子允许列表（Seed Allowlist）
 
-# Seed Allowlist
+某些包因其业务职责会合法访问凭据或执行敏感操作。pipguard 内置一份种子允许列表，用于将这些包的风险从 HIGH 降级为 MEDIUM，以减少误报阻断。
 
-Some packages legitimately access credential stores or perform sensitive operations
-as part of their core purpose. pipguard ships with a seed allowlist that reduces
-their finding from HIGH to MEDIUM so they don't cause false-positive blocks.
+!!! danger "CRITICAL 永不降级"
+    种子 allowlist（以及 `--allow`）仅支持 HIGH → MEDIUM。
+    CRITICAL 风险始终会被阻断。
 
-!!! danger "CRITICAL is never reduced"
-    The seed allowlist (and `--allow`) only reduces HIGH → MEDIUM.
-    CRITICAL findings always block, regardless of any allowlist entry.
+## 内置列表
 
-## Built-in Allowlist
+| 包名 | 为什么会访问凭据 |
+|---|---|
+| `keyring` | 凭据存储库，按设计会读写系统密钥链 |
+| `keyrings.alt` | keyring 的替代后端实现 |
+| `boto3` | AWS SDK，需读取 `~/.aws/credentials` |
+| `botocore` | boto3 的核心依赖库 |
 
-| Package | Why it accesses credentials |
-|---------|----------------------------|
-| `keyring` | Credential storage library — reads/writes system keyring by design |
-| `keyrings.alt` | Alternative keyring backends |
-| `boto3` | AWS SDK — reads `~/.aws/credentials` for authentication |
-| `botocore` | AWS core library (boto3 dependency) |
-| `awscli` | AWS CLI — reads `~/.aws/config` |
-| `paramiko` | SSH client — reads `~/.ssh/id_rsa` for key-based auth |
-| `google-auth` | Google authentication — reads `~/.config/gcloud/` |
-| `google-cloud-storage` | Google Cloud SDK |
-| `google-cloud-bigquery` | Google Cloud BigQuery |
-| `google-cloud-core` | Google Cloud base library |
-| `azure-identity` | Azure authentication library |
-
-## Per-Invocation Allowlist
-
-Add packages to the allowlist for a single invocation with `--allow`:
+## CLI 用法
 
 ```bash
-pipguard install --allow my-internal-auth-lib -r requirements.txt
+pipguard install --allow boto3,botocore -r requirements.txt
 ```
 
-Multiple packages:
-
-```bash
-pipguard install --allow pkg-a --allow pkg-b -r requirements.txt
-```
-
-## Adding to the Project Allowlist
-
-To suggest adding a package to the built-in seed allowlist, open an issue at
-[github.com/shenxianpeng/pipguard](https://github.com/shenxianpeng/pipguard/issues)
-with evidence of why the credential access is legitimate.
+仅在确认业务必要时加入 allowlist，并定期审计。
