@@ -207,6 +207,21 @@ class TestPrintFindingsReport:
         assert "zipp/mod.py:7" in out
         assert "attrs — CLEAN" in out
 
+    def test_default_report_hides_low_details_inside_medium_package(self, capsys):
+        result = PackageScanResult(
+            "aiohttp",
+            "",
+            findings=[
+                Finding(level=RiskLevel.MEDIUM, file_path="aiohttp/client.py", line=1453, description="netrc access"),
+                Finding(level=RiskLevel.LOW, file_path="aiohttp/web.py", line=564, description="dynamic import"),
+            ],
+        )
+        print_findings_report([result], verbose=False)
+        out = capsys.readouterr().out
+        assert "[MEDIUM] aiohttp" in out
+        assert "aiohttp/client.py:1453" in out
+        assert "aiohttp/web.py:564" not in out
+
     def test_report_order_is_deterministic(self, capsys):
         critical = PackageScanResult(
             "omega",

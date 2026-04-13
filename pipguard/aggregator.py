@@ -131,7 +131,14 @@ def _group_results(results: Iterable[PackageScanResult]) -> Dict[RiskLevel, List
     return grouped
 
 
-def _print_result_details(result: PackageScanResult) -> None:
+def _iter_reportable_findings(result: PackageScanResult, verbose: bool) -> List[Finding]:
+    findings = sorted(result.findings, key=_finding_sort_key)
+    if verbose:
+        return findings
+    return [finding for finding in findings if finding.level != RiskLevel.LOW]
+
+
+def _print_result_details(result: PackageScanResult, verbose: bool = False) -> None:
     level = result.effective_level
     pkg = result.package_name
 
@@ -149,7 +156,7 @@ def _print_result_details(result: PackageScanResult) -> None:
     if result.is_allowlisted and result.max_level == RiskLevel.HIGH:
         print("    (allowlisted — severity reduced from HIGH to MEDIUM)")
 
-    for finding in sorted(result.findings, key=_finding_sort_key):
+    for finding in _iter_reportable_findings(result, verbose):
         lvl_tag = _color(f"[{finding.level}]", finding.level.name)
         print(f"    {lvl_tag} {finding.file_path}:{finding.line}")
         print(f"           {finding.description}")
@@ -194,4 +201,4 @@ def print_findings_report(results: List[PackageScanResult], verbose: bool = Fals
             continue
 
         for result in group:
-            _print_result_details(result)
+            _print_result_details(result, verbose=verbose)
