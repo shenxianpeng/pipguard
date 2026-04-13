@@ -813,6 +813,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy as Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1062,6 +1090,22 @@ Never use <code>--allow-sdist</code> in automated pipelines without explicit rev
 <tr>
 <td><code>--allow-sdist</code></td>
 <td>Allow sdist fallback (DANGER: executes arbitrary code — AST scan does NOT prevent this)</td>
+</tr>
+<tr>
+<td><code>--require-hashes</code></td>
+<td>Require hash-locked requirements entries (<code>--hash=...</code> or URL hash fragment)</td>
+</tr>
+<tr>
+<td><code>--policy FILE</code></td>
+<td>Load policy file (default: <code>./pipguard-policy.toml</code> if present)</td>
+</tr>
+<tr>
+<td><code>--intel-feed FILE_OR_URL</code></td>
+<td>Threat-intel JSON feed containing blocked package versions</td>
+</tr>
+<tr>
+<td><code>--enforce-intel</code></td>
+<td>Enforce intel feed denylist and block matching packages</td>
 </tr>
 </tbody>
 </table>

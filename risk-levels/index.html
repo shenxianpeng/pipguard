@@ -763,6 +763,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy as Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -896,6 +924,10 @@ found during static AST analysis.</p>
 <td>Network calls (<code>urllib</code>, <code>httpx</code>, <code>requests</code>, <code>socket</code>) in <code>setup.py</code> or install hooks</td>
 <td>Build-time network calls have no legitimate use case. The March 2026 litellm attack used this to exfiltrate data.</td>
 </tr>
+<tr>
+<td>Shell/subprocess execution in install hooks (<code>os.system</code>, <code>os.popen</code>, shell execution via <code>subprocess</code>)</td>
+<td>Install-time command execution is a high-confidence attacker primitive and is blocked by default.</td>
+</tr>
 </tbody>
 </table>
 <div class="admonition danger">
@@ -925,14 +957,14 @@ Only <code>--force</code> bypasses CRITICAL — use with extreme caution.</p>
 <td>A package reading your SSH keys during <code>pip install</code> is an attack, not a feature.</td>
 </tr>
 <tr>
-<td><code>subprocess.run(..., shell=True)</code></td>
+<td>Direct subprocess execution (non-shell)</td>
 <td>Install hooks only</td>
-<td>Shell injection risk; no legitimate build script needs <code>shell=True</code>.</td>
+<td>Elevated risk in install-time context; surfaced as HIGH for manual review.</td>
 </tr>
 <tr>
-<td><code>os.system()</code> / <code>os.popen()</code></td>
-<td>Install hooks only</td>
-<td>Arbitrary shell execution at install time.</td>
+<td>Binary IOC credential markers (<code>/.ssh/id_rsa</code>, <code>/.aws/credentials</code>)</td>
+<td>Binary extension scan</td>
+<td>Heuristic binary content includes hard-coded credential path indicators.</td>
 </tr>
 </tbody>
 </table>
@@ -963,6 +995,14 @@ It reading <code>~/.aws</code> in <code>setup.py</code> is not.</p>
 <tr>
 <td>Sensitive env var access (<code>*TOKEN*</code>, <code>*KEY*</code>, <code>*SECRET*</code>, <code>*PASSWORD*</code>, <code>*CREDENTIAL*</code>)</td>
 <td>Flagged in runtime code</td>
+</tr>
+<tr>
+<td>Large source file over 1MB</td>
+<td>Scanner continues, but emits confidence-reduction warning for manual review</td>
+</tr>
+<tr>
+<td>Binary IOC string indicators (<code>https://</code>, <code>/bin/sh</code>, <code>socket</code>)</td>
+<td>Heuristic binary scan detected suspicious runtime/exfil primitives</td>
 </tr>
 </tbody>
 </table>

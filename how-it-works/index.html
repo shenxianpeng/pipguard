@@ -808,6 +808,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy as Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1040,6 +1068,10 @@
 <td>Network in <code>setup.py</code> / install hooks</td>
 <td><code>urllib.request.urlopen(...)</code> in <code>setup.py</code></td>
 </tr>
+<tr>
+<td>Shell/subprocess execution in install hooks</td>
+<td><code>os.system(...)</code>, <code>subprocess.run(..., shell=True)</code></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -1061,12 +1093,8 @@
 <td><code>open('~/.ssh/id_rsa')</code> in <code>setup.py</code></td>
 </tr>
 <tr>
-<td>Shell subprocess in install hooks</td>
-<td><code>subprocess.run(..., shell=True)</code></td>
-</tr>
-<tr>
-<td><code>os.system()</code> / <code>os.popen()</code> in install hooks</td>
-<td><code>os.system('curl ...')</code></td>
+<td>Subprocess execution in install hooks</td>
+<td><code>subprocess.run([...])</code></td>
 </tr>
 </tbody>
 </table>
@@ -1091,6 +1119,14 @@
 <tr>
 <td>Sensitive env var access</td>
 <td><code>os.environ.get('AWS_SECRET_ACCESS_KEY')</code></td>
+</tr>
+<tr>
+<td>Large source file over 1MB</td>
+<td>scanner emits confidence-reduction warning</td>
+</tr>
+<tr>
+<td>Binary IOC string hit</td>
+<td><code>.so</code> contains <code>https://...</code> or <code>/bin/sh</code></td>
 </tr>
 </tbody>
 </table>
@@ -1121,6 +1157,8 @@
 </div>
 </div>
 </div>
+<p>Binary files are also scanned with lightweight IOC string matching (first 2MB) to
+surface obvious credential-path or exfiltration indicators.</p>
 <h2 id="homoglyph-typosquatting-detection">Homoglyph / Typosquatting Detection<a class="headerlink" href="#homoglyph-typosquatting-detection" title="Permanent link">&para;</a></h2>
 <p>Before scanning archive contents, pipguard checks the package name itself for
 non-ASCII characters (e.g. Cyrillic <code>о</code> substituted for Latin <code>o</code>). Any such
