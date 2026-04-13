@@ -68,7 +68,17 @@ pipguard install --allow paramiko -r requirements.txt
 
 # Override for known false-positives (use with care)
 pipguard install --force my-trusted-internal-pkg
+
+# Show full LOW/CLEAN scan details
+pipguard install --verbose requests
+
+# Show raw pip install output
+pipguard install --show-pip-output requests
 ```
+
+By default, pipguard prints a risk summary, expands `CRITICAL` / `HIGH` / `MEDIUM`,
+collapses `LOW` to package-level counts, and keeps successful `pip install` logs quiet.
+Use `--verbose` for full scan details and `--show-pip-output` to restore raw pip logs.
 
 For the full reference — risk levels, exit codes, allowlist, and CI integration — see the **[documentation](https://shenxianpeng.github.io/pipguard/)**.
 

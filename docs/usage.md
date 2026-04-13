@@ -10,7 +10,10 @@
 pipguard install requests
 ```
 
-pipguard will download, scan, and — if clean — install the package. No output means no findings.
+pipguard will download, scan, and install the package from the scanned local cache.
+By default, the report is summary-first: `CRITICAL` / `HIGH` / `MEDIUM` findings are
+expanded, `LOW` findings are collapsed to package-level counts, and `CLEAN` packages are
+shown only in the summary totals.
 
 ### Install from requirements.txt
 
@@ -27,6 +30,32 @@ and have pipguard exit 1 automatically on CRITICAL or HIGH findings:
 
 ```bash
 pipguard install --yes -r requirements.txt
+```
+
+## Default Output
+
+Successful installs keep raw `pip install` logs quiet unless you opt in with
+`--show-pip-output`.
+
+```text
+$ pipguard install some-package
+📦 Downloading to /tmp/pipguard-abcd1234 ...
+🔍 Scanning 5 package(s) ...
+Scan summary:
+  Total packages: 5
+  CRITICAL: 0  HIGH: 0  MEDIUM: 1  LOW: 2  CLEAN: 2
+
+MEDIUM
+  [MEDIUM] jsonschema
+    [MEDIUM] jsonschema/validators.py:113
+           Outbound network call (urllib.request.urlopen()) in runtime code
+
+LOW
+  [LOW] markupsafe — 1 finding
+  [LOW] zipp — 1 finding
+  Use --verbose to show LOW-level file details.
+
+Proceed with installation? [y/N]
 ```
 
 <div class="pg-terminal">
@@ -95,6 +124,8 @@ pipguard install --allow-sdist some-package
 | `--force PKG` | Bypass all checks for a specific package |
 | `--allow-sdist` | Allow sdist fallback (DANGER: executes arbitrary code — AST scan does NOT prevent this) |
 | `--require-hashes` | Require hash-locked requirements entries (`--hash=...` or URL hash fragment) |
+| `--verbose` | Show full scan details, including LOW findings and CLEAN package list |
+| `--show-pip-output` | Show raw pip install output instead of the quiet default |
 | `--policy FILE` | Load policy file (default: `./pipguard.toml` if present) |
 | `--intel-feed FILE_OR_URL` | Threat-intel JSON feed containing blocked package versions |
 | `--enforce-intel` | Enforce intel feed denylist and block matching packages |

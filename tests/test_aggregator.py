@@ -15,6 +15,7 @@ from pipguard.aggregator import (
     check_package_name_for_homoglyph,
     is_allowlisted,
     normalize_package_name,
+    print_findings_report,
     SEED_ALLOWLIST,
 )
 from pipguard.models import Finding, PackageScanResult, RiskLevel
@@ -177,3 +178,71 @@ class TestNormalizePackageNameNFKC:
     def test_ascii_unchanged(self):
         assert normalize_package_name("Requests") == "requests"
         assert normalize_package_name("google_auth") == "google-auth"
+
+
+class TestPrintFindingsReport:
+    def test_default_report_collapses_low_and_hides_clean_details(self, capsys):
+        low = PackageScanResult(
+            "zipp",
+            "",
+            findings=[Finding(level=RiskLevel.LOW, file_path="zipp/mod.py", line=7, description="dyn import")],
+        )
+        clean = PackageScanResult("attrs", "", findings=[])
+        print_findings_report([clean, low])
+        out = capsys.readouterr().out
+        assert "Scan summary:" in out
+        assert "[LOW] zipp" in out
+        assert "zipp/mod.py" not in out
+        assert "attrs — CLEAN" not in out
+
+    def test_verbose_report_shows_low_and_clean_details(self, capsys):
+        low = PackageScanResult(
+            "zipp",
+            "",
+            findings=[Finding(level=RiskLevel.LOW, file_path="zipp/mod.py", line=7, description="dyn import")],
+        )
+        clean = PackageScanResult("attrs", "", findings=[])
+        print_findings_report([clean, low], verbose=True)
+        out = capsys.readouterr().out
+        assert "zipp/mod.py:7" in out
+        assert "attrs — CLEAN" in out
+
+    def test_report_order_is_deterministic(self, capsys):
+        critical = PackageScanResult(
+            "omega",
+            "",
+            findings=[Finding(level=RiskLevel.CRITICAL, file_path="omega/setup.py", line=1, description="boom")],
+        )
+        medium = PackageScanResult(
+            "beta",
+            "",
+            findings=[Finding(level=RiskLevel.MEDIUM, file_path="beta/net.py", line=3, description="net")],
+        )
+        low_a = PackageScanResult(
+            "aardvark",
+            "",
+            findings=[Finding(level=RiskLevel.LOW, file_path="aardvark/mod.py", line=4, description="dyn")],
+        )
+        low_z = PackageScanResult(
+            "zeta",
+            "",
+            findings=[Finding(level=RiskLevel.LOW, file_path="zeta/mod.py", line=5, description="dyn")],
+        )
+        print_findings_report([low_z, medium, low_a, critical])
+        out = capsys.readouterr().out
+        assert out.index("CRITICAL") < out.index("MEDIUM") < out.index("LOW")
+        assert out.index("aardvark") < out.index("zeta")
+
+    def test_findings_sorted_by_level_then_location(self, capsys):
+        result = PackageScanResult(
+            "pkg",
+            "",
+            findings=[
+                Finding(level=RiskLevel.LOW, file_path="z.py", line=4, description="z"),
+                Finding(level=RiskLevel.MEDIUM, file_path="b.py", line=2, description="m"),
+                Finding(level=RiskLevel.LOW, file_path="a.py", line=1, description="a"),
+            ],
+        )
+        print_findings_report([result], verbose=True)
+        out = capsys.readouterr().out
+        assert out.index("b.py:2") < out.index("a.py:1") < out.index("z.py:4")

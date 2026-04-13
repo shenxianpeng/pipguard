@@ -14,6 +14,7 @@ def install_from_local(
     find_links_dir: str,
     requirements_file: Optional[str] = None,
     require_hashes: bool = False,
+    show_pip_output: bool = False,
 ) -> int:
     """
     Install packages using only the already-scanned local files.
@@ -36,5 +37,14 @@ def install_from_local(
     if require_hashes:
         cmd += ["--require-hashes"]
 
-    result = subprocess.run(cmd)
+    if show_pip_output:
+        result = subprocess.run(cmd)
+        return result.returncode
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        if result.stdout:
+            sys.stdout.write(result.stdout)
+        if result.stderr:
+            sys.stderr.write(result.stderr)
     return result.returncode
