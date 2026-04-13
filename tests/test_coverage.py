@@ -248,6 +248,14 @@ class TestDownloadPackages:
         assert "-r" in cmd
         assert req_file in cmd
 
+    def test_require_hashes_passed_to_download(self, tmp_path):
+        from pipguard.downloader import download_packages
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0, stderr="")
+            download_packages(["requests"], str(tmp_path), require_hashes=True)
+        cmd = mock_run.call_args[0][0]
+        assert "--require-hashes" in cmd
+
 
 # ── extractor.py ─────────────────────────────────────────────────────────────
 
@@ -321,6 +329,14 @@ class TestInstallFromLocal:
         cmd = mock_run.call_args[0][0]
         assert "-r" in cmd
         assert req in cmd
+
+    def test_require_hashes_passed_to_install(self, tmp_path):
+        from pipguard.installer import install_from_local
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            install_from_local(["requests"], str(tmp_path), require_hashes=True)
+        cmd = mock_run.call_args[0][0]
+        assert "--require-hashes" in cmd
 
 
 # ── scanner.py ────────────────────────────────────────────────────────────────

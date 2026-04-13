@@ -400,3 +400,11 @@ class TestScanBinaryExtensions:
         findings = scan_binary_extensions([str(so_file)], has_python_source=False)
         assert any(f.level == RiskLevel.MEDIUM for f in findings)
         assert any("HTTPS indicator" in f.description for f in findings)
+
+    def test_binary_ioc_scan_handles_missing_file(self):
+        findings = scan_binary_extensions(
+            ["/no/such/file.so"],
+            has_python_source=True,
+        )
+        # keeps base LOW blind-spot finding and ignores OSError for IOC read
+        assert any(f.level == RiskLevel.LOW for f in findings)

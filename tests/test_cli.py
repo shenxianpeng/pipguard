@@ -346,6 +346,16 @@ class TestCmdInstallGate:
         mock_scan.assert_not_called()
         mock_install.assert_not_called()
 
+    @patch("pipguard.cli.load_intel_feed")
+    def test_intel_enforced_without_feed_does_not_block(
+        self, mock_intel, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        mock_dl.return_value = ([str(tmp_path / "okpkg-1.0.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("okpkg", RiskLevel.CLEAN)
+        rc = cmd_install(_make_args(packages=["okpkg"], enforce_intel=True, intel_feed=None))
+        assert rc == 0
+        mock_intel.assert_not_called()
+
 
 class TestValidateRequirementsFilePEP508:
     """Regression tests for PEP 508 direct URL dependencies."""
