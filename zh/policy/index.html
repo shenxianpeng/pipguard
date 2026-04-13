@@ -756,10 +756,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+  <a href="#_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        示例
       
     </span>
   </a>
@@ -767,10 +767,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#keys" class="md-nav__link">
+  <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Keys
+        建议
       
     </span>
   </a>
@@ -820,10 +820,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+  <a href="#_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        示例
       
     </span>
   </a>
@@ -831,10 +831,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#keys" class="md-nav__link">
+  <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Keys
+        建议
       
     </span>
   </a>
@@ -861,50 +861,27 @@
   
 
 
-<blockquote>
-<p>本页面提供中文入口，内容将持续完善。</p>
-</blockquote>
-<h1 id="policy-as-code">Policy as Code<a class="headerlink" href="#policy-as-code" title="Permanent link">&para;</a></h1>
-<p>pipguard can load an optional policy file to enforce organization-wide defaults.</p>
-<p>Default path:</p>
+<h1 id="policy-as-code">策略即代码（Policy as Code）<a class="headerlink" href="#policy-as-code" title="Permanent link">&para;</a></h1>
+<p>pipguard 支持加载可选策略文件，用于在团队或组织范围内统一安全默认值。</p>
+<p>默认路径：</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./pipguard.toml
 </span></code></pre></div>
-<p>Or pass explicitly:</p>
+<p>也可以显式指定：</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--policy<span class="w"> </span>./security/pipguard.toml<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </span></code></pre></div>
-<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
-<div class="language-toml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">[install]</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">require_hashes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">allow_vcs_pinned</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">allow_direct_url_pinned</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">binary_only</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;block&quot;</span><span class="w">  </span><span class="c1"># prompt | block | allow</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">[allowlist]</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">seed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;my-internal-auth-lib&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;corp-keyring&quot;</span><span class="p">]</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="k">[intel]</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">feed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://example.org/pipguard-feed.json&quot;</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">enforce</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<h2 id="_1">示例<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<div class="language-toml highlight"><span class="filename">pipguard.toml</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">[install]</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">yes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">allow_sdist</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">[allowlist]</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">packages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;boto3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;botocore&quot;</span><span class="p">]</span>
 </span></code></pre></div>
-<h2 id="keys">Keys<a class="headerlink" href="#keys" title="Permanent link">&para;</a></h2>
+<h2 id="_2">建议<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>require_hashes</code> (bool): enforce hash-locked dependencies.</li>
-<li><code>allow_vcs_pinned</code> (bool): allow VCS requirements only when pinned to commit hash.</li>
-<li><code>allow_direct_url_pinned</code> (bool): allow direct URL dependencies only with hash fragment.</li>
-<li><code>binary_only</code> (string): behavior when binary-only wheel is detected:</li>
-<li><code>prompt</code> (default): keep MEDIUM behavior.</li>
-<li><code>block</code>: fail installation (exit 1).</li>
-<li><code>allow</code>: do not enforce additional binary-only policy block.</li>
-</ul>
-<p><code>[intel]</code> section:</p>
-<ul>
-<li><code>feed</code> (string): local file path or HTTPS URL to a JSON denylist feed.</li>
-<li><code>enforce</code> (bool): if <code>true</code>, block packages in the feed before scan/install.</li>
-</ul>
-<p><code>[allowlist]</code> section:</p>
-<ul>
-<li><code>seed</code> (list[string]): project-level seed allowlist entries. These are merged with
-  the built-in seed allowlist and <code>--allow</code> CLI flags.</li>
+<li>在 CI 中强制使用同一份策略文件</li>
+<li>仅将确有业务必要的包加入 allowlist</li>
+<li>对策略改动走代码评审流程</li>
 </ul>
 
 

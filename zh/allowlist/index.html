@@ -730,10 +730,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#built-in-allowlist" class="md-nav__link">
+  <a href="#_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Built-in Allowlist
+        内置列表
       
     </span>
   </a>
@@ -741,21 +741,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#per-invocation-allowlist" class="md-nav__link">
+  <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Per-Invocation Allowlist
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-to-the-project-allowlist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding to the Project Allowlist
+        CLI 用法
       
     </span>
   </a>
@@ -833,10 +822,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#built-in-allowlist" class="md-nav__link">
+  <a href="#_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Built-in Allowlist
+        内置列表
       
     </span>
   </a>
@@ -844,21 +833,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#per-invocation-allowlist" class="md-nav__link">
+  <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Per-Invocation Allowlist
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-to-the-project-allowlist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding to the Project Allowlist
+        CLI 用法
       
     </span>
   </a>
@@ -885,84 +863,44 @@
   
 
 
-<blockquote>
-<p>本页面提供中文入口，内容将持续完善。</p>
-</blockquote>
-<h1 id="seed-allowlist">Seed Allowlist<a class="headerlink" href="#seed-allowlist" title="Permanent link">&para;</a></h1>
-<p>Some packages legitimately access credential stores or perform sensitive operations
-as part of their core purpose. pipguard ships with a seed allowlist that reduces
-their finding from HIGH to MEDIUM so they don't cause false-positive blocks.</p>
+<h1 id="seed-allowlist">种子允许列表（Seed Allowlist）<a class="headerlink" href="#seed-allowlist" title="Permanent link">&para;</a></h1>
+<p>某些包因其业务职责会合法访问凭据或执行敏感操作。pipguard 内置一份种子允许列表，用于将这些包的风险从 HIGH 降级为 MEDIUM，以减少误报阻断。</p>
 <div class="admonition danger">
-<p class="admonition-title">CRITICAL is never reduced</p>
-<p>The seed allowlist (and <code>--allow</code>) only reduces HIGH → MEDIUM.
-CRITICAL findings always block, regardless of any allowlist entry.</p>
+<p class="admonition-title">CRITICAL 永不降级</p>
+<p>种子 allowlist（以及 <code>--allow</code>）仅支持 HIGH → MEDIUM。
+CRITICAL 风险始终会被阻断。</p>
 </div>
-<h2 id="built-in-allowlist">Built-in Allowlist<a class="headerlink" href="#built-in-allowlist" title="Permanent link">&para;</a></h2>
+<h2 id="_1">内置列表<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Package</th>
-<th>Why it accesses credentials</th>
+<th>包名</th>
+<th>为什么会访问凭据</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>keyring</code></td>
-<td>Credential storage library — reads/writes system keyring by design</td>
+<td>凭据存储库，按设计会读写系统密钥链</td>
 </tr>
 <tr>
 <td><code>keyrings.alt</code></td>
-<td>Alternative keyring backends</td>
+<td>keyring 的替代后端实现</td>
 </tr>
 <tr>
 <td><code>boto3</code></td>
-<td>AWS SDK — reads <code>~/.aws/credentials</code> for authentication</td>
+<td>AWS SDK，需读取 <code>~/.aws/credentials</code></td>
 </tr>
 <tr>
 <td><code>botocore</code></td>
-<td>AWS core library (boto3 dependency)</td>
-</tr>
-<tr>
-<td><code>awscli</code></td>
-<td>AWS CLI — reads <code>~/.aws/config</code></td>
-</tr>
-<tr>
-<td><code>paramiko</code></td>
-<td>SSH client — reads <code>~/.ssh/id_rsa</code> for key-based auth</td>
-</tr>
-<tr>
-<td><code>google-auth</code></td>
-<td>Google authentication — reads <code>~/.config/gcloud/</code></td>
-</tr>
-<tr>
-<td><code>google-cloud-storage</code></td>
-<td>Google Cloud SDK</td>
-</tr>
-<tr>
-<td><code>google-cloud-bigquery</code></td>
-<td>Google Cloud BigQuery</td>
-</tr>
-<tr>
-<td><code>google-cloud-core</code></td>
-<td>Google Cloud base library</td>
-</tr>
-<tr>
-<td><code>azure-identity</code></td>
-<td>Azure authentication library</td>
+<td>boto3 的核心依赖库</td>
 </tr>
 </tbody>
 </table>
-<h2 id="per-invocation-allowlist">Per-Invocation Allowlist<a class="headerlink" href="#per-invocation-allowlist" title="Permanent link">&para;</a></h2>
-<p>Add packages to the allowlist for a single invocation with <code>--allow</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow<span class="w"> </span>my-internal-auth-lib<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<h2 id="cli">CLI 用法<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow<span class="w"> </span>boto3,botocore<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </span></code></pre></div>
-<p>Multiple packages:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow<span class="w"> </span>pkg-a<span class="w"> </span>--allow<span class="w"> </span>pkg-b<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-</span></code></pre></div>
-<h2 id="adding-to-the-project-allowlist">Adding to the Project Allowlist<a class="headerlink" href="#adding-to-the-project-allowlist" title="Permanent link">&para;</a></h2>
-<p>To suggest adding a package to the built-in seed allowlist, open an issue at
-<a href="https://github.com/shenxianpeng/pipguard/issues">github.com/shenxianpeng/pipguard</a>
-with evidence of why the credential access is legitimate.</p>
+<p>仅在确认业务必要时加入 allowlist，并定期审计。</p>
 
 
 

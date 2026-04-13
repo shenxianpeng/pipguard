@@ -89,7 +89,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-it-works" class="md-skip">
+        <a href="#_1" class="md-skip">
           跳转至
         </a>
       
@@ -590,10 +590,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        架构流程
       
     </span>
   </a>
@@ -601,10 +601,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-pre-install" class="md-nav__link">
+  <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why Pre-Install?
+        为什么更安全
       
     </span>
   </a>
@@ -612,82 +612,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#toctou-safety" class="md-nav__link">
+  <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TOCTOU Safety
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ast-scanning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AST Scanning
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="AST Scanning">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-gets-flagged" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What gets flagged
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#homoglyph-typosquatting-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Homoglyph / Typosquatting Detection
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#binary-extension-scanning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Binary Extension Scanning
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#seed-allowlist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Seed Allowlist
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#limitations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Limitations
+        重点检测对象
       
     </span>
   </a>
@@ -900,10 +828,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        架构流程
       
     </span>
   </a>
@@ -911,10 +839,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-pre-install" class="md-nav__link">
+  <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why Pre-Install?
+        为什么更安全
       
     </span>
   </a>
@@ -922,82 +850,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#toctou-safety" class="md-nav__link">
+  <a href="#_4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TOCTOU Safety
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ast-scanning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AST Scanning
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="AST Scanning">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#what-gets-flagged" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What gets flagged
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#homoglyph-typosquatting-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Homoglyph / Typosquatting Detection
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#binary-extension-scanning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Binary Extension Scanning
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#seed-allowlist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Seed Allowlist
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#limitations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Limitations
+        重点检测对象
       
     </span>
   </a>
@@ -1024,214 +880,40 @@
   
 
 
-<blockquote>
-<p>本页面提供中文入口，内容将持续完善。</p>
-</blockquote>
-<h1 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h1>
-<p>pipguard's design has one rule: <strong>code must never execute during scanning</strong>.</p>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<h1 id="_1">工作原理<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>pipguard 的核心原则只有一条：<strong>扫描阶段绝不执行目标包代码</strong>。</p>
+<h2 id="_2">架构流程<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipguard install X
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>       │
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>       ▼
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pip download --prefer-binary X    ← downloads wheel/sdist, no code execution
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pip download --prefer-binary X    ← 仅下载 wheel/sdist，不执行代码
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>       │
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>       ▼
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Detect sdist fallback             ← exit 2 if sdist detected (unless --allow-sdist)
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>检测是否回退到 sdist              ← 若检测到 sdist，默认 exit 2（除非 --allow-sdist）
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>       │
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>       ▼
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>Extract archive (zipfile/tarfile) ← never executes code
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>解压归档 (zipfile/tarfile)        ← 只解压，不运行脚本
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>       │
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>       ▼
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>AST scan all .py files            ← parallel, ThreadPoolExecutor
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  setup.py, pyproject.toml, *.pth ← CRITICAL/HIGH scope
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>  all other .py                   ← MEDIUM/LOW scope
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>       │
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>       ▼
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>Risk scoring:
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>  CRITICAL → block (exit 1)
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  HIGH     → block (exit 1)
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  MEDIUM   → warn + confirm
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>  LOW      → warn + confirm
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  CLEAN    → install silently
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>       │
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>       ▼
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>pip install --no-index            ← installs FROM SCANNED FILES (TOCTOU-safe)
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    --find-links /tmp/pipguard-XX
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>静态 AST 扫描                      ← 规则检测敏感行为与恶意模式
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>       │
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>       ▼
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>风险分级与决策                      ← CRITICAL/HIGH 阻断；其余按策略处理
 </span></code></pre></div>
-<h2 id="why-pre-install">Why Pre-Install?<a class="headerlink" href="#why-pre-install" title="Permanent link">&para;</a></h2>
-<p>Classical security tools (pip-audit, Safety, GuardDog) work post-hoc — they check installed packages against known-bad signature databases. This means:</p>
-<ol>
-<li><strong>Zero-day blind spot</strong> — a new attack not yet in the database walks straight through</li>
-<li><strong>Race condition</strong> — the malicious code has already run by the time the tool checks</li>
-</ol>
-<p>pipguard reverses the order. It asks: <em>does this code do something that </em><em>any</em><em> pip install should be allowed to do?</em></p>
-<p>Regardless of whether the package is on any watchlist, the answer to "reads <code>~/.ssh/id_rsa</code> and sends it over a network" is always <strong>no</strong>.</p>
-<h2 id="toctou-safety">TOCTOU Safety<a class="headerlink" href="#toctou-safety" title="Permanent link">&para;</a></h2>
-<p>A subtle attack vector: scan a clean file, then swap it for a malicious one before install.</p>
-<p>pipguard counters this by:</p>
-<ol>
-<li>Downloading the archive to a temp directory</li>
-<li>Scanning the files <strong>in place</strong> in that temp directory</li>
-<li>Running <code>pip install --no-index --find-links /tmp/pipguard-XX</code> — installing the exact files that were scanned</li>
-</ol>
-<p>The archive is never re-downloaded or re-extracted after scanning.</p>
-<h2 id="ast-scanning">AST Scanning<a class="headerlink" href="#ast-scanning" title="Permanent link">&para;</a></h2>
-<p>pipguard uses Python's built-in <code>ast</code> module — no third-party dependencies — to parse <code>.py</code> files into abstract syntax trees and walk the nodes looking for dangerous patterns.</p>
-<h3 id="what-gets-flagged">What gets flagged<a class="headerlink" href="#what-gets-flagged" title="Permanent link">&para;</a></h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:4"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">CRITICAL</label><label for="__tabbed_1_2">HIGH</label><label for="__tabbed_1_3">MEDIUM</label><label for="__tabbed_1_4">LOW</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>.pth</code> file with executable Python</td>
-<td><code>import os; os.system(...)</code> in <code>.pth</code></td>
-</tr>
-<tr>
-<td>Obfuscated eval</td>
-<td><code>eval(base64.b64decode(...))</code></td>
-</tr>
-<tr>
-<td>Network in <code>setup.py</code> / install hooks</td>
-<td><code>urllib.request.urlopen(...)</code> in <code>setup.py</code></td>
-</tr>
-<tr>
-<td>Shell/subprocess execution in install hooks</td>
-<td><code>os.system(...)</code>, <code>subprocess.run(..., shell=True)</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="tabbed-block">
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Non-ASCII character in package name</td>
-<td><code>bоto3</code> with Cyrillic <code>о</code> — possible homoglyph/typosquatting attack</td>
-</tr>
-<tr>
-<td>Credential path read in install hooks</td>
-<td><code>open('~/.ssh/id_rsa')</code> in <code>setup.py</code></td>
-</tr>
-<tr>
-<td>Subprocess execution in install hooks</td>
-<td><code>subprocess.run([...])</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="tabbed-block">
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Binary-only wheel (no Python source)</td>
-<td>Wheel with only <code>.so</code> / <code>.pyd</code> / <code>.dylib</code> files</td>
-</tr>
-<tr>
-<td>Network in runtime code</td>
-<td><code>urllib.request.urlopen(...)</code> in <code>utils.py</code></td>
-</tr>
-<tr>
-<td>Sensitive env var access</td>
-<td><code>os.environ.get('AWS_SECRET_ACCESS_KEY')</code></td>
-</tr>
-<tr>
-<td>Large source file over 1MB</td>
-<td>scanner emits confidence-reduction warning</td>
-</tr>
-<tr>
-<td>Binary IOC string hit</td>
-<td><code>.so</code> contains <code>https://...</code> or <code>/bin/sh</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="tabbed-block">
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Compiled binary extension in mixed wheel</td>
-<td><code>.so</code> / <code>.pyd</code> / <code>.dylib</code> alongside <code>.py</code> source</td>
-</tr>
-<tr>
-<td>Dynamic imports</td>
-<td><code>importlib.import_module(name)</code></td>
-</tr>
-<tr>
-<td><code>__import__()</code></td>
-<td><code>__import__(variable)</code></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<p>Binary files are also scanned with lightweight IOC string matching (first 2MB) to
-surface obvious credential-path or exfiltration indicators.</p>
-<h2 id="homoglyph-typosquatting-detection">Homoglyph / Typosquatting Detection<a class="headerlink" href="#homoglyph-typosquatting-detection" title="Permanent link">&para;</a></h2>
-<p>Before scanning archive contents, pipguard checks the package name itself for
-non-ASCII characters (e.g. Cyrillic <code>о</code> substituted for Latin <code>o</code>). Any such
-character produces a <strong>HIGH</strong> finding regardless of what the package contains:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bоto3   ← Cyrillic &#39;о&#39; (U+043E) in position 1
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>↑ visually identical to boto3, but a different string
-</span></code></pre></div>
-<p>Package names are also NFKC-normalized before allowlist comparison, so a
-homoglyph name cannot bypass the allowlist by mimicking a trusted package.</p>
-<h2 id="binary-extension-scanning">Binary Extension Scanning<a class="headerlink" href="#binary-extension-scanning" title="Permanent link">&para;</a></h2>
-<p>pipguard detects compiled binary extension files (<code>.so</code>, <code>.pyd</code>, <code>.dylib</code>) in
-extracted wheels. Static AST scanning cannot inspect these files, so pipguard
-flags them explicitly:</p>
+<h2 id="_3">为什么更安全<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Mixed wheel</strong> (<code>.py</code> source + binary extensions): each extension file
-  generates a <strong>LOW</strong> finding — the scanner covered the Python parts but is
-  blind to any payload in compiled code.</li>
-<li><strong>Binary-only wheel</strong> (no <code>.py</code> source at all): a single <strong>MEDIUM</strong> finding
-  is emitted, and the confirmation gate fires. pipguard's core scan promise
-  cannot be fulfilled for packages with no Python source.</li>
+<li><strong>零执行面</strong>：安装前不运行 <code>setup.py</code>、<code>.pth</code> 或任意构建脚本</li>
+<li><strong>零外部情报依赖</strong>：不依赖漏洞数据库、签名或联网查询</li>
+<li><strong>可解释结果</strong>：每条告警都对应明确规则与风险原因</li>
 </ul>
-<h2 id="seed-allowlist">Seed Allowlist<a class="headerlink" href="#seed-allowlist" title="Permanent link">&para;</a></h2>
-<p>Some packages legitimately access credentials as part of their core purpose.
-pipguard ships with a seed allowlist that reduces their finding from HIGH to MEDIUM
-(CRITICAL is <strong>never</strong> reduced):</p>
-<p><code>keyring</code>, <code>keyrings.alt</code>, <code>boto3</code>, <code>botocore</code>, <code>awscli</code>, <code>paramiko</code>,
-<code>google-auth</code>, <code>google-cloud-storage</code>, <code>google-cloud-bigquery</code>,
-<code>google-cloud-core</code>, <code>azure-identity</code></p>
-<p><a href="../allowlist/">Full allowlist reference →</a></p>
-<h2 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h2>
-<div class="admonition note">
-<p class="admonition-title">Phase 1 scope</p>
-<p>These are known limitations of the current static-analysis approach.</p>
-</div>
+<h2 id="_4">重点检测对象<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Obfuscation</strong> — multi-layer obfuscation (e.g. <code>exec(compile(...))</code> wrapped multiple times) may evade detection</li>
-<li><strong>C extensions</strong> — <code>.so</code> / <code>.pyd</code> binaries are opaque to AST scanning; flagged as LOW (mixed) or MEDIUM (binary-only) to surface the blind spot</li>
-<li><strong>Python/pip only</strong> — no npm, cargo, or go module support</li>
-<li><strong>Phase 2 (in design)</strong> — seccomp/eBPF sandbox for capability-level interception at runtime</li>
+<li><code>.pth</code> 自动执行代码</li>
+<li>安装阶段网络请求（如 <code>requests</code> / <code>socket</code>）</li>
+<li>安装阶段命令执行（如 <code>os.system</code>、<code>subprocess</code>）</li>
+<li>混淆载荷（如 <code>eval(base64.b64decode(...))</code>）</li>
 </ul>
+<p>更多细节请见：<a href="../risk-levels/">风险等级</a>。</p>
 
 
 

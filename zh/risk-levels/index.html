@@ -89,7 +89,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#risk-levels" class="md-skip">
+        <a href="#_1" class="md-skip">
           跳转至
         </a>
       
@@ -929,144 +929,57 @@
   
 
 
-<blockquote>
-<p>本页面提供中文入口，内容将持续完善。</p>
-</blockquote>
-<h1 id="risk-levels">Risk Levels<a class="headerlink" href="#risk-levels" title="Permanent link">&para;</a></h1>
-<p>pipguard assigns every scanned package one of five risk levels based on patterns
-found during static AST analysis.</p>
+<h1 id="_1">风险等级<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>pipguard 会基于静态 AST 分析结果，为每个包分配以下五个等级之一。</p>
 <h2 id="critical">CRITICAL<a class="headerlink" href="#critical" title="Permanent link">&para;</a></h2>
-<p><strong>Action: Block immediately. Exit 1. No confirmation prompt.</strong></p>
+<p><strong>处理：立即阻断，退出码 1，不提示确认。</strong></p>
 <table>
 <thead>
 <tr>
-<th>Trigger</th>
-<th>Why it's CRITICAL</th>
+<th>触发条件</th>
+<th>为什么是 CRITICAL</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>.pth</code> file containing executable Python code</td>
-<td><code>.pth</code> files are executed automatically at Python interpreter startup — before any user code runs. Any executable content is unambiguously malicious.</td>
+<td><code>.pth</code> 中存在可执行 Python 代码</td>
+<td><code>.pth</code> 会在解释器启动时自动执行，风险极高</td>
 </tr>
 <tr>
-<td><code>eval(base64.b64decode(...))</code> in any file</td>
-<td>Classic obfuscated payload pattern. Legitimate packages never need this.</td>
+<td>任意文件出现 <code>eval(base64.b64decode(...))</code></td>
+<td>典型混淆恶意载荷模式</td>
 </tr>
 <tr>
-<td>Network calls (<code>urllib</code>, <code>httpx</code>, <code>requests</code>, <code>socket</code>) in <code>setup.py</code> or install hooks</td>
-<td>Build-time network calls have no legitimate use case. The March 2026 litellm attack used this to exfiltrate data.</td>
+<td><code>setup.py</code>/安装钩子中发生网络调用</td>
+<td>安装期联网通常无正当必要</td>
 </tr>
 <tr>
-<td>Shell/subprocess execution in install hooks (<code>os.system</code>, <code>os.popen</code>, shell execution via <code>subprocess</code>)</td>
-<td>Install-time command execution is a high-confidence attacker primitive and is blocked by default.</td>
+<td>安装钩子执行 shell/subprocess 命令</td>
+<td>攻击者常用执行原语</td>
 </tr>
 </tbody>
 </table>
 <div class="admonition danger">
-<p class="admonition-title">CRITICAL is never reduced</p>
-<p>The <code>--allow</code> flag and the seed allowlist do <strong>not</strong> reduce CRITICAL findings.
-Only <code>--force</code> bypasses CRITICAL — use with extreme caution.</p>
+<p class="admonition-title">CRITICAL 永不降级</p>
+<p><code>--allow</code> 与内置 allowlist 都不会降低 CRITICAL 风险。</p>
 </div>
 <h2 id="high">HIGH<a class="headerlink" href="#high" title="Permanent link">&para;</a></h2>
-<p><strong>Action: Block. Exit 1. No confirmation prompt.</strong></p>
-<table>
-<thead>
-<tr>
-<th>Trigger</th>
-<th>Scope</th>
-<th>Why</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Non-ASCII character in package name</td>
-<td>Name check (pre-scan)</td>
-<td>Possible homoglyph / typosquatting attack (e.g. <code>bоto3</code> with Cyrillic <code>о</code> instead of Latin <code>o</code>).</td>
-</tr>
-<tr>
-<td>Reads credential paths (<code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.kube</code>, <code>~/.gnupg</code>)</td>
-<td>Install hooks only</td>
-<td>A package reading your SSH keys during <code>pip install</code> is an attack, not a feature.</td>
-</tr>
-<tr>
-<td>Direct subprocess execution (non-shell)</td>
-<td>Install hooks only</td>
-<td>Elevated risk in install-time context; surfaced as HIGH for manual review.</td>
-</tr>
-<tr>
-<td>Binary IOC credential markers (<code>/.ssh/id_rsa</code>, <code>/.aws/credentials</code>)</td>
-<td>Binary extension scan</td>
-<td>Heuristic binary content includes hard-coded credential path indicators.</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition warning">
-<p class="admonition-title">HIGH in runtime code</p>
-<p>If the same patterns appear in <em>runtime</em> code (not install hooks), the finding is
-downgraded to MEDIUM. <code>boto3</code> legitimately reads <code>~/.aws</code> at runtime — that's fine.
-It reading <code>~/.aws</code> in <code>setup.py</code> is not.</p>
-</div>
+<p><strong>处理：阻断安装，退出码 1。</strong></p>
+<p>常见场景：</p>
+<ul>
+<li>同形异义（homoglyph）包名</li>
+<li>安装阶段读取敏感文件（如 <code>~/.ssh</code>、<code>~/.aws</code>）</li>
+<li>可疑命令执行模式</li>
+</ul>
 <h2 id="medium">MEDIUM<a class="headerlink" href="#medium" title="Permanent link">&para;</a></h2>
-<p><strong>Action: Warn and prompt for confirmation. (<code>--yes</code> skips prompt and proceeds.)</strong></p>
-<table>
-<thead>
-<tr>
-<th>Trigger</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Binary-only wheel (no Python source)</td>
-<td>Wheel contains only <code>.so</code> / <code>.pyd</code> / <code>.dylib</code> files — AST scan cannot verify contents. Confirmation gate fires; use <code>--yes</code> to proceed.</td>
-</tr>
-<tr>
-<td>Network calls in runtime <code>.py</code> files</td>
-<td>Common in legitimate packages; shown for transparency</td>
-</tr>
-<tr>
-<td>Sensitive env var access (<code>*TOKEN*</code>, <code>*KEY*</code>, <code>*SECRET*</code>, <code>*PASSWORD*</code>, <code>*CREDENTIAL*</code>)</td>
-<td>Flagged in runtime code</td>
-</tr>
-<tr>
-<td>Large source file over 1MB</td>
-<td>Scanner continues, but emits confidence-reduction warning for manual review</td>
-</tr>
-<tr>
-<td>Binary IOC string indicators (<code>https://</code>, <code>/bin/sh</code>, <code>socket</code>)</td>
-<td>Heuristic binary scan detected suspicious runtime/exfil primitives</td>
-</tr>
-</tbody>
-</table>
+<p><strong>处理：默认提示确认；<code>--yes</code> 时继续。</strong></p>
+<p>示例：运行期网络访问、敏感环境变量读取、二进制-only wheel 等。</p>
 <h2 id="low">LOW<a class="headerlink" href="#low" title="Permanent link">&para;</a></h2>
-<p><strong>Action: Warn (shown in summary). Confirmation prompt fires (skippable with <code>--yes</code>).</strong></p>
-<table>
-<thead>
-<tr>
-<th>Trigger</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Compiled binary extension in mixed wheel</td>
-<td><code>.so</code> / <code>.pyd</code> / <code>.dylib</code> file present alongside Python source — AST scanner is blind to any payload in compiled code</td>
-</tr>
-<tr>
-<td><code>importlib.import_module(variable)</code></td>
-<td>Dynamic imports can load arbitrary code</td>
-</tr>
-<tr>
-<td><code>__import__(variable)</code></td>
-<td>Same concern as above</td>
-</tr>
-</tbody>
-</table>
+<p><strong>处理：提示确认或按策略继续。</strong></p>
+<p>示例：动态导入、混合型二进制扩展等弱风险信号。</p>
 <h2 id="clean">CLEAN<a class="headerlink" href="#clean" title="Permanent link">&para;</a></h2>
-<p><strong>Action: Install silently.</strong></p>
-<p>No patterns matching CRITICAL, HIGH, MEDIUM, or LOW were found.
-The package installs without any output.</p>
+<p><strong>处理：直接安装。</strong></p>
+<p>未命中任何风险规则。</p>
 
 
 

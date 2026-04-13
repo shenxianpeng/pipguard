@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#the-problem" class="md-skip">
+        <a href="#_1" class="md-skip">
           跳转至
         </a>
       
@@ -346,7 +346,9 @@
           
             
               
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden>
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -442,10 +444,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-problem" class="md-nav__link">
+  <a href="#_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Problem
+        问题背景
       
     </span>
   </a>
@@ -453,10 +455,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How It Works
+        工作方式
       
     </span>
   </a>
@@ -464,10 +466,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#risk-levels-at-a-glance" class="md-nav__link">
+  <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Risk Levels at a Glance
+        风险等级速览
       
     </span>
   </a>
@@ -803,7 +805,9 @@
             
             
               
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" hidden>
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -820,10 +824,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-problem" class="md-nav__link">
+  <a href="#_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Problem
+        问题背景
       
     </span>
   </a>
@@ -831,10 +835,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How It Works
+        工作方式
       
     </span>
   </a>
@@ -842,10 +846,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#risk-levels-at-a-glance" class="md-nav__link">
+  <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Risk Levels at a Glance
+        风险等级速览
       
     </span>
   </a>
@@ -866,6 +870,8 @@
               <article class="md-content__inner md-typeset">
                 
                   
+  
+
 
 
   
@@ -874,33 +880,25 @@
 
   <h1>Home</h1>
 
-<blockquote>
-<p>本页面提供中文入口，内容将持续完善。</p>
-</blockquote>
-<hr />
-<p>hide:
-  - navigation
-  - toc</p>
-<hr />
 <div class="pg-hero">
-  <div class="pg-hero__eyebrow">supply chain security · python · zero config</div>
+  <div class="pg-hero__eyebrow">供应链安全 · Python · 零配置</div>
   <div class="pg-hero__headline">
-    Block the attack<br>
-    <span class="pg-accent">before it lands.</span>
+    拦截攻击<br>
+    <span class="pg-accent">在落地之前。</span>
   </div>
   <p class="pg-hero__sub">
-    <strong>pipguard</strong> scans every package via AST analysis <em>before</em> code runs.
-    No database. No network calls. No configuration. Just a guard at the door.
+    <strong>pipguard</strong> 在代码执行前，先通过 AST 扫描每一个包。
+    无数据库、无网络调用、无复杂配置 —— 像门卫一样先拦后装。
   </p>
   <div class="pg-hero__facts">
-    <span class="pg-hero__fact">Zero config</span>
-    <span class="pg-hero__fact">Pure stdlib</span>
-    <span class="pg-hero__fact">Blocks before install</span>
-    <span class="pg-hero__fact">CI-ready</span>
+    <span class="pg-hero__fact">零配置</span>
+    <span class="pg-hero__fact">纯标准库</span>
+    <span class="pg-hero__fact">安装前阻断</span>
+    <span class="pg-hero__fact">CI 友好</span>
   </div>
   <div class="pg-cta-group">
     <a class="pg-btn pg-btn-primary" href="installation/">pip install pipguard</a>
-    <a class="pg-btn pg-btn-secondary" href="usage/">Read the docs →</a>
+    <a class="pg-btn pg-btn-secondary" href="usage/">阅读文档 →</a>
   </div>
 </div>
 
@@ -914,9 +912,9 @@
   <div class="pg-terminal__body">
     <div><span class="t-dollar">$</span><span class="t-cmd">pipguard install litellm==1.82.8</span></div>
     <div>&nbsp;</div>
-    <div><span class="t-muted">→ Downloading wheel (no code executed)</span></div>
-    <div><span class="t-muted">→ Extracting archive</span></div>
-    <div><span class="t-muted">→ AST scanning 47 files</span></div>
+    <div><span class="t-muted">→ 下载 wheel（不执行代码）</span></div>
+    <div><span class="t-muted">→ 解压归档</span></div>
+    <div><span class="t-muted">→ AST 扫描 47 个文件</span></div>
     <div>&nbsp;</div>
     <div><span class="t-dim">&nbsp; setup.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ............... </span><span class="t-ok">CLEAN</span></div>
     <div><span class="t-dim">&nbsp; utils/loader.py&nbsp; ............... </span><span class="t-ok">CLEAN</span></div>
@@ -924,92 +922,91 @@
     <div>&nbsp;</div>
     <div><span class="t-dim">&nbsp; ─────────────────────────────────────</span></div>
     <div>&nbsp;</div>
-    <div><span class="t-block">&nbsp; ✗ BLOCKED: litellm==1.82.8</span></div>
-    <div><span class="t-dim">&nbsp; .pth autorun · reads ~/.ssh/id_rsa</span></div>
-    <div><span class="t-dim">&nbsp; exfiltrates to 44.202.x.x:4444</span></div>
+    <div><span class="t-block">&nbsp; ✗ 已阻断: litellm==1.82.8</span></div>
+    <div><span class="t-dim">&nbsp; .pth 自动执行 · 读取 ~/.ssh/id_rsa</span></div>
+    <div><span class="t-dim">&nbsp; 并外传到 44.202.x.x:4444</span></div>
     <div>&nbsp;</div>
-    <div><span class="t-accent">&nbsp; Severity: CRITICAL · Exit code: 1</span></div>
+    <div><span class="t-accent">&nbsp; 风险等级: CRITICAL · 退出码: 1</span></div>
   </div>
 </div>
 
-<h2 id="the-problem">The Problem<a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
-<p>The March 2026 litellm attack (97M downloads/month) embedded Python code in a <code>.pth</code>
-file — executed automatically at interpreter startup, exfiltrating SSH keys, AWS credentials,
-and Kubernetes configs from a single <code>pip install</code>.</p>
-<p>Classical tools (pip-audit, GuardDog) are blind to zero-day attacks. They check known
-signatures. pipguard asks a different question:</p>
+<h2 id="_1">问题背景<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>2026 年 3 月的 litellm 供应链攻击（每月约 9700 万下载）在 <code>.pth</code> 文件内嵌入 Python 代码。
+该代码会在解释器启动时自动执行，并在一次 <code>pip install</code> 后窃取 SSH 密钥、AWS 凭据和 Kubernetes 配置。</p>
+<p>传统工具（如 pip-audit、GuardDog）通常依赖已知签名或漏洞库，面对零日投毒可能失效。
+pipguard 的问题更直接：</p>
 <div class="admonition danger">
-<p class="admonition-title">The question classical tools never ask</p>
-<p>Should <strong>any</strong> <code>pip install</code> be allowed to read <code>~/.ssh/id_rsa</code>?</p>
-<p>The answer is <strong>no</strong>. And that question doesn't require a database.</p>
+<p class="admonition-title">传统工具经常不会问的问题</p>
+<p>某个 <code>pip install</code> 是否应该读取 <code>~/.ssh/id_rsa</code>？</p>
+<p>答案是 <strong>不应该</strong>，而且这个判断不需要任何在线数据库。</p>
 </div>
-<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<h2 id="_2">工作方式<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <div class="pg-steps">
   <div class="pg-step">
     <div class="pg-step__num">01</div>
     <div class="pg-step__title">pip download</div>
-    <div class="pg-step__desc">Downloads wheel or sdist.<br>No code runs. Ever.</div>
+    <div class="pg-step__desc">只下载 wheel 或 sdist。<br>绝不执行代码。</div>
   </div>
   <div class="pg-step">
     <div class="pg-step__num">02</div>
-    <div class="pg-step__title">Sdist check</div>
-    <div class="pg-step__desc">Exit 2 if sdist detected — build scripts are unsafe.</div>
+    <div class="pg-step__title">Sdist 检测</div>
+    <div class="pg-step__desc">检测到 sdist 默认 exit 2（不安全）。</div>
   </div>
   <div class="pg-step">
     <div class="pg-step__num">03</div>
-    <div class="pg-step__title">Extract</div>
-    <div class="pg-step__desc">zipfile/tarfile only.<br>No subprocess. No exec.</div>
+    <div class="pg-step__title">解压</div>
+    <div class="pg-step__desc">仅使用 zipfile/tarfile。<br>不调用 subprocess，不 exec。</div>
   </div>
   <div class="pg-step">
     <div class="pg-step__num">04</div>
-    <div class="pg-step__title">AST scan</div>
-    <div class="pg-step__desc">Parallel scan of all .py files. CRITICAL scope on .pth, setup.py.</div>
+    <div class="pg-step__title">AST 扫描</div>
+    <div class="pg-step__desc">并行扫描全部 .py 文件；对 .pth、setup.py 提升敏感度。</div>
   </div>
   <div class="pg-step">
     <div class="pg-step__num">05</div>
-    <div class="pg-step__title">Risk score</div>
-    <div class="pg-step__desc">CRITICAL/HIGH → exit 1.<br>CLEAN → install silently.</div>
+    <div class="pg-step__title">风险决策</div>
+    <div class="pg-step__desc">CRITICAL/HIGH 阻断（exit 1）；CLEAN 直接安装。</div>
   </div>
 </div>
 
-<h2 id="risk-levels-at-a-glance">Risk Levels at a Glance<a class="headerlink" href="#risk-levels-at-a-glance" title="Permanent link">&para;</a></h2>
+<h2 id="_3">风险等级速览<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Level</th>
-<th>What triggers it</th>
-<th>Action</th>
+<th>等级</th>
+<th>触发条件示例</th>
+<th>处理</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><span class="pg-badge pg-badge-critical">CRITICAL</span></td>
-<td><code>.pth</code> executable code; <code>eval(base64.b64decode(...))</code></td>
-<td>Block (exit 1)</td>
+<td><code>.pth</code> 可执行代码；<code>eval(base64.b64decode(...))</code></td>
+<td>阻断（exit 1）</td>
 </tr>
 <tr>
 <td><span class="pg-badge pg-badge-high">HIGH</span></td>
-<td>Non-ASCII package name (homoglyph); reads <code>~/.ssh</code>, <code>~/.aws</code> in install hooks; <code>shell=True</code>; <code>os.system()</code></td>
-<td>Block (exit 1)</td>
+<td>同形异义包名；安装钩子读取 <code>~/.ssh</code>/<code>~/.aws</code>；<code>shell=True</code>；<code>os.system()</code></td>
+<td>阻断（exit 1）</td>
 </tr>
 <tr>
 <td><span class="pg-badge pg-badge-medium">MEDIUM</span></td>
-<td>Binary-only wheel; network in runtime; sensitive env vars</td>
-<td>Warn + confirm</td>
+<td>二进制-only wheel；运行期网络调用；敏感环境变量</td>
+<td>告警 + 确认</td>
 </tr>
 <tr>
 <td>LOW</td>
-<td>Compiled binary extension in mixed wheel; dynamic imports</td>
-<td>Warn + confirm</td>
+<td>混合型二进制扩展；动态导入</td>
+<td>告警 + 确认</td>
 </tr>
 <tr>
 <td>CLEAN</td>
-<td>None of the above</td>
-<td>Install silently</td>
+<td>无风险命中</td>
+<td>直接安装</td>
 </tr>
 </tbody>
 </table>
-<p><a href="risk-levels/">Full risk level reference →</a></p>
+<p><a href="risk-levels/">查看完整风险等级说明 →</a></p>
 
 
 
@@ -1017,8 +1014,13 @@ signatures. pipguard asks a different question:</p>
 
 
 
+  
+  
 
 
+
+
+  
 
 
 
@@ -1041,6 +1043,8 @@ signatures. pipguard asks a different question:</p>
         <footer class="md-footer">
   
     
+      
+        
       
       <nav class="md-footer__inner md-grid" aria-label="页脚" >
         
