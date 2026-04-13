@@ -307,14 +307,16 @@ class TestInstallFromLocal:
     def test_returns_pip_exit_code_on_success(self, tmp_path):
         from pipguard.installer import install_from_local
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0)
+            mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
             rc = install_from_local(["requests"], str(tmp_path))
         assert rc == 0
+        assert mock_run.call_args.kwargs["capture_output"] is True
+        assert mock_run.call_args.kwargs["text"] is True
 
     def test_returns_pip_exit_code_on_failure(self, tmp_path):
         from pipguard.installer import install_from_local
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=1)
+            mock_run.return_value = MagicMock(returncode=1, stdout="pip out\n", stderr="pip err\n")
             rc = install_from_local(["badpkg"], str(tmp_path))
         assert rc == 1
 
@@ -324,7 +326,7 @@ class TestInstallFromLocal:
         with open(req, "w") as f:
             f.write("requests==2.28.0\n")
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0)
+            mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
             install_from_local([], str(tmp_path), requirements_file=req)
         cmd = mock_run.call_args[0][0]
         assert "-r" in cmd
@@ -333,10 +335,26 @@ class TestInstallFromLocal:
     def test_require_hashes_passed_to_install(self, tmp_path):
         from pipguard.installer import install_from_local
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0)
+            mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
             install_from_local(["requests"], str(tmp_path), require_hashes=True)
         cmd = mock_run.call_args[0][0]
         assert "--require-hashes" in cmd
+
+    def test_failure_replays_captured_output(self, tmp_path, capsys):
+        from pipguard.installer import install_from_local
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=1, stdout="pip out\n", stderr="pip err\n")
+            install_from_local(["badpkg"], str(tmp_path))
+        captured = capsys.readouterr()
+        assert "pip out" in captured.out
+        assert "pip err" in captured.err
+
+    def test_show_pip_output_uses_passthrough_mode(self, tmp_path):
+        from pipguard.installer import install_from_local
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            install_from_local(["requests"], str(tmp_path), show_pip_output=True)
+        assert "capture_output" not in mock_run.call_args.kwargs
 
 
 # ── scanner.py ────────────────────────────────────────────────────────────────

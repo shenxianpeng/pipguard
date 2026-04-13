@@ -6,7 +6,7 @@ Allowlist reduces HIGH → MEDIUM only.
 
 import sys
 import unicodedata
-from typing import List, Optional
+from typing import Dict, Iterable, List, Optional
 
 from .models import Finding, PackageScanResult, RiskLevel
 
@@ -38,6 +38,14 @@ _COLORS = {
     "CLEAN":    "\033[32m",  # green
     "RESET":    "\033[0m",
 }
+
+_REPORT_ORDER = (
+    RiskLevel.CRITICAL,
+    RiskLevel.HIGH,
+    RiskLevel.MEDIUM,
+    RiskLevel.LOW,
+    RiskLevel.CLEAN,
+)
 
 
 def _color(text: str, level_name: str) -> str:
@@ -108,35 +116,89 @@ def aggregate_findings(
     )
 
 
-def print_findings_report(results: List[PackageScanResult]) -> None:
-    """Print a human-readable findings report to stdout."""
-    any_findings = any(r.findings or r.is_binary_only for r in results)
+def _finding_sort_key(finding: Finding) -> tuple:
+    return (-finding.level.value, finding.file_path, finding.line, finding.description)
 
-    if not any_findings:
-        print(_color("✓ All packages scanned CLEAN.", "CLEAN"))
+
+def _result_sort_key(result: PackageScanResult) -> tuple:
+    return (-result.effective_level.value, normalize_package_name(result.package_name))
+
+
+def _group_results(results: Iterable[PackageScanResult]) -> Dict[RiskLevel, List[PackageScanResult]]:
+    grouped: Dict[RiskLevel, List[PackageScanResult]] = {level: [] for level in _REPORT_ORDER}
+    for result in sorted(results, key=_result_sort_key):
+        grouped[result.effective_level].append(result)
+    return grouped
+
+
+def _iter_reportable_findings(result: PackageScanResult, verbose: bool) -> List[Finding]:
+    findings = sorted(result.findings, key=_finding_sort_key)
+    if verbose:
+        return findings
+    return [finding for finding in findings if finding.level != RiskLevel.LOW]
+
+
+def _print_result_details(result: PackageScanResult, verbose: bool = False) -> None:
+    level = result.effective_level
+    pkg = result.package_name
+
+    if result.is_binary_only:
+        print(f"  {_color('[UNKNOWN]', 'MEDIUM')} {pkg}")
+        print("    Binary-only wheel — no Python source to scan.")
+        print("    Verify independently or use --force to install.")
         return
 
-    for result in results:
-        level = result.effective_level
-        pkg = result.package_name
+    if not result.findings:
+        print(f"  {_color('✓', 'CLEAN')} {pkg} — CLEAN")
+        return
 
-        if result.is_binary_only:
-            print(f"\n{_color('[UNKNOWN]', 'MEDIUM')} {pkg}")
-            print("  Binary-only wheel — no Python source to scan.")
-            print("  Verify independently or use --force to install.")
+    print(f"  {_color(f'[{level}]', level.name)} {pkg}")
+    if result.is_allowlisted and result.max_level == RiskLevel.HIGH:
+        print("    (allowlisted — severity reduced from HIGH to MEDIUM)")
+
+    for finding in _iter_reportable_findings(result, verbose):
+        lvl_tag = _color(f"[{finding.level}]", finding.level.name)
+        print(f"    {lvl_tag} {finding.file_path}:{finding.line}")
+        print(f"           {finding.description}")
+        if finding.snippet:
+            print(f"           -> {finding.snippet}")
+
+
+def print_findings_report(results: List[PackageScanResult], verbose: bool = False) -> None:
+    """Print a human-readable findings report to stdout."""
+    grouped = _group_results(results)
+    counts = {level: len(grouped[level]) for level in _REPORT_ORDER}
+
+    print("Scan summary:")
+    print(f"  Total packages: {len(results)}")
+    print(
+        "  " + "  ".join(
+            f"{_color(level.name, level.name)}: {counts[level]}"
+            for level in _REPORT_ORDER
+        )
+    )
+
+    if counts[RiskLevel.CLEAN] == len(results) and not verbose:
+        print("  All scanned packages are CLEAN.")
+        return
+
+    for level in _REPORT_ORDER:
+        group = grouped[level]
+        if not group:
             continue
 
-        if not result.findings:
-            print(f"  {_color('✓', 'CLEAN')} {pkg} — CLEAN")
+        if level == RiskLevel.CLEAN and not verbose:
             continue
 
-        print(f"\n{_color(f'[{level}]', level.name)} {pkg}")
-        if result.is_allowlisted and result.max_level == RiskLevel.HIGH:
-            print("  (allowlisted — severity reduced from HIGH to MEDIUM)")
+        print(f"\n{_color(level.name, level.name)}")
 
-        for finding in sorted(result.findings, key=lambda f: f.level.value, reverse=True):
-            lvl_tag = _color(f"[{finding.level}]", finding.level.name)
-            print(f"  {lvl_tag} {finding.file_path}:{finding.line}")
-            print(f"         {finding.description}")
-            if finding.snippet:
-                print(f"         → {finding.snippet}")
+        if level == RiskLevel.LOW and not verbose:
+            for result in group:
+                count = len(result.findings)
+                noun = "finding" if count == 1 else "findings"
+                print(f"  {_color('[LOW]', 'LOW')} {result.package_name} — {count} {noun}")
+            print("  Use --verbose to show LOW-level file details.")
+            continue
+
+        for result in group:
+            _print_result_details(result, verbose=verbose)

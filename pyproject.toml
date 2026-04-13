@@ -33,6 +33,9 @@ pipguard = "pipguard.cli:main"
 Homepage = "https://github.com/shenxianpeng/pipguard"
 "Bug Tracker" = "https://github.com/shenxianpeng/pipguard/issues"
 
+[tool.setuptools.packages.find]
+include = ["pipguard*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

@@ -237,6 +237,8 @@ def cmd_install(args) -> int:
     require_hashes = bool(args.require_hashes or policy.require_hashes)
     intel_feed = getattr(args, "intel_feed", None) or policy.intel_feed
     intel_enforce = bool(getattr(args, "enforce_intel", False) or policy.intel_enforce)
+    verbose = bool(getattr(args, "verbose", False))
+    show_pip_output = bool(getattr(args, "show_pip_output", False))
 
     packages: List[str] = args.packages or []
     requirements_file: Optional[str] = getattr(args, "r", None)
@@ -308,7 +310,7 @@ def cmd_install(args) -> int:
                     )],
                 ))
         if intel_results:
-            print_findings_report(intel_results)
+            print_findings_report(intel_results, verbose=verbose)
             print("\n❌ Installation BLOCKED — package denied by threat-intel feed.", file=sys.stderr)
             return 1
 
@@ -340,7 +342,7 @@ def cmd_install(args) -> int:
                     )],
                 ))
 
-    print_findings_report(results)
+    print_findings_report(results, verbose=verbose)
 
     # Determine worst effective risk level across all packages
     max_level = RiskLevel.CLEAN
@@ -387,6 +389,7 @@ def cmd_install(args) -> int:
         tmp_dir,
         requirements_file=requirements_file,
         require_hashes=require_hashes,
+        show_pip_output=show_pip_output,
     )
     if rc == 0:
         print("✅ Installation complete.")
@@ -446,6 +449,14 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument(
         "--require-hashes", action="store_true",
         help="Require hashes for all requirements entries (also configurable in policy)",
+    )
+    install.add_argument(
+        "--verbose", action="store_true",
+        help="Show full scan details, including LOW findings and CLEAN package list",
+    )
+    install.add_argument(
+        "--show-pip-output", action="store_true",
+        help="Show raw pip install output instead of pipguard's quiet default",
     )
     install.add_argument(
         "--policy", metavar="pipguard.toml",

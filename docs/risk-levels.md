@@ -48,7 +48,7 @@ found during static AST analysis.
 
 ## LOW
 
-**Action: Warn (shown in summary). Confirmation prompt fires (skippable with `--yes`).**
+**Action: Warn. Confirmation prompt fires (skippable with `--yes`).**
 
 | Trigger | Notes |
 |---------|-------|
@@ -56,9 +56,13 @@ found during static AST analysis.
 | `importlib.import_module(variable)` | Dynamic imports can load arbitrary code |
 | `__import__(variable)` | Same concern as above |
 
+By default, LOW findings are shown as package-level counts in the summary output.
+Use `--verbose` to expand file-level LOW details.
+
 ## CLEAN
 
-**Action: Install silently.**
+**Action: Included in summary totals; install proceeds.**
 
 No patterns matching CRITICAL, HIGH, MEDIUM, or LOW were found.
-The package installs without any output.
+By default, CLEAN packages are counted but not listed individually. Use `--verbose`
+to print every CLEAN package line.

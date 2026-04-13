@@ -183,6 +183,16 @@ class TestBuildParser:
         args = parser.parse_args(["install", "--require-hashes", "requests"])
         assert args.require_hashes is True
 
+    def test_verbose_flag(self):
+        parser = build_parser()
+        args = parser.parse_args(["install", "--verbose", "requests"])
+        assert args.verbose is True
+
+    def test_show_pip_output_flag(self):
+        parser = build_parser()
+        args = parser.parse_args(["install", "--show-pip-output", "requests"])
+        assert args.show_pip_output is True
+
     def test_policy_flag(self):
         parser = build_parser()
         args = parser.parse_args(["install", "--policy", "pipguard.toml", "requests"])
@@ -218,6 +228,8 @@ def _make_args(**kwargs):
         allow=[],
         allow_sdist=False,
         require_hashes=False,
+        verbose=False,
+        show_pip_output=False,
         policy=None,
         intel_feed=None,
         enforce_intel=False,
@@ -309,6 +321,24 @@ class TestCmdInstallGate:
         reported_results = mock_report.call_args[0][0]
         assert len(reported_results) == 1
         assert reported_results[0].effective_level == RiskLevel.MEDIUM
+
+    def test_verbose_flag_is_passed_to_report(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        mock_dl.return_value = ([str(tmp_path / "pkg-1.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("pkg", RiskLevel.CLEAN)
+        rc = cmd_install(_make_args(verbose=True))
+        assert rc == 0
+        assert mock_report.call_args.kwargs["verbose"] is True
+
+    def test_show_pip_output_flag_is_passed_to_installer(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        mock_dl.return_value = ([str(tmp_path / "pkg-1.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("pkg", RiskLevel.CLEAN)
+        rc = cmd_install(_make_args(show_pip_output=True))
+        assert rc == 0
+        assert mock_install.call_args.kwargs["show_pip_output"] is True
 
     def test_sdist_rejected_without_flag(
         self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
