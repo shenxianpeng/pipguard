@@ -1,16 +1,14 @@
-> 本页面提供中文入口，内容将持续完善。
+# 退出码
 
-# Exit Codes
+pipguard 使用结构化退出码，便于 CI/CD 精准处理。
 
-pipguard uses structured exit codes so CI pipelines can react precisely.
+| 退出码 | 含义 | 触发场景 |
+|---|---|---|
+| `0` | **Clean**：安装成功 | 所有包为 CLEAN（或 MEDIUM/LOW 已确认） |
+| `1` | **Blocked**：已阻断 | 任意包触发 CRITICAL 或 HIGH |
+| `2` | **Scan error**：扫描失败 | 下载失败、归档不支持、磁盘异常等 |
 
-| Code | Meaning | When it occurs |
-|------|---------|---------------|
-| `0` | **Clean** — install succeeded | All packages scanned as CLEAN (or MEDIUM/LOW with user confirmation) |
-| `1` | **Blocked** — CRITICAL or HIGH risk detected | Any package triggered a CRITICAL or HIGH finding |
-| `2` | **Scan error** — could not complete the scan | Download failed, unsupported archive format, disk space error |
-
-## Usage in CI
+## CI 示例
 
 ```bash
 pipguard install --yes -r requirements.txt
@@ -20,27 +18,4 @@ echo "Exit code: $?"
 ```yaml title="GitHub Actions"
 - name: Secure dependency install
   run: pipguard install --yes -r requirements.txt
-  # Step fails automatically on exit 1 or 2
-```
-
-```yaml title="GitLab CI"
-install:
-  script:
-    - pipguard install --yes -r requirements.txt
-```
-
-## Distinguishing Exit Codes
-
-If you need to handle scan errors differently from blocked packages:
-
-```bash
-pipguard install --yes -r requirements.txt
-EXIT=$?
-if [ $EXIT -eq 1 ]; then
-  echo "Security block — malicious package detected"
-  exit 1
-elif [ $EXIT -eq 2 ]; then
-  echo "Scan error — check network or archive format"
-  exit 2
-fi
 ```

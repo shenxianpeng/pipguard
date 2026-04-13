@@ -1,26 +1,24 @@
-> 本页面提供中文入口，内容将持续完善。
+# 安装指南
 
-# Installation
-
-## Requirements
+## 环境要求
 
 - Python 3.10+
-- pip (any recent version)
-- Zero external dependencies — pipguard uses only the Python standard library
+- pip（任意较新版本）
+- 零外部依赖：pipguard 仅使用 Python 标准库
 
-## Install from PyPI
+## 从 PyPI 安装
 
 ```bash
 pip install pipguard
 ```
 
-Verify the installation:
+验证安装：
 
 ```bash
 pipguard --version
 ```
 
-## Install from Source
+## 从源码安装
 
 ```bash
 git clone https://github.com/shenxianpeng/pipguard.git
@@ -30,26 +28,26 @@ pip install -e .
 
 ## CI / Docker
 
-Add to your `requirements-dev.txt` or install directly in your CI pipeline:
+可将 pipguard 加入 `requirements-dev.txt`，或在 CI 中直接安装：
 
 ```yaml title=".github/workflows/ci.yml"
-- name: Install pipguard
+- name: 安装 pipguard
   run: pip install pipguard
 
-- name: Secure dependency install
+- name: 安全安装依赖
   run: pipguard install --yes -r requirements.txt
 ```
 
-## Upgrading
+## 升级
 
 ```bash
 pip install --upgrade pipguard
 ```
 
-## Uninstalling
+## 卸载
 
 ```bash
 pip uninstall pipguard
 ```
 
-pipguard creates no configuration files and leaves no persistent state — uninstall is clean.
+pipguard 不会生成配置文件，也不会写入持久状态，卸载后环境保持干净。
