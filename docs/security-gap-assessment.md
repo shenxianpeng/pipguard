@@ -123,7 +123,7 @@
    - 生成并验证 lock 清单（包名+版本+hash）。  
 
 2. **引入可配置策略文件（policy-as-code）**
-   - 例如 `pipguard-policy.toml`：
+   - 例如 `pipguard.toml`：
      - CI 中 `binary_only = block`
      - 允许域名白名单
      - 禁止 install-hook 网络。  

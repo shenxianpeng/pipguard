@@ -1,8 +1,8 @@
 """Policy-as-code support for pipguard."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 try:  # Python 3.11+
     import tomllib
@@ -18,11 +18,12 @@ class Policy:
     binary_only: str = "prompt"  # prompt | block | allow
     intel_feed: str = ""
     intel_enforce: bool = False
+    seed_allowlist: List[str] = field(default_factory=list)
 
 
 def load_policy(path: Optional[str]) -> Policy:
-    """Load policy TOML from explicit path or default pipguard-policy.toml."""
-    candidate = Path(path) if path else Path("pipguard-policy.toml")
+    """Load policy TOML from explicit path or default pipguard.toml."""
+    candidate = Path(path) if path else Path("pipguard.toml")
     if not candidate.exists():
         return Policy()
 
@@ -40,6 +41,11 @@ def load_policy(path: Optional[str]) -> Policy:
     if binary_only not in {"prompt", "block", "allow"}:
         binary_only = "prompt"
 
+    allowlist = data.get("allowlist", {})
+    configured_allowlist = allowlist.get("seed", [])
+    if not isinstance(configured_allowlist, list):
+        configured_allowlist = []
+
     intel = data.get("intel", {})
 
     return Policy(
@@ -49,6 +55,7 @@ def load_policy(path: Optional[str]) -> Policy:
         binary_only=binary_only,
         intel_feed=str(intel.get("feed", "")).strip(),
         intel_enforce=bool(intel.get("enforce", False)),
+        seed_allowlist=[str(item) for item in configured_allowlist if str(item).strip()],
     )
 
 
@@ -75,6 +82,18 @@ def _parse_policy_toml(text: str) -> dict:
         key, value = [x.strip() for x in line.split("=", 1)]
         if value.lower() in ("true", "false"):
             parsed = value.lower() == "true"
+        elif value.startswith("[") and value.endswith("]"):
+            items = []
+            inner = value[1:-1].strip()
+            if inner:
+                for token in inner.split(","):
+                    token = token.strip()
+                    if (token.startswith('"') and token.endswith('"')) or (
+                        token.startswith("'") and token.endswith("'")
+                    ):
+                        token = token[1:-1]
+                    items.append(token)
+            parsed = items
         elif (value.startswith('"') and value.endswith('"')) or (
             value.startswith("'") and value.endswith("'")
         ):
