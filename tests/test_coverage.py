@@ -350,13 +350,13 @@ class TestScannerEdgePaths:
         result = scan_pth_file("/nonexistent/path/attack.pth")
         assert result == []
 
-    def test_scan_python_file_over_1mb_returns_empty(self, tmp_path):
-        """Files larger than 1MB are skipped."""
+    def test_scan_python_file_over_1mb_emits_confidence_warning(self, tmp_path):
+        """Files larger than 1MB emit confidence-reduction finding (not skipped)."""
         from pipguard.scanner import scan_python_file
         big = tmp_path / "big.py"
         big.write_bytes(b"x = 1\n" * 200_000)  # > 1MB
         findings = scan_python_file(str(big))
-        assert findings == []
+        assert any("scan confidence reduced" in f.description for f in findings)
 
     def test_scan_python_file_oserror_returns_empty(self):
         """OSError during file open returns empty findings."""
@@ -473,6 +473,10 @@ class TestCmdInstallBranches:
             allow_sdist=False,
             yes=False,
             force=False,
+            require_hashes=False,
+            policy=None,
+            intel_feed=None,
+            enforce_intel=False,
         )
         for k, v in kwargs.items():
             setattr(args, k, v)
@@ -617,6 +621,10 @@ class TestCmdInstallRequirementsValidation:
             allow_sdist=False,
             yes=False,
             force=False,
+            require_hashes=False,
+            policy=None,
+            intel_feed=None,
+            enforce_intel=False,
         )
         for k, v in kwargs.items():
             setattr(args, k, v)
@@ -641,6 +649,10 @@ class TestCmdInstallMediumProceed:
             allow_sdist=False,
             yes=False,
             force=False,
+            require_hashes=False,
+            policy=None,
+            intel_feed=None,
+            enforce_intel=False,
         )
         for k, v in kwargs.items():
             setattr(args, k, v)
@@ -685,21 +697,20 @@ class TestScannerBranchCoverage:
         )
 
     def test_subprocess_with_non_shell_keyword(self, tmp_path):
-        """subprocess.run() with timeout kwarg — kw.arg != 'shell', loop continues."""
+        """subprocess.run() with timeout kwarg is still HIGH in install-hook scope."""
         from pipguard.scanner import scan_python_file
         f = tmp_path / "setup.py"
         f.write_text("import subprocess\nsubprocess.run(['ls'], timeout=5)\n")
         findings = scan_python_file(str(f), is_hook=True)
-        # No shell=True finding
-        assert not any("shell=True" in fi.description for fi in findings)
+        assert any(fi.level.name == "HIGH" for fi in findings)
 
     def test_subprocess_with_shell_false(self, tmp_path):
-        """subprocess.run() with shell=False — condition at 208 is False, loop continues."""
+        """subprocess.run() with shell=False is still HIGH in install-hook scope."""
         from pipguard.scanner import scan_python_file
         f = tmp_path / "setup.py"
         f.write_text("import subprocess\nsubprocess.run(['ls'], shell=False)\n")
         findings = scan_python_file(str(f), is_hook=True)
-        assert not any("shell=True" in fi.description for fi in findings)
+        assert any(fi.level.name == "HIGH" for fi in findings)
 
     def test_env_get_with_non_constant_key(self, tmp_path):
         """os.environ.get(variable) where variable is not a string constant."""

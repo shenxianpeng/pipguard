@@ -13,6 +13,7 @@ def install_from_local(
     packages: List[str],
     find_links_dir: str,
     requirements_file: Optional[str] = None,
+    require_hashes: bool = False,
 ) -> int:
     """
     Install packages using only the already-scanned local files.
@@ -32,6 +33,8 @@ def install_from_local(
         cmd += ["-r", requirements_file]
     else:
         cmd += packages
+    if require_hashes:
+        cmd += ["--require-hashes"]
 
     result = subprocess.run(cmd)
     return result.returncode

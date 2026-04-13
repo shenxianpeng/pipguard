@@ -35,6 +35,7 @@ def download_packages(
     dest_dir: str,
     allow_sdist: bool = False,
     requirements_file: str = None,
+    require_hashes: bool = False,
 ) -> Tuple[List[str], List[str]]:
     """
     Download packages to dest_dir using pip download --prefer-binary.
@@ -59,6 +60,8 @@ def download_packages(
         cmd += ["-r", requirements_file]
     else:
         cmd += packages
+    if require_hashes:
+        cmd += ["--require-hashes"]
 
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
