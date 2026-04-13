@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pipguard.cli import (
     _pkg_name_from_filename,
+    _pkg_version_from_filename,
     _validate_requirements_file,
     build_parser,
     cmd_install,
@@ -52,6 +53,9 @@ class TestPkgNameFromFilename:
         result = _pkg_name_from_filename("/tmp/pipguard-xxxx/requests-2.28.0-py3-none-any.whl")
         assert result == "requests"
 
+    def test_version_extracted_from_wheel(self):
+        assert _pkg_version_from_filename("requests-2.28.0-py3-none-any.whl") == "2.28.0"
+
 
 # ── requirements.txt validation ──────────────────────────────────────────────
 
@@ -69,6 +73,17 @@ class TestValidateRequirementsFile:
     def test_vcs_dep_returns_2(self, tmp_path):
         f = self._write(tmp_path, "git+https://github.com/org/repo.git@main\n")
         assert _validate_requirements_file(f) == 2
+
+    def test_vcs_pinned_commit_returns_0(self, tmp_path):
+        f = self._write(tmp_path, "git+https://github.com/org/repo.git@a1b2c3d4\n")
+        assert _validate_requirements_file(f) == 0
+
+    def test_pep508_direct_url_with_hash_returns_0(self, tmp_path):
+        f = self._write(
+            tmp_path,
+            "pkg @ https://example.com/pkg-1.0.0.whl#sha256=abcdefabcdefabcdefabcdefabcdefab\n",
+        )
+        assert _validate_requirements_file(f) == 0
 
     def test_local_path_dep_returns_2(self, tmp_path):
         f = self._write(tmp_path, "./my-local-package\n")
@@ -106,6 +121,17 @@ class TestValidateRequirementsFile:
             "hg+https://bitbucket.org/org/repo\n",
         )
         assert _validate_requirements_file(f) == 2
+
+    def test_require_hashes_rejects_unhashed_entry(self, tmp_path):
+        f = self._write(tmp_path, "requests==2.28.0\n")
+        assert _validate_requirements_file(f, require_hashes=True) == 2
+
+    def test_require_hashes_accepts_hashed_entry(self, tmp_path):
+        f = self._write(
+            tmp_path,
+            "requests==2.28.0 --hash=sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890\n",
+        )
+        assert _validate_requirements_file(f, require_hashes=True) == 0
 
 
 # ── CLI parser ───────────────────────────────────────────────────────────────
@@ -152,6 +178,22 @@ class TestBuildParser:
         args = parser.parse_args(["install", "--allow-sdist", "requests"])
         assert args.allow_sdist is True
 
+    def test_require_hashes_flag(self):
+        parser = build_parser()
+        args = parser.parse_args(["install", "--require-hashes", "requests"])
+        assert args.require_hashes is True
+
+    def test_policy_flag(self):
+        parser = build_parser()
+        args = parser.parse_args(["install", "--policy", "pipguard-policy.toml", "requests"])
+        assert args.policy == "pipguard-policy.toml"
+
+    def test_intel_flags(self):
+        parser = build_parser()
+        args = parser.parse_args(["install", "--intel-feed", "feed.json", "--enforce-intel", "requests"])
+        assert args.intel_feed == "feed.json"
+        assert args.enforce_intel is True
+
     def test_version_flag(self, capsys):
         parser = build_parser()
         with pytest.raises(SystemExit) as exc:
@@ -175,6 +217,10 @@ def _make_args(**kwargs):
         force=False,
         allow=[],
         allow_sdist=False,
+        require_hashes=False,
+        policy=None,
+        intel_feed=None,
+        enforce_intel=False,
     )
     defaults.update(kwargs)
     return types.SimpleNamespace(**defaults)
@@ -272,6 +318,43 @@ class TestCmdInstallGate:
         rc = cmd_install(_make_args(packages=["litellm"]))
         assert rc == 2
         mock_install.assert_not_called()
+
+    def test_policy_blocks_binary_only_wheel(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        policy = tmp_path / "pipguard-policy.toml"
+        policy.write_text("[install]\nbinary_only = 'block'\n")
+        mock_dl.return_value = ([str(tmp_path / "binpkg-1.0-py3-none-any.whl")], [])
+        mock_scan.return_value = PackageScanResult(
+            package_name="binpkg",
+            version="",
+            findings=[Finding(level=RiskLevel.MEDIUM, file_path="x.so", line=0, description="binary-only")],
+            is_binary_only=True,
+        )
+        rc = cmd_install(_make_args(packages=["binpkg"], policy=str(policy), yes=True))
+        assert rc == 1
+        mock_install.assert_not_called()
+
+    @patch("pipguard.cli.load_intel_feed")
+    def test_intel_feed_blocks_package(
+        self, mock_intel, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        mock_intel.return_value = {("evilpkg", "1.0.0"): "known malware sample"}
+        mock_dl.return_value = ([str(tmp_path / "evilpkg-1.0.0-py3-none-any.whl")], [])
+        rc = cmd_install(_make_args(packages=["evilpkg==1.0.0"], enforce_intel=True, intel_feed="feed.json"))
+        assert rc == 1
+        mock_scan.assert_not_called()
+        mock_install.assert_not_called()
+
+    @patch("pipguard.cli.load_intel_feed")
+    def test_intel_enforced_without_feed_does_not_block(
+        self, mock_intel, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        mock_dl.return_value = ([str(tmp_path / "okpkg-1.0.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("okpkg", RiskLevel.CLEAN)
+        rc = cmd_install(_make_args(packages=["okpkg"], enforce_intel=True, intel_feed=None))
+        assert rc == 0
+        mock_intel.assert_not_called()
 
 
 class TestValidateRequirementsFilePEP508:

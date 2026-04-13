@@ -16,7 +16,7 @@ CLEAN: none of the above.
 import ast
 import os
 import re
-from typing import List
+from typing import Dict, List, Optional
 
 from .models import Finding, RiskLevel
 
@@ -59,6 +59,18 @@ _NETWORK_FUNCS = frozenset({
     "http.client.HTTPConnection",
     "http.client.HTTPSConnection",
 })
+
+_BINARY_SCAN_LIMIT = 2 * 1024 * 1024  # 2MB quick heuristic scan
+_BINARY_IOCS = (
+    (b"/.ssh/id_rsa", RiskLevel.HIGH, "binary contains SSH private-key path indicator"),
+    (b"/.aws/credentials", RiskLevel.HIGH, "binary contains AWS credentials-path indicator"),
+    (b"/.kube/config", RiskLevel.HIGH, "binary contains kubeconfig-path indicator"),
+    (b"aws_secret_access_key", RiskLevel.HIGH, "binary references AWS secret key token"),
+    (b"socket", RiskLevel.MEDIUM, "binary contains network API indicator"),
+    (b"http://", RiskLevel.MEDIUM, "binary contains cleartext HTTP indicator"),
+    (b"https://", RiskLevel.MEDIUM, "binary contains HTTPS indicator"),
+    (b"/bin/sh", RiskLevel.MEDIUM, "binary contains shell execution indicator"),
+)
 
 
 def is_install_hook_scope(filepath: str) -> bool:
@@ -134,12 +146,22 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
     findings: List[Finding] = []
 
     try:
-        if os.path.getsize(filepath) > 1_048_576:  # 1 MB limit
-            return findings
+        file_size = os.path.getsize(filepath)
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             source = f.read()
     except OSError:
         return findings
+
+    if file_size > 1_048_576:
+        findings.append(Finding(
+            level=RiskLevel.HIGH if is_hook else RiskLevel.MEDIUM,
+            file_path=filepath,
+            line=0,
+            description=(
+                "large source file (>1MB) — scan confidence reduced; "
+                "review package manually"
+            ),
+        ))
 
     # Text-level check: eval/exec on base64-decoded content (obfuscated payload)
     if re.search(r"b64decode\s*\(", source):
@@ -156,6 +178,8 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
     except SyntaxError:
         # Cannot parse — return what we found at text level
         return findings
+
+    aliases = _build_alias_map(tree)
 
     for node in ast.walk(tree):
         lineno = getattr(node, "lineno", 0)
@@ -176,7 +200,7 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
 
         # ── Dynamic code execution in install hooks ─────────────────────────────
         if is_hook and isinstance(node, ast.Call):
-            name = _call_name(node)
+            name = _resolved_call_name(node, aliases)
             if name in ("exec", "eval", "compile"):
                 findings.append(Finding(
                     level=RiskLevel.CRITICAL,
@@ -187,35 +211,40 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
 
         # ── os.system / os.popen in install hooks (always shell execution) ────────
         if is_hook and isinstance(node, ast.Call):
-            name = _call_name(node)
+            name = _resolved_call_name(node, aliases)
             if name in ("os.system", "os.popen"):
                 findings.append(Finding(
-                    level=RiskLevel.HIGH,
+                    level=RiskLevel.CRITICAL,
                     file_path=filepath,
                     line=lineno,
                     description=f"Shell execution ({name}()) in install hook",
                 ))
 
-        # ── subprocess shell=True in install hooks ──────────────────────────────
+        # ── subprocess execution in install hooks ──────────────────────────────
         if is_hook and isinstance(node, ast.Call):
-            name = _call_name(node)
+            name = _resolved_call_name(node, aliases)
             if name in (
                 "subprocess.run", "subprocess.call", "subprocess.check_call",
                 "subprocess.check_output", "subprocess.Popen",
             ):
-                for kw in getattr(node, "keywords", []):
-                    if kw.arg == "shell" and isinstance(kw.value, ast.Constant):
-                        if kw.value.value is True:
-                            findings.append(Finding(
-                                level=RiskLevel.HIGH,
-                                file_path=filepath,
-                                line=lineno,
-                                description=f"subprocess with shell=True in install hook",
-                            ))
+                if _subprocess_invokes_shell(node):
+                    findings.append(Finding(
+                        level=RiskLevel.CRITICAL,
+                        file_path=filepath,
+                        line=lineno,
+                        description="subprocess shell execution in install hook",
+                    ))
+                else:
+                    findings.append(Finding(
+                        level=RiskLevel.HIGH,
+                        file_path=filepath,
+                        line=lineno,
+                        description=f"subprocess execution ({name}()) in install hook",
+                    ))
 
         # ── Network calls ────────────────────────────────────────────────────────
         if isinstance(node, ast.Call):
-            name = _call_name(node)
+            name = _resolved_call_name(node, aliases)
             if name in _NETWORK_FUNCS:
                 level = RiskLevel.CRITICAL if is_hook else RiskLevel.MEDIUM
                 label = "install hook" if is_hook else "runtime code"
@@ -228,7 +257,7 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
 
         # ── Sensitive env var access ─────────────────────────────────────────────
         if isinstance(node, ast.Call):
-            name = _call_name(node)
+            name = _resolved_call_name(node, aliases)
             if name in ("os.environ.get", "os.getenv") and node.args:
                 arg0 = node.args[0]
                 if isinstance(arg0, ast.Constant) and isinstance(arg0.value, str):
@@ -242,7 +271,7 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
 
         # ── Dynamic imports (LOW) ────────────────────────────────────────────────
         if isinstance(node, ast.Call):
-            name = _call_name(node)
+            name = _resolved_call_name(node, aliases)
             if name in ("importlib.import_module", "__import__"):
                 findings.append(Finding(
                     level=RiskLevel.LOW,
@@ -273,7 +302,7 @@ def scan_binary_extensions(
 
     if not has_python_source:
         # Binary-only: one MEDIUM finding summarising the whole package.
-        return [Finding(
+        findings = [Finding(
             level=RiskLevel.MEDIUM,
             file_path=binary_files[0],
             line=0,
@@ -282,6 +311,9 @@ def scan_binary_extensions(
                 "cannot verify package contents"
             ),
         )]
+        for filepath in binary_files:
+            findings.extend(_scan_binary_file_for_iocs(filepath))
+        return findings
 
     # Mixed: Python source present, but compiled extensions also exist.
     findings = []
@@ -294,6 +326,27 @@ def scan_binary_extensions(
                 "compiled binary extension — cannot inspect for malicious code"
             ),
         ))
+        findings.extend(_scan_binary_file_for_iocs(filepath))
+    return findings
+
+
+def _scan_binary_file_for_iocs(filepath: str) -> List[Finding]:
+    """Best-effort binary IOC scan using printable/string signatures."""
+    findings: List[Finding] = []
+    try:
+        with open(filepath, "rb") as f:
+            blob = f.read(_BINARY_SCAN_LIMIT).lower()
+    except OSError:
+        return findings
+
+    for marker, level, description in _BINARY_IOCS:
+        if marker in blob:
+            findings.append(Finding(
+                level=level,
+                file_path=filepath,
+                line=0,
+                description=description,
+            ))
     return findings
 
 
@@ -311,3 +364,82 @@ def _call_name(node: ast.Call) -> str:
             parts.append(curr.id)
         return ".".join(reversed(parts))
     return ""
+
+
+def _build_alias_map(tree: ast.AST) -> Dict[str, str]:
+    """Build a simple alias map for imports and one-hop assignments."""
+    aliases: Dict[str, str] = {}
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for spec in node.names:
+                local = spec.asname or spec.name.split(".")[0]
+                aliases[local] = spec.name
+
+        elif isinstance(node, ast.ImportFrom):
+            if not node.module:
+                continue
+            for spec in node.names:
+                if spec.name == "*":
+                    continue
+                local = spec.asname or spec.name
+                aliases[local] = f"{node.module}.{spec.name}"
+
+        elif isinstance(node, ast.Assign):
+            resolved = _resolve_expr_name(node.value, aliases)
+            if not resolved:
+                continue
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    aliases[target.id] = resolved
+
+    return aliases
+
+
+def _resolved_call_name(node: ast.Call, aliases: Dict[str, str]) -> str:
+    return _resolve_expr_name(node.func, aliases) or _call_name(node)
+
+
+def _resolve_expr_name(expr: ast.AST, aliases: Dict[str, str]) -> Optional[str]:
+    """Resolve a best-effort dotted name from Name/Attribute/getattr(...)."""
+    if isinstance(expr, ast.Name):
+        return aliases.get(expr.id, expr.id)
+
+    if isinstance(expr, ast.Attribute):
+        base = _resolve_expr_name(expr.value, aliases)
+        if not base:
+            return None
+        return f"{base}.{expr.attr}"
+
+    if isinstance(expr, ast.Call):
+        # getattr(module_or_alias, "attr") -> module.attr
+        callee = _resolve_expr_name(expr.func, aliases)
+        if callee == "getattr" and len(expr.args) >= 2:
+            base = _resolve_expr_name(expr.args[0], aliases)
+            attr = expr.args[1]
+            if base and isinstance(attr, ast.Constant) and isinstance(attr.value, str):
+                return f"{base}.{attr.value}"
+
+    return None
+
+
+def _subprocess_invokes_shell(node: ast.Call) -> bool:
+    """Return True for subprocess calls that execute via shell semantics."""
+    for kw in getattr(node, "keywords", []):
+        if kw.arg == "shell" and isinstance(kw.value, ast.Constant) and kw.value.value is True:
+            return True
+
+    if not node.args:
+        return False
+    cmd = node.args[0]
+    if isinstance(cmd, ast.List) and len(cmd.elts) >= 2:
+        first = cmd.elts[0]
+        second = cmd.elts[1]
+        if (
+            isinstance(first, ast.Constant) and isinstance(first.value, str)
+            and isinstance(second, ast.Constant) and isinstance(second.value, str)
+            and first.value in ("sh", "bash", "zsh", "cmd", "powershell", "pwsh")
+            and second.value in ("-c", "/c", "-Command")
+        ):
+            return True
+    return False

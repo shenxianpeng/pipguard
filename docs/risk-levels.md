@@ -12,6 +12,7 @@ found during static AST analysis.
 | `.pth` file containing executable Python code | `.pth` files are executed automatically at Python interpreter startup — before any user code runs. Any executable content is unambiguously malicious. |
 | `eval(base64.b64decode(...))` in any file | Classic obfuscated payload pattern. Legitimate packages never need this. |
 | Network calls (`urllib`, `httpx`, `requests`, `socket`) in `setup.py` or install hooks | Build-time network calls have no legitimate use case. The March 2026 litellm attack used this to exfiltrate data. |
+| Shell/subprocess execution in install hooks (`os.system`, `os.popen`, shell execution via `subprocess`) | Install-time command execution is a high-confidence attacker primitive and is blocked by default. |
 
 !!! danger "CRITICAL is never reduced"
     The `--allow` flag and the seed allowlist do **not** reduce CRITICAL findings.
@@ -25,8 +26,8 @@ found during static AST analysis.
 |---------|-------|-----|
 | Non-ASCII character in package name | Name check (pre-scan) | Possible homoglyph / typosquatting attack (e.g. `bоto3` with Cyrillic `о` instead of Latin `o`). |
 | Reads credential paths (`~/.ssh`, `~/.aws`, `~/.kube`, `~/.gnupg`) | Install hooks only | A package reading your SSH keys during `pip install` is an attack, not a feature. |
-| `subprocess.run(..., shell=True)` | Install hooks only | Shell injection risk; no legitimate build script needs `shell=True`. |
-| `os.system()` / `os.popen()` | Install hooks only | Arbitrary shell execution at install time. |
+| Direct subprocess execution (non-shell) | Install hooks only | Elevated risk in install-time context; surfaced as HIGH for manual review. |
+| Binary IOC credential markers (`/.ssh/id_rsa`, `/.aws/credentials`) | Binary extension scan | Heuristic binary content includes hard-coded credential path indicators. |
 
 !!! warning "HIGH in runtime code"
     If the same patterns appear in *runtime* code (not install hooks), the finding is
@@ -42,6 +43,8 @@ found during static AST analysis.
 | Binary-only wheel (no Python source) | Wheel contains only `.so` / `.pyd` / `.dylib` files — AST scan cannot verify contents. Confirmation gate fires; use `--yes` to proceed. |
 | Network calls in runtime `.py` files | Common in legitimate packages; shown for transparency |
 | Sensitive env var access (`*TOKEN*`, `*KEY*`, `*SECRET*`, `*PASSWORD*`, `*CREDENTIAL*`) | Flagged in runtime code |
+| Large source file over 1MB | Scanner continues, but emits confidence-reduction warning for manual review |
+| Binary IOC string indicators (`https://`, `/bin/sh`, `socket`) | Heuristic binary scan detected suspicious runtime/exfil primitives |
 
 ## LOW
 

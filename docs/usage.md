@@ -94,6 +94,10 @@ pipguard install --allow-sdist some-package
 | `--allow PKG` | Add package to per-invocation allowlist (HIGH→MEDIUM) |
 | `--force PKG` | Bypass all checks for a specific package |
 | `--allow-sdist` | Allow sdist fallback (DANGER: executes arbitrary code — AST scan does NOT prevent this) |
+| `--require-hashes` | Require hash-locked requirements entries (`--hash=...` or URL hash fragment) |
+| `--policy FILE` | Load policy file (default: `./pipguard-policy.toml` if present) |
+| `--intel-feed FILE_OR_URL` | Threat-intel JSON feed containing blocked package versions |
+| `--enforce-intel` | Enforce intel feed denylist and block matching packages |
 
 ## Exit Codes
 

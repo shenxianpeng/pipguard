@@ -13,9 +13,10 @@ Exit codes:
 import argparse
 import concurrent.futures
 import os
+import re
 import sys
 import tempfile
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from . import __version__
 from .aggregator import aggregate_findings, check_package_name_for_homoglyph, print_findings_report
@@ -23,7 +24,9 @@ from .cleanup import install_signal_handlers, register_temp_dir
 from .downloader import download_packages
 from .extractor import collect_binary_extension_files, collect_scannable_files, extract_archive
 from .installer import install_from_local
+from .intel import load_intel_feed
 from .models import Finding, PackageScanResult, RiskLevel
+from .policy import load_policy
 from .scanner import scan_binary_extensions, scan_pth_file, scan_python_file
 
 
@@ -50,6 +53,20 @@ def _pkg_name_from_filename(archive_path: str) -> str:
             break
         name_parts.append(part)
     return "-".join(name_parts) if name_parts else fname
+
+
+def _pkg_version_from_filename(archive_path: str) -> str:
+    """Extract version from wheel/sdist filename using first digit-starting segment."""
+    fname = os.path.basename(archive_path)
+    for ext in (".whl", ".tar.gz", ".tar.bz2", ".tgz", ".zip"):
+        if fname.endswith(ext):
+            fname = fname[: -len(ext)]
+            break
+    parts = fname.split("-")
+    for part in parts:
+        if part and part[0].isdigit():
+            return part
+    return ""
 
 
 # ── Per-package scan (runs in ThreadPoolExecutor) ───────────────────────────
@@ -107,36 +124,75 @@ def _scan_one_package(
 
 # ── requirements.txt validation ─────────────────────────────────────────────
 
-def _validate_requirements_file(filepath: str) -> int:
+_VCS_PIN_RE = re.compile(r"^(?:git|hg|svn|bzr)\+.+@([A-Fa-f0-9]{7,40})(?:#|$)")
+_HASH_FRAG_RE = re.compile(r"#(?:sha256|sha384|sha512)=[A-Fa-f0-9]{32,128}")
+
+
+def _read_requirement_entries(filepath: str) -> List[Tuple[int, str]]:
+    entries: List[Tuple[int, str]] = []
+    with open(filepath, "r", encoding="utf-8") as f:
+        lineno = 0
+        start = 0
+        buffer = ""
+        for raw in f:
+            lineno += 1
+            line = raw.rstrip("\n")
+            if not buffer:
+                start = lineno
+            if line.endswith("\\"):
+                buffer += line[:-1].rstrip() + " "
+                continue
+            full = (buffer + line).strip()
+            buffer = ""
+            if full:
+                entries.append((start, full))
+    return entries
+
+
+def _validate_requirements_file(
+    filepath: str,
+    require_hashes: bool = False,
+    allow_vcs_pinned: bool = True,
+    allow_direct_url_pinned: bool = True,
+) -> int:
     """
     Validate requirements.txt for unsupported formats (Phase 1).
     Returns 0 if OK, 2 if unsupported entries are found.
     """
     unsupported = []
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            for lineno, raw in enumerate(f, 1):
-                line = raw.strip()
-                if not line or line.startswith("#") or line.startswith("--"):
-                    continue
-                if line.startswith("-e "):
-                    print(
-                        f"  Note: skipping editable install at line {lineno}: {line}",
-                        file=sys.stderr,
-                    )
-                    continue
-                if any(
-                    line.startswith(prefix)
-                    for prefix in ("git+", "hg+", "svn+", "bzr+")
-                ):
-                    unsupported.append((lineno, line, "VCS dependency"))
-                elif " @ " in line:
-                    # PEP 508 direct URL: pkg @ https://... or pkg @ file:///...
-                    unsupported.append((lineno, line, "direct URL dependency (PEP 508 @ syntax)"))
-                elif line.startswith("./") or line.startswith("../") or (
-                    line.startswith("/") and not line.startswith("-")
-                ):
-                    unsupported.append((lineno, line, "local path dependency"))
+        entries = _read_requirement_entries(filepath)
+        for lineno, line in entries:
+            if line.startswith("#") or line.startswith("--"):
+                continue
+            if line.startswith("-e "):
+                print(
+                    f"  Note: skipping editable install at line {lineno}: {line}",
+                    file=sys.stderr,
+                )
+                continue
+
+            has_hash = ("--hash=" in line) or bool(_HASH_FRAG_RE.search(line))
+            is_vcs = any(line.startswith(prefix) for prefix in ("git+", "hg+", "svn+", "bzr+"))
+            is_direct_url = " @ " in line
+
+            if is_vcs:
+                if not allow_vcs_pinned:
+                    unsupported.append((lineno, line, "VCS dependency disabled by policy"))
+                elif not _VCS_PIN_RE.match(line):
+                    unsupported.append((lineno, line, "VCS dependency must pin commit hash"))
+            elif is_direct_url:
+                if not allow_direct_url_pinned:
+                    unsupported.append((lineno, line, "direct URL dependency disabled by policy"))
+                elif not has_hash:
+                    unsupported.append((lineno, line, "direct URL dependency must include hash"))
+            elif line.startswith("./") or line.startswith("../") or (
+                line.startswith("/") and not line.startswith("-")
+            ):
+                unsupported.append((lineno, line, "local path dependency"))
+
+            if require_hashes and not has_hash:
+                unsupported.append((lineno, line, "missing hash while --require-hashes is enabled"))
     except OSError as exc:
         print(f"Error reading requirements file: {exc}", file=sys.stderr)
         return 2
@@ -149,8 +205,8 @@ def _validate_requirements_file(filepath: str) -> int:
         for lineno, entry, reason in unsupported:
             print(f"  Line {lineno}: {entry}  [{reason}]", file=sys.stderr)
         print(
-            "\n  Supported: PyPI specifiers, version pins, hash-locked deps.\n"
-            "  Not supported: VCS deps (git+...), local paths (./...).",
+            "\n  Supported: PyPI specifiers, hash-locked deps, and pinned VCS/URL deps.\n"
+            "  Not supported: unpinned VCS/URL deps, local paths (./...).",
             file=sys.stderr,
         )
         return 2
@@ -177,6 +233,11 @@ def cmd_install(args) -> int:
     tmp_dir = tempfile.mkdtemp(prefix="pipguard-")
     register_temp_dir(tmp_dir)
 
+    policy = load_policy(getattr(args, "policy", None))
+    require_hashes = bool(args.require_hashes or policy.require_hashes)
+    intel_feed = getattr(args, "intel_feed", None) or policy.intel_feed
+    intel_enforce = bool(getattr(args, "enforce_intel", False) or policy.intel_enforce)
+
     packages: List[str] = args.packages or []
     requirements_file: Optional[str] = getattr(args, "r", None)
     extra_allow: List[str] = args.allow or []
@@ -186,7 +247,12 @@ def cmd_install(args) -> int:
         return 2
 
     if requirements_file:
-        rc = _validate_requirements_file(requirements_file)
+        rc = _validate_requirements_file(
+            requirements_file,
+            require_hashes=require_hashes,
+            allow_vcs_pinned=policy.allow_vcs_pinned,
+            allow_direct_url_pinned=policy.allow_direct_url_pinned,
+        )
         if rc != 0:
             return rc
 
@@ -197,6 +263,7 @@ def cmd_install(args) -> int:
             tmp_dir,
             allow_sdist=args.allow_sdist,
             requirements_file=requirements_file,
+            require_hashes=require_hashes,
         )
     except RuntimeError as exc:
         print(f"Error: {exc}", file=sys.stderr)
@@ -221,6 +288,29 @@ def cmd_install(args) -> int:
     if not archive_files:
         print("No downloadable packages found.", file=sys.stderr)
         return 2
+
+    if intel_enforce and intel_feed:
+        blocked = load_intel_feed(intel_feed)
+        intel_results: List[PackageScanResult] = []
+        for arch in archive_files:
+            name = _pkg_name_from_filename(arch).lower()
+            version = _pkg_version_from_filename(arch)
+            reason = blocked.get((name, version))
+            if reason:
+                intel_results.append(PackageScanResult(
+                    package_name=f"{name}=={version}",
+                    version=version,
+                    findings=[Finding(
+                        level=RiskLevel.CRITICAL,
+                        file_path=arch,
+                        line=0,
+                        description=f"Intel feed blocked package: {reason}",
+                    )],
+                ))
+        if intel_results:
+            print_findings_report(intel_results)
+            print("\n❌ Installation BLOCKED — package denied by threat-intel feed.", file=sys.stderr)
+            return 1
 
     # Parallel scan (Architecture Amendment A8)
     n = len(archive_files)
@@ -278,6 +368,12 @@ def cmd_install(args) -> int:
             return 1
 
     elif max_level in (RiskLevel.MEDIUM, RiskLevel.LOW):
+        if policy.binary_only == "block" and any(r.is_binary_only for r in results):
+            print(
+                "\n❌ Installation BLOCKED — policy binary_only=block and binary-only wheel detected.",
+                file=sys.stderr,
+            )
+            return 1
         if args.yes:
             print(f"\n⚠️  {max_level} findings present. Proceeding because --yes was set.")
         elif not _confirm_install():
@@ -286,7 +382,12 @@ def cmd_install(args) -> int:
 
     # Install from locally scanned files — NEVER re-download (TOCTOU fix, A2)
     print("\n⚙️  Installing from scanned local cache ...")
-    rc = install_from_local(packages, tmp_dir, requirements_file=requirements_file)
+    rc = install_from_local(
+        packages,
+        tmp_dir,
+        requirements_file=requirements_file,
+        require_hashes=require_hashes,
+    )
     if rc == 0:
         print("✅ Installation complete.")
     else:
@@ -341,6 +442,22 @@ def build_parser() -> argparse.ArgumentParser:
             "(DANGER: sdist install EXECUTES arbitrary code — "
             "pipguard's AST scan does NOT prevent this)"
         ),
+    )
+    install.add_argument(
+        "--require-hashes", action="store_true",
+        help="Require hashes for all requirements entries (also configurable in policy)",
+    )
+    install.add_argument(
+        "--policy", metavar="pipguard-policy.toml",
+        help="Path to policy file (default: ./pipguard-policy.toml if present)",
+    )
+    install.add_argument(
+        "--intel-feed", metavar="FILE_OR_URL",
+        help="Threat-intel JSON feed location with blocked package versions",
+    )
+    install.add_argument(
+        "--enforce-intel", action="store_true",
+        help="Block packages present in intel feed",
     )
     return parser
 

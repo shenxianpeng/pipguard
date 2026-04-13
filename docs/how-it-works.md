@@ -70,6 +70,7 @@ pipguard uses Python's built-in `ast` module — no third-party dependencies —
     | `.pth` file with executable Python | `import os; os.system(...)` in `.pth` |
     | Obfuscated eval | `eval(base64.b64decode(...))` |
     | Network in `setup.py` / install hooks | `urllib.request.urlopen(...)` in `setup.py` |
+    | Shell/subprocess execution in install hooks | `os.system(...)`, `subprocess.run(..., shell=True)` |
 
 === "HIGH"
 
@@ -77,8 +78,7 @@ pipguard uses Python's built-in `ast` module — no third-party dependencies —
     |---------|---------|
     | Non-ASCII character in package name | `bоto3` with Cyrillic `о` — possible homoglyph/typosquatting attack |
     | Credential path read in install hooks | `open('~/.ssh/id_rsa')` in `setup.py` |
-    | Shell subprocess in install hooks | `subprocess.run(..., shell=True)` |
-    | `os.system()` / `os.popen()` in install hooks | `os.system('curl ...')` |
+    | Subprocess execution in install hooks | `subprocess.run([...])` |
 
 === "MEDIUM"
 
@@ -87,6 +87,8 @@ pipguard uses Python's built-in `ast` module — no third-party dependencies —
     | Binary-only wheel (no Python source) | Wheel with only `.so` / `.pyd` / `.dylib` files |
     | Network in runtime code | `urllib.request.urlopen(...)` in `utils.py` |
     | Sensitive env var access | `os.environ.get('AWS_SECRET_ACCESS_KEY')` |
+    | Large source file over 1MB | scanner emits confidence-reduction warning |
+    | Binary IOC string hit | `.so` contains `https://...` or `/bin/sh` |
 
 === "LOW"
 
@@ -95,6 +97,9 @@ pipguard uses Python's built-in `ast` module — no third-party dependencies —
     | Compiled binary extension in mixed wheel | `.so` / `.pyd` / `.dylib` alongside `.py` source |
     | Dynamic imports | `importlib.import_module(name)` |
     | `__import__()` | `__import__(variable)` |
+
+Binary files are also scanned with lightweight IOC string matching (first 2MB) to
+surface obvious credential-path or exfiltration indicators.
 
 ## Homoglyph / Typosquatting Detection
 

