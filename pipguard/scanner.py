@@ -72,6 +72,30 @@ _BINARY_IOCS = (
     (b"/bin/sh", RiskLevel.MEDIUM, "binary contains shell execution indicator"),
 )
 
+# ctypes functions that load native code — any use in install hooks is dangerous
+_CTYPES_DANGEROUS = frozenset({
+    "ctypes.CDLL",
+    "ctypes.WinDLL",
+    "ctypes.OleDLL",
+    "ctypes.pydll",
+    "ctypes.windll",
+    "ctypes.cdll",
+    "ctypes.oledll",
+    "ctypes.pythonapi.PyRun_SimpleString",
+})
+
+# Pickle deserialization — arbitrary code execution
+_PICKLE_DESERIALIZE = frozenset({
+    "pickle.loads",
+    "pickle.load",
+    "_pickle.loads",
+    "_pickle.load",
+    "cPickle.loads",
+    "cPickle.load",
+    "dill.loads",
+    "dill.load",
+})
+
 
 def is_install_hook_scope(filepath: str) -> bool:
     """Returns True if this file is install-hook (HIGH) scope."""
@@ -234,6 +258,92 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
                     description=f"Dynamic code execution ({name}()) in install hook",
                 ))
 
+        # ── ctypes native code loading in install hooks ───────────────────────
+        if is_hook and isinstance(node, ast.Call):
+            name = _resolved_call_name(node, aliases)
+            if name in _CTYPES_DANGEROUS or any(
+                name.startswith(prefix + ".") for prefix in _CTYPES_DANGEROUS
+            ):
+                findings.append(Finding(
+                    level=RiskLevel.CRITICAL,
+                    file_path=filepath,
+                    line=lineno,
+                    description=f"ctypes native code loading ({name}()) in install hook",
+                ))
+
+        # ── Pickle deserialization in install hooks ───────────────────────────
+        if is_hook and isinstance(node, ast.Call):
+            name = _resolved_call_name(node, aliases)
+            if name in _PICKLE_DESERIALIZE:
+                findings.append(Finding(
+                    level=RiskLevel.HIGH,
+                    file_path=filepath,
+                    line=lineno,
+                    description=f"Unsafe deserialization ({name}()) in install hook — arbitrary code execution risk",
+                ))
+
+        # ── marshal.loads + exec/compile chain in any code ─────────────────────
+        if isinstance(node, ast.Call):
+            name = _resolved_call_name(node, aliases)
+            if name in ("exec", "eval"):
+                for arg in node.args:
+                    for sub in ast.walk(arg):
+                        if isinstance(sub, ast.Call):
+                            sub_name = _resolved_call_name(sub, aliases)
+                            if sub_name and sub_name.endswith("loads") and "marshal" in sub_name:
+                                findings.append(Finding(
+                                    level=RiskLevel.CRITICAL,
+                                    file_path=filepath,
+                                    line=lineno,
+                                    description=(
+                                        "exec/eval on marshal-deserialized object — "
+                                        "obfuscated code-object payload"
+                                    ),
+                                ))
+                                break
+                            if sub_name and "compile" in sub_name:
+                                findings.append(Finding(
+                                    level=RiskLevel.CRITICAL,
+                                    file_path=filepath,
+                                    line=lineno,
+                                    description=(
+                                        "exec/eval on compile() output — "
+                                        "multi-stage obfuscated execution"
+                                    ),
+                                ))
+                                break
+                    else:
+                        continue
+                    break
+
+        # ── Wildcard import in install hooks ──────────────────────────────────
+        if is_hook and isinstance(node, (ast.ImportFrom,)):
+            for spec in getattr(node, "names", []):
+                if isinstance(spec, ast.alias) and spec.name == "*":
+                    findings.append(Finding(
+                        level=RiskLevel.MEDIUM,
+                        file_path=filepath,
+                        line=lineno,
+                        description=(
+                            f"Wildcard import (from {node.module or '?'} import *) "
+                            "in install hook — blinds the scanner"
+                        ),
+                    ))
+                    break
+
+        # ── tempfile + dangerous usage in install hooks ──────────────────────
+        if is_hook and isinstance(node, ast.Call):
+            name = _resolved_call_name(node, aliases)
+            # Detect writing content to tempfile + executing it
+            if name in ("tempfile.mkstemp", "tempfile.mkdtemp", "tempfile.NamedTemporaryFile",
+                        "tempfile.TemporaryFile"):
+                findings.append(Finding(
+                    level=RiskLevel.MEDIUM,
+                    file_path=filepath,
+                    line=lineno,
+                    description=f"tempfile usage ({name}()) in install hook — potential write-and-execute",
+                ))
+
         # ── os.system / os.popen in install hooks (always shell execution) ────────
         if is_hook and isinstance(node, ast.Call):
             name = _resolved_call_name(node, aliases)
@@ -303,6 +413,19 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
                     file_path=filepath,
                     line=lineno,
                     description=f"Dynamic import: {name}()",
+                ))
+
+        # ── ctypes usage in runtime code ────────────────────────────────────────
+        if not is_hook and isinstance(node, ast.Call):
+            name = _resolved_call_name(node, aliases)
+            if name in _CTYPES_DANGEROUS or any(
+                name.startswith(prefix + ".") for prefix in _CTYPES_DANGEROUS
+            ):
+                findings.append(Finding(
+                    level=RiskLevel.HIGH,
+                    file_path=filepath,
+                    line=lineno,
+                    description=f"ctypes native code loading ({name}()) in runtime code",
                 ))
 
     return findings
