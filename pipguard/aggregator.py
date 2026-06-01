@@ -146,10 +146,12 @@ def _print_result_details(result: PackageScanResult, verbose: bool = False) -> N
         print(f"  {_color('[UNKNOWN]', 'MEDIUM')} {pkg}")
         print("    Binary-only wheel — no Python source to scan.")
         print("    Verify independently or use --force to install.")
+        _print_cves(result)
         return
 
     if not result.findings:
         print(f"  {_color('✓', 'CLEAN')} {pkg} — CLEAN")
+        _print_cves(result)
         return
 
     print(f"  {_color(f'[{level}]', level.name)} {pkg}")
@@ -162,6 +164,17 @@ def _print_result_details(result: PackageScanResult, verbose: bool = False) -> N
         print(f"           {finding.description}")
         if finding.snippet:
             print(f"           -> {finding.snippet}")
+
+    _print_cves(result)
+
+
+def _print_cves(result: PackageScanResult) -> None:
+    """Print known CVEs from osv.dev for this package version."""
+    if not result.cves:
+        return
+    print(f"    ── Known CVEs (osv.dev) ──")
+    for vuln in sorted(result.cves, key=lambda v: v.short_id):
+        print(f"    {_color(vuln.one_line, vuln.severity or 'MEDIUM')}")
 
 
 def print_findings_report(results: List[PackageScanResult], verbose: bool = False) -> None:

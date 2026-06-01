@@ -11,6 +11,8 @@
 
 **Python supply chain security tool. Scan packages before installing them.**
 
+AST-based static analysis + known CVE lookup via [osv.dev](https://osv.dev).
+
 ```bash
 pip install pipguard
 pipguard install litellm==1.82.8   # Blocks the March 2026 attack. Exits 1.

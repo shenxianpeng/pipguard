@@ -76,6 +76,22 @@ Proceed with installation? [y/N]
   </div>
 </div>
 
+## Known CVE Lookup (osv.dev)
+
+After AST scanning, pipguard queries [osv.dev](https://osv.dev) for known
+vulnerabilities in the package version. Known CVEs appear in the scan report
+as a separate section:
+
+```text
+  [MEDIUM] jinja2
+    [MEDIUM] jinja2/sandbox.py:123
+           Access to sensitive env var: 'SECRET_KEY'
+    ── Known CVEs (osv.dev) ──
+    CVE-2024-56326 [MEDIUM] Jinja sandbox breakout through attr filter selection (fixed in 3.1.6)
+```
+
+The query is best-effort and non-blocking — network issues are silently handled.
+
 ## Allowing Known-Legitimate Packages
 
 Some packages legitimately access credential stores (e.g. `paramiko` reads `~/.ssh`).

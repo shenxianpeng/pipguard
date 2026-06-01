@@ -26,6 +26,7 @@ from .extractor import collect_binary_extension_files, collect_scannable_files, 
 from .installer import install_from_local
 from .intel import load_intel_feed
 from .models import Finding, PackageScanResult, RiskLevel
+from .osv import query_osv
 from .policy import load_policy
 from .scanner import scan_binary_extensions, scan_pth_file, scan_python_file
 
@@ -114,12 +115,23 @@ def _scan_one_package(
             scan_binary_extensions(binary_files, has_python_source=has_scannable)
         )
 
+    result: PackageScanResult
     if not has_scannable:
-        return aggregate_findings(
+        result = aggregate_findings(
             pkg_name, all_findings, extra_allow=extra_allow, is_binary_only=True
         )
+    else:
+        result = aggregate_findings(pkg_name, all_findings, extra_allow=extra_allow)
 
-    return aggregate_findings(pkg_name, all_findings, extra_allow=extra_allow)
+    # Query osv.dev for known CVEs (best-effort, non-blocking)
+    version = _pkg_version_from_filename(archive_path)
+    result.version = result.version or version
+    try:
+        result.cves = query_osv(pkg_name, result.version)
+    except Exception:
+        pass  # Network error → graceful degradation, no CVEs shown
+
+    return result
 
 
 # ── requirements.txt validation ─────────────────────────────────────────────

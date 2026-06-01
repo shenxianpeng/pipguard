@@ -22,6 +22,9 @@ AST scan all .py files            ← parallel, ThreadPoolExecutor
   all other .py                   ← MEDIUM/LOW scope
        │
        ▼
+osv.dev API query                ← known CVE lookup (best-effort)
+       │
+       ▼
 Risk scoring:
   CRITICAL → block (exit 1)
   HIGH     → block (exit 1)
@@ -127,6 +130,31 @@ flags them explicitly:
 - **Binary-only wheel** (no `.py` source at all): a single **MEDIUM** finding
   is emitted, and the confirmation gate fires. pipguard's core scan promise
   cannot be fulfilled for packages with no Python source.
+
+## Known CVE Lookup (osv.dev)
+
+After AST scanning, pipguard queries the [osv.dev](https://osv.dev) API for
+known vulnerabilities in the scanned package version. osv.dev aggregates
+advisories from PyPI advisories, GitHub Security Advisories, and other sources.
+
+This is complementary to pipguard's AST analysis:
+
+- **AST scanning** detects suspicious behaviors (network calls, credential
+  access, obfuscated payloads) — including zero-day attacks
+- **osv.dev** matches against the public CVE database — catching known
+  vulnerabilities that may not trigger AST rules
+
+The query is best-effort and non-blocking: if osv.dev is unreachable, the
+scan continues without CVEs shown. Known CVEs appear as a separate section
+in the scan report:
+
+```
+  [MEDIUM] jinja2
+    [MEDIUM] jinja2/sandbox.py:123
+           Access to sensitive env var: 'SECRET_KEY'
+    ── Known CVEs (osv.dev) ──
+    CVE-2024-56326 [MEDIUM] Jinja sandbox breakout through attr filter selection (fixed in 3.1.6)
+```
 
 ## Seed Allowlist
 

@@ -40,6 +40,7 @@ class PackageScanResult:
     findings: List[Finding] = field(default_factory=list)
     is_allowlisted: bool = False
     is_binary_only: bool = False
+    cves: list = field(default_factory=list)  # OsvVulnerability objects (lazy import to avoid circular deps)
 
     @property
     def max_level(self) -> RiskLevel:
