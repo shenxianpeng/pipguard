@@ -54,6 +54,19 @@ class TestOsvVulnerability:
         vuln = OsvVulnerability(vuln_id="GHSA-99", summary="Test")
         assert "[None]" not in vuln.one_line
 
+    def test_one_line_without_summary(self):
+        """one_line should not include the summary if it's empty."""
+        vuln = OsvVulnerability(vuln_id="CVE-2024-1", summary="")
+        line = vuln.one_line
+        assert "CVE-2024-1" in line
+        # No summary text appended
+        assert line.strip().endswith("CVE-2024-1") or line == "CVE-2024-1"
+
+    def test_one_line_without_fixed_version(self):
+        """one_line should not include 'fixed in' when fixed_version is None."""
+        vuln = OsvVulnerability(vuln_id="GHSA-99", summary="Test", fixed_version=None)
+        assert "fixed in" not in vuln.one_line
+
 
 # ── OSV API response parsing ────────────────────────────────────────────────
 
@@ -139,6 +152,104 @@ class TestParseOsvResponse:
     def test_vulns_field_is_none(self):
         data = {"vulns": None}
         assert _parse_osv_response(data) == []
+
+    def test_database_specific_not_a_dict(self):
+        """database_specific that is not a dict should not crash."""
+        data = {
+            "vulns": [{
+                "id": "GHSA-zzzz",
+                "summary": "Test",
+                "database_specific": "not-a-dict",
+            }]
+        }
+        vulns = _parse_osv_response(data)
+        assert len(vulns) == 1
+        assert vulns[0].severity is None
+
+    def test_summary_from_database_specific_when_entry_summary_empty(self):
+        """When entry has no summary, fall back to database_specific summary."""
+        data = {
+            "vulns": [{
+                "id": "GHSA-dbonly",
+                "database_specific": {"summary": "From database_specific"},
+            }]
+        }
+        vulns = _parse_osv_response(data)
+        assert len(vulns) == 1
+        assert vulns[0].summary == "From database_specific"
+
+    def test_affected_ranges_non_ecosystem_type(self):
+        """Ranges with type != ECOSYSTEM should not extract fixed version."""
+        data = {
+            "vulns": [{
+                "id": "GHSA-semver",
+                "summary": "Test",
+                "affected": [{
+                    "ranges": [{
+                        "type": "SEMVER",
+                        "events": [
+                            {"introduced": "0"},
+                            {"fixed": "9.9.9"},
+                        ],
+                    }],
+                }],
+            }]
+        }
+        vulns = _parse_osv_response(data)
+        assert len(vulns) == 1
+        assert vulns[0].fixed_version is None
+
+    def test_affected_ranges_empty_events(self):
+        """ECOSYSTEM range with empty events list should not crash."""
+        data = {
+            "vulns": [{
+                "id": "GHSA-no-events",
+                "summary": "Test",
+                "affected": [{
+                    "ranges": [{
+                        "type": "ECOSYSTEM",
+                        "events": [],
+                    }],
+                }],
+            }]
+        }
+        vulns = _parse_osv_response(data)
+        assert len(vulns) == 1
+        assert vulns[0].fixed_version is None
+
+    def test_affected_empty_ranges(self):
+        """Affected entry with empty ranges list should not crash."""
+        data = {
+            "vulns": [{
+                "id": "GHSA-no-ranges",
+                "summary": "Test",
+                "affected": [{"ranges": []}],
+            }]
+        }
+        vulns = _parse_osv_response(data)
+        assert len(vulns) == 1
+        assert vulns[0].fixed_version is None
+
+    def test_events_without_fixed_key(self):
+        """Events list where no event has a 'fixed' key."""
+        data = {
+            "vulns": [{
+                "id": "GHSA-no-fix",
+                "summary": "Test",
+                "affected": [{
+                    "ranges": [{
+                        "type": "ECOSYSTEM",
+                        "events": [
+                            {"introduced": "0"},
+                            {"last_affected": "1.0.0"},
+                        ],
+                    }],
+                }],
+            }]
+        }
+        vulns = _parse_osv_response(data)
+        assert len(vulns) == 1
+        assert vulns[0].fixed_version is None
 
 
 # ── query_osv integration tests ─────────────────────────────────────────────

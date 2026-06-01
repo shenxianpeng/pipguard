@@ -124,12 +124,10 @@ def _scan_one_package(
         result = aggregate_findings(pkg_name, all_findings, extra_allow=extra_allow)
 
     # Query osv.dev for known CVEs (best-effort, non-blocking)
+    # query_osv handles all errors internally, returning [] on failure
     version = _pkg_version_from_filename(archive_path)
     result.version = result.version or version
-    try:
-        result.cves = query_osv(pkg_name, result.version)
-    except Exception:
-        pass  # Network error → graceful degradation, no CVEs shown
+    result.cves = query_osv(pkg_name, result.version)
 
     return result
 
