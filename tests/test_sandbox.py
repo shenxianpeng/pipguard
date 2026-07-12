@@ -117,6 +117,21 @@ def test_sandbox_capture_output_writes_through_on_failure(capsys):
     assert "ERR" in out.err
 
 
+def test_sandbox_capture_output_failure_without_output(capsys):
+    """capture_output=True with a non-zero exit but no stdout/stderr must not
+    write anything (covers the empty-output branches)."""
+    rc = run_sandboxed(
+        [sys.executable, "-c", "import sys; sys.exit(2)"],
+        deny_fragments=["/.ssh/"],
+        capture_output=True,
+        timeout=30,
+    )
+    assert rc == 2
+    out = capsys.readouterr()
+    assert out.out == ""
+    assert out.err == ""
+
+
 def test_sandbox_does_not_break_offline_pip_install(tmp_path):
     """Integration: pip installs a wheel offline UNDER the sandbox (rc 0),
     proving the sandbox permits pip's own legitimate file access.
