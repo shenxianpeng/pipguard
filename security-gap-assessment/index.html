@@ -908,6 +908,15 @@
 <blockquote>
 <p>评估时间：2026-04-13
 评估范围：当前仓库主流程（download → extract → AST scan → gated install）</p>
+<p><strong>更新（2026-07）：本文为历史快照，下列早期缺口已实现，阅读时请以代码为准。</strong>
+- 别名/一跳数据流追踪、<code>getattr</code>/<code>__import__</code> 反射、变量反射（<code>s="system"; getattr(os,s)</code>）
+- 点号导入解析（<code>import urllib.request</code> → <code>urllib.request.urlopen</code>）
+- 命令执行扩展：<code>os.exec*</code>/<code>os.spawn*</code>/<code>posix.system</code>/<code>pty.spawn</code>/<code>runpy</code>、<code>subprocess(["bash","-c",...])</code>
+- 凭据路径拼接检测（<code>os.path.join(expanduser("~"), ".ssh", ...)</code>）
+- 供应链完整性：<code>--require-hashes</code>、pinned VCS/直接 URL 校验（见 <code>docs/usage.md</code>）
+- policy-as-code（<code>pipguard.toml</code>，见 <code>docs/policy.md</code>）、OSV 已知 CVE 查询（opt-in）
+- 检出力回归基准（<code>benchmark/</code>，TPR/FPR，CI 强制）</p>
+<p>仍未实现（本文剩余有效项）：运行时沙箱、二进制扩展深度审计、实例方法数据流（<code>s=socket.socket(); s.connect()</code>）。</p>
 </blockquote>
 <h2 id="1">1) 当前做得好的地方（功能层）<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
 <ol>

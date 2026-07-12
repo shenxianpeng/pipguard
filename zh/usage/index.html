@@ -593,6 +593,23 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        支持的依赖来源
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="支持的依赖来源">
+      <ul class="md-nav__list">
+        
           <li class="md-nav__item">
   <a href="#ci" class="md-nav__link">
     <span class="md-ellipsis">
@@ -610,7 +627,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
+  <a href="#cve-osvdev" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        已知 CVE 查询（osv.dev）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         常用参数
@@ -621,7 +649,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
         输出与行为
@@ -905,6 +933,23 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        支持的依赖来源
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="支持的依赖来源">
+      <ul class="md-nav__list">
+        
           <li class="md-nav__item">
   <a href="#ci" class="md-nav__link">
     <span class="md-ellipsis">
@@ -922,7 +967,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
+  <a href="#cve-osvdev" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        已知 CVE 查询（osv.dev）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         常用参数
@@ -933,7 +989,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
         输出与行为
@@ -975,19 +1031,86 @@
 <h3 id="requirementstxt">从 requirements.txt 安装<a class="headerlink" href="#requirementstxt" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </span></code></pre></div>
+<h2 id="_4">支持的依赖来源<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>pipguard 只能对它下载并检查过的制品保证扫描承诺，因此只接受能解析为
+<strong>固定、可校验制品</strong> 的依赖项，其余的会被拒绝（退出码 2）：</p>
+<table>
+<thead>
+<tr>
+<th>依赖写法</th>
+<th>是否接受</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PyPI 版本约束（<code>requests==2.31.0</code>、<code>numpy&gt;=1.24</code>）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>hash 锁定（<code>pkg==1.0 --hash=sha256:…</code>）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>pin 到 commit 的 VCS（<code>git+https://…@&lt;commit-sha&gt;</code>）</td>
+<td>✅（必须 pin commit SHA）</td>
+</tr>
+<tr>
+<td>带 hash 的直接 URL（<code>pkg @ https://…/pkg-1.0.whl#sha256=…</code>）</td>
+<td>✅（必须带 hash）</td>
+</tr>
+<tr>
+<td>可编辑安装（<code>-e .</code>）</td>
+<td>⏭️ 跳过并告警</td>
+</tr>
+<tr>
+<td>未 pin 的 VCS（<code>git+https://…</code>，无 commit）</td>
+<td>❌ 退出码 2</td>
+</tr>
+<tr>
+<td>不带 hash 的直接 URL</td>
+<td>❌ 退出码 2</td>
+</tr>
+<tr>
+<td>本地路径（<code>./pkg</code>、<code>/abs/pkg</code>）</td>
+<td>❌ 退出码 2</td>
+</tr>
+</tbody>
+</table>
+<p>加 <code>--require-hashes</code>（或策略文件 <code>[install] require_hashes = true</code>）可要求
+<strong>每一项</strong> 都带 hash，等同于 <code>pip install --require-hashes</code> 的完整性保证。
+可通过策略键 <code>allow_vcs_pinned</code> / <code>allow_direct_url_pinned</code> 完全禁用 VCS / 直接 URL 依赖。</p>
 <h3 id="ci">非交互模式（CI 推荐）<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--yes<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </span></code></pre></div>
-<h2 id="_4">常用参数<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<h2 id="cve-osvdev">已知 CVE 查询（osv.dev）<a class="headerlink" href="#cve-osvdev" title="Permanent link">&para;</a></h2>
+<p>pipguard 的 AST 扫描检测的是 <em>可疑行为</em>；<code>--check-vulns</code> 会额外查询
+<a href="https://osv.dev">osv.dev</a>，补上 <em>已公开漏洞</em> 这一互补信号：</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--check-vulns<span class="w"> </span>requests
+</span></code></pre></div>
+<p>已知 CVE 会显示在独立的 <strong>Known CVEs (osv.dev)</strong> 区块——即使包在行为上被判为
+CLEAN 也会显示。默认仅提示、不阻断；加 <code>--fail-on-vuln</code>（隐含 <code>--check-vulns</code>）
+可将其变为硬性门禁（退出码 1）。</p>
+<div class="admonition note">
+<p class="admonition-title">opt-in 网络请求</p>
+<p>OSV 查询是扫描期间 pipguard 唯一的外部请求，因此是 opt-in 的。不加
+<code>--check-vulns</code>（或策略文件 <code>[osv] enabled = true</code>）时 pipguard 保持离线。
+查询是尽力而为的——osv.dev 不可达时会静默降级，行为扫描照常进行。</p>
+</div>
+<h2 id="_5">常用参数<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>--yes</code>：自动确认 MEDIUM/LOW 风险（适合 CI）</li>
-<li><code>--allow pkg1,pkg2</code>：允许指定包将 HIGH 降级为 MEDIUM</li>
-<li><code>--allow-sdist</code>：允许 sdist（默认不允许）</li>
+<li><code>--yes</code> / <code>-y</code>：自动确认 MEDIUM/LOW 风险（适合 CI）</li>
+<li><code>--allow pkg</code>：将指定包 HIGH 降级为 MEDIUM（可重复）</li>
+<li><code>--force</code>：对指定包绕过所有检查（谨慎使用）</li>
+<li><code>--allow-sdist</code>：允许 sdist（默认不允许；会执行任意代码）</li>
+<li><code>--require-hashes</code>：要求所有 requirements 条目都带 hash</li>
+<li><code>--check-vulns</code>：查询 osv.dev 已知漏洞（opt-in 网络请求；仅提示）</li>
+<li><code>--fail-on-vuln</code>：命中已知 CVE 时退出码 1（隐含 <code>--check-vulns</code>）</li>
+<li><code>--intel-feed FILE_OR_URL</code> / <code>--enforce-intel</code>：威胁情报名单及其强制阻断</li>
 <li><code>--verbose</code>：显示完整扫描明细，包括 LOW 文件详情与 CLEAN 包列表</li>
 <li><code>--show-pip-output</code>：显示原始 pip 安装输出</li>
 <li><code>--policy path/to/pipguard.toml</code>：使用策略文件</li>
 </ul>
-<h2 id="_5">输出与行为<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<h2 id="_6">输出与行为<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <ul>
 <li>检测到 <strong>CRITICAL/HIGH</strong>：阻断安装，退出码 <code>1</code></li>
 <li>检测到 <strong>MEDIUM/LOW</strong>：提示确认（或 <code>--yes</code> 自动继续）</li>

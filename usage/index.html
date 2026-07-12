@@ -599,6 +599,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#supported-dependency-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Dependency Sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ci-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -966,6 +977,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#supported-dependency-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Dependency Sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ci-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1087,6 +1109,56 @@ shown only in the summary totals.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </span></code></pre></div>
 <p>Scans all packages in the file. Blocks on first CRITICAL or HIGH finding.</p>
+<h2 id="supported-dependency-sources">Supported Dependency Sources<a class="headerlink" href="#supported-dependency-sources" title="Permanent link">&para;</a></h2>
+<p>pipguard can only guarantee its scan promise for artifacts it downloads and
+inspects, so it accepts requirement entries that resolve to a fixed, verifiable
+artifact and rejects (exit 2) the ones that don't:</p>
+<table>
+<thead>
+<tr>
+<th>Requirement form</th>
+<th>Accepted?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PyPI specifier (<code>requests==2.31.0</code>, <code>numpy&gt;=1.24</code>)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Hash-locked (<code>pkg==1.0 --hash=sha256:…</code>)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Pinned VCS (<code>git+https://…@&lt;commit-sha&gt;</code>)</td>
+<td>✅ (commit SHA required)</td>
+</tr>
+<tr>
+<td>Direct URL with hash (<code>pkg @ https://…/pkg-1.0.whl#sha256=…</code>)</td>
+<td>✅ (hash required)</td>
+</tr>
+<tr>
+<td>Editable (<code>-e .</code>)</td>
+<td>⏭️ skipped with a warning</td>
+</tr>
+<tr>
+<td>Unpinned VCS (<code>git+https://…</code>, no commit)</td>
+<td>❌ exit 2</td>
+</tr>
+<tr>
+<td>Direct URL without a hash</td>
+<td>❌ exit 2</td>
+</tr>
+<tr>
+<td>Local path (<code>./pkg</code>, <code>/abs/pkg</code>)</td>
+<td>❌ exit 2</td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>--require-hashes</code> (or <code>[install] require_hashes = true</code> in a policy file) to
+require a hash on <strong>every</strong> entry — the same integrity guarantee as
+<code>pip install --require-hashes</code>. VCS and direct-URL support can be disabled
+entirely via the <code>allow_vcs_pinned</code> / <code>allow_direct_url_pinned</code> policy keys.</p>
 <h2 id="ci-mode">CI Mode<a class="headerlink" href="#ci-mode" title="Permanent link">&para;</a></h2>
 <p>In CI, you never want interactive prompts. Use <code>--yes</code> to suppress all confirmation prompts
 and have pipguard exit 1 automatically on CRITICAL or HIGH findings:</p>
