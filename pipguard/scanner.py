@@ -567,8 +567,16 @@ def _build_alias_map(tree: ast.AST) -> Dict[str, str]:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for spec in node.names:
-                local = spec.asname or spec.name.split(".")[0]
-                aliases[local] = spec.name
+                if spec.asname:
+                    # `import a.b.c as x` binds `x` -> the a.b.c module
+                    aliases[spec.asname] = spec.name
+                else:
+                    # `import a.b.c` binds the top package `a`, which refers to
+                    # module `a` — NOT a.b.c. Mapping it to the full dotted name
+                    # would double-count segments (e.g. urllib.request.urlopen
+                    # resolving to urllib.request.request.urlopen).
+                    top = spec.name.split(".")[0]
+                    aliases[top] = top
 
         elif isinstance(node, ast.ImportFrom):
             if not node.module:
