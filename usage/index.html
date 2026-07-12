@@ -643,6 +643,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#scanning-the-pypi-feed-reporter-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scanning the PyPI Feed (Reporter Workflow)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#allowing-known-legitimate-packages" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1021,6 +1032,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#scanning-the-pypi-feed-reporter-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scanning the PyPI Feed (Reporter Workflow)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#allowing-known-legitimate-packages" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1232,10 +1254,37 @@ is unreachable it fails open and the behavioural scan still runs.</p>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w">       </span><span class="c1"># same as --check-vulns</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">fail_on_vuln</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="c1"># set true for --fail-on-vuln</span>
 </span></code></pre></div>
+<h2 id="scanning-the-pypi-feed-reporter-workflow">Scanning the PyPI Feed (Reporter Workflow)<a class="headerlink" href="#scanning-the-pypi-feed-reporter-workflow" title="Permanent link">&para;</a></h2>
+<p><code>pipguard scan-feed</code> watches PyPI's RSS feed of recent releases, scans each entry
+<strong>without installing anything</strong>, and surfaces the high-risk ones as candidates
+for manual review. This operationalizes the "reporter" workflow — most new
+releases are boring; a scan lets one person focus attention on the few that look
+suspicious, and file an advisory if a manual look confirms it.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Scan the 20 most recent releases; list anything HIGH or CRITICAL</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pipguard<span class="w"> </span>scan-feed
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># New packages (not just new releases of existing ones), CRITICAL-only</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>pipguard<span class="w"> </span>scan-feed<span class="w"> </span>--feed<span class="w"> </span>packages<span class="w"> </span>--min-level<span class="w"> </span>critical
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Scan a saved feed file, widen the net to MEDIUM, add CVE lookups</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>pipguard<span class="w"> </span>scan-feed<span class="w"> </span>--feed<span class="w"> </span>./updates.xml<span class="w"> </span>--min-level<span class="w"> </span>medium<span class="w"> </span>--check-vulns
+</span></code></pre></div>
+<p>Options: <code>--feed</code> (<code>updates</code> (default) | <code>packages</code> | a URL or local file),
+<code>--limit N</code> (default 20; <code>0</code> = no limit), <code>--min-level</code>
+(<code>critical</code>|<code>high</code>|<code>medium</code>|<code>low</code>, default <code>high</code>), plus <code>--allow</code>,
+<code>--check-vulns</code>, <code>--verbose</code>, and <code>--policy</code>.</p>
+<p>Exit codes: <strong>1</strong> if any package meets or exceeds <code>--min-level</code> (so a scheduled
+job can alert), <strong>0</strong> if none do, <strong>2</strong> on a feed/download error. sdist-only
+releases are skipped (they can't be scanned without executing build code).</p>
+<div class="admonition note">
+<p class="admonition-title">This is triage, not proof</p>
+<p>A flagged package is a <em>candidate for review</em>, not a confirmed attack.
+Inspect it (e.g. via the PyPI Inspector) before acting.</p>
+</div>
 <h2 id="allowing-known-legitimate-packages">Allowing Known-Legitimate Packages<a class="headerlink" href="#allowing-known-legitimate-packages" title="Permanent link">&para;</a></h2>
 <p>Some packages legitimately access credential stores (e.g. <code>paramiko</code> reads <code>~/.ssh</code>).
 Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow<span class="w"> </span>paramiko<span class="w"> </span>paramiko
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow<span class="w"> </span>paramiko<span class="w"> </span>paramiko
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">CRITICAL findings are never reduced</p>
@@ -1243,7 +1292,7 @@ Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
 </div>
 <h2 id="forcing-a-package-escape-hatch">Forcing a Package (Escape Hatch)<a class="headerlink" href="#forcing-a-package-escape-hatch" title="Permanent link">&para;</a></h2>
 <p>For known false-positives on fully-trusted internal packages:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--force<span class="w"> </span>my-trusted-internal-pkg
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--force<span class="w"> </span>my-trusted-internal-pkg
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Use with care</p>
@@ -1252,7 +1301,7 @@ Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
 <h2 id="allowing-sdist-packages">Allowing sdist Packages<a class="headerlink" href="#allowing-sdist-packages" title="Permanent link">&para;</a></h2>
 <p>By default pipguard exits with code 2 if a package falls back to sdist (source distribution),
 because sdists execute build scripts. To opt in:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow-sdist<span class="w"> </span>some-package
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow-sdist<span class="w"> </span>some-package
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">sdist installs execute arbitrary code</p>

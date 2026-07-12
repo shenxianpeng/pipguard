@@ -649,6 +649,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pypi-feedreporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        扫描 PyPI feed（reporter 工作流）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -989,6 +1000,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pypi-feedreporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        扫描 PyPI feed（reporter 工作流）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1110,6 +1132,29 @@ CLEAN 也会显示。默认仅提示、不阻断；加 <code>--fail-on-vuln</cod
 <li><code>--show-pip-output</code>：显示原始 pip 安装输出</li>
 <li><code>--policy path/to/pipguard.toml</code>：使用策略文件</li>
 </ul>
+<h2 id="pypi-feedreporter">扫描 PyPI feed（reporter 工作流）<a class="headerlink" href="#pypi-feedreporter" title="Permanent link">&para;</a></h2>
+<p><code>pipguard scan-feed</code> 会监控 PyPI 最近发布的 RSS feed，对每一项<strong>只扫描、不安装</strong>，
+并把高风险的挑出来作为人工核查候选。这把"reporter"工作流落地了——绝大多数新发布
+都平平无奇，扫描让一个人能把注意力集中在少数可疑的上面，人工确认后再提交 advisory。</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># 扫描最近 20 个发布，列出 HIGH 或 CRITICAL</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pipguard<span class="w"> </span>scan-feed
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># 新包（而非已有包的新版本），仅 CRITICAL</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>pipguard<span class="w"> </span>scan-feed<span class="w"> </span>--feed<span class="w"> </span>packages<span class="w"> </span>--min-level<span class="w"> </span>critical
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># 扫描本地保存的 feed 文件，放宽到 MEDIUM，并查 CVE</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>pipguard<span class="w"> </span>scan-feed<span class="w"> </span>--feed<span class="w"> </span>./updates.xml<span class="w"> </span>--min-level<span class="w"> </span>medium<span class="w"> </span>--check-vulns
+</span></code></pre></div>
+<p>参数：<code>--feed</code>（<code>updates</code>（默认）| <code>packages</code> | URL 或本地文件）、<code>--limit N</code>
+（默认 20；<code>0</code> 表示不限）、<code>--min-level</code>（<code>critical</code>|<code>high</code>|<code>medium</code>|<code>low</code>，默认
+<code>high</code>），以及 <code>--allow</code>、<code>--check-vulns</code>、<code>--verbose</code>、<code>--policy</code>。</p>
+<p>退出码：任何包达到或超过 <code>--min-level</code> 时为 <strong>1</strong>（便于定时任务告警），没有则 <strong>0</strong>，
+feed/下载错误为 <strong>2</strong>。纯 sdist 的发布会被跳过（不执行构建代码就无法扫描）。</p>
+<div class="admonition note">
+<p class="admonition-title">这是初筛，不是定论</p>
+<p>被标记的包只是<em>核查候选</em>，不代表确认的攻击。请先人工检查（例如用 PyPI Inspector）
+再行动。</p>
+</div>
 <h2 id="_6">输出与行为<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <ul>
 <li>检测到 <strong>CRITICAL/HIGH</strong>：阻断安装，退出码 <code>1</code></li>
