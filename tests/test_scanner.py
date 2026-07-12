@@ -163,6 +163,31 @@ class TestScanPythonFileCritical:
         findings = scan_python_file(str(setup), is_hook=True)
         assert any(f.level == RiskLevel.CRITICAL for f in findings)
 
+    def test_dunder_import_chained_call_in_hook_is_critical(self, tmp_path):
+        """__import__('os').system(...) must resolve to os.system → CRITICAL."""
+        setup = tmp_path / "setup.py"
+        setup.write_text("__import__('os').system('id')\n")
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_dunder_import_socket_chained_call_is_critical(self, tmp_path):
+        """__import__('socket').create_connection(...) → network call CRITICAL."""
+        setup = tmp_path / "setup.py"
+        setup.write_text("__import__('socket').create_connection(('h', 80))\n")
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_importlib_module_chained_call_in_hook_is_critical(self, tmp_path):
+        """importlib.import_module('os') assigned then called → CRITICAL."""
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import importlib\n"
+            "m = importlib.import_module('os')\n"
+            "m.system('id')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
     def test_setup_py_fixture_is_critical(self):
         """The full malicious setup.py fixture is CRITICAL."""
         path = os.path.join(FIXTURES, "pth_attack", "setup.py")
@@ -188,6 +213,43 @@ class TestScanPythonFileHigh:
         setup.write_text("path = os.path.expanduser('~/.aws/credentials')\n")
         findings = scan_python_file(str(setup), is_hook=True)
         assert any(f.level == RiskLevel.HIGH for f in findings)
+
+    def test_credential_path_via_join_in_hook_is_high(self, tmp_path):
+        """os.path.join(expanduser('~'), '.ssh', 'id_rsa') → HIGH."""
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import os\n"
+            "open(os.path.join(os.path.expanduser('~'), '.ssh', 'id_rsa'))\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(
+            f.level == RiskLevel.HIGH and "os.path.join" in f.description
+            for f in findings
+        )
+
+    def test_credential_path_via_join_in_runtime_is_medium(self, tmp_path):
+        """Same construction in runtime code is MEDIUM, not HIGH."""
+        mod = tmp_path / "runner.py"
+        mod.write_text(
+            "import os\n"
+            "open(os.path.join(os.path.expanduser('~'), '.aws', 'credentials'))\n"
+        )
+        findings = scan_python_file(str(mod), is_hook=False)
+        assert any(
+            f.level == RiskLevel.MEDIUM and "os.path.join" in f.description
+            for f in findings
+        )
+        assert not any(f.level == RiskLevel.HIGH for f in findings)
+
+    def test_benign_path_join_is_clean(self, tmp_path):
+        """os.path.join with non-credential segments must not flag."""
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import os\n"
+            "os.path.join(base, 'src', 'pkg', '__init__.py')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert not any("os.path.join" in f.description for f in findings)
 
     def test_subprocess_shell_true_in_hook_is_critical(self, tmp_path):
         setup = tmp_path / "setup.py"

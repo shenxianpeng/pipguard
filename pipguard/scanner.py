@@ -41,6 +41,34 @@ _SENSITIVE_ENV_RE = re.compile(
     r"(?i)(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|PASSWD|API_KEY|ACCESS_KEY)"
 )
 
+# Path segments that reconstruct a credential path when assembled via
+# os.path.join(...), even though no single string literal matches
+# CREDENTIAL_PATHS. Kept intentionally specific to avoid false positives.
+_CREDENTIAL_PATH_COMPONENTS = frozenset({
+    ".ssh",
+    ".aws",
+    ".kube",
+    ".gnupg",
+    ".netrc",
+    ".git-credentials",
+    "id_rsa",
+    "id_ed25519",
+    "id_ecdsa",
+})
+
+# Path-join callables whose assembled segments we inspect for credential paths.
+_PATH_JOIN_FUNCS = frozenset({
+    "os.path.join",
+    "posixpath.join",
+    "ntpath.join",
+})
+
+# Dynamic-import callables whose string argument names the imported module.
+_DYNAMIC_IMPORT_FUNCS = frozenset({
+    "__import__",
+    "importlib.import_module",
+})
+
 # Install hook filenames (HIGH severity scope — A6)
 _INSTALL_HOOK_NAMES = frozenset({"setup.py", "setup.cfg", "pyproject.toml"})
 
@@ -246,6 +274,24 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
                         snippet=node.value[:100],
                     ))
                     break
+
+        # ── Credential path constructed via os.path.join(...) ───────────────────
+        if isinstance(node, ast.Call):
+            name = _resolved_call_name(node, aliases)
+            if name in _PATH_JOIN_FUNCS:
+                component = _credential_join_component(node)
+                if component:
+                    level = RiskLevel.HIGH if is_hook else RiskLevel.MEDIUM
+                    findings.append(Finding(
+                        level=level,
+                        file_path=filepath,
+                        line=lineno,
+                        description=(
+                            "Credential path constructed via os.path.join: "
+                            f"{component}"
+                        ),
+                        snippet=component,
+                    ))
 
         # ── Dynamic code execution in install hooks ─────────────────────────────
         if is_hook and isinstance(node, ast.Call):
@@ -560,14 +606,35 @@ def _resolve_expr_name(expr: ast.AST, aliases: Dict[str, str]) -> Optional[str]:
         return f"{base}.{expr.attr}"
 
     if isinstance(expr, ast.Call):
-        # getattr(module_or_alias, "attr") -> module.attr
         callee = _resolve_expr_name(expr.func, aliases)
+        # getattr(module_or_alias, "attr") -> module.attr
         if callee == "getattr" and len(expr.args) >= 2:
             base = _resolve_expr_name(expr.args[0], aliases)
             attr = expr.args[1]
             if base and isinstance(attr, ast.Constant) and isinstance(attr.value, str):
                 return f"{base}.{attr.value}"
+        # __import__("os") / importlib.import_module("os") -> os
+        # so chained calls like __import__("os").system(...) resolve to os.system
+        if callee in _DYNAMIC_IMPORT_FUNCS and expr.args:
+            mod = expr.args[0]
+            if isinstance(mod, ast.Constant) and isinstance(mod.value, str):
+                return mod.value
 
+    return None
+
+
+def _credential_join_component(node: ast.Call) -> Optional[str]:
+    """Return the first sensitive segment in an os.path.join(...) call, if any.
+
+    Catches credential paths assembled from separate literals — e.g.
+    ``os.path.join(os.path.expanduser("~"), ".ssh", "id_rsa")`` — which evade
+    the literal-substring match against CREDENTIAL_PATHS.
+    """
+    for arg in node.args:
+        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+            segment = arg.value.strip().strip("/")
+            if segment in _CREDENTIAL_PATH_COMPONENTS:
+                return segment
     return None
 
 
