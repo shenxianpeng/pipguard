@@ -50,6 +50,13 @@
         <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/risk-levels/"/>
     </url>
     <url>
+        <loc>https://shenxianpeng.github.io/pipguard/runtime-sandbox/</loc>
+        <lastmod>2026-07-12</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/runtime-sandbox/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/runtime-sandbox/"/>
+    </url>
+    <url>
         <loc>https://shenxianpeng.github.io/pipguard/security-gap-assessment/</loc>
         <lastmod>2026-07-12</lastmod>
         <changefreq>daily</changefreq>
@@ -111,6 +118,13 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/risk-levels/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/risk-levels/"/>
+    </url>
+    <url>
+        <loc>https://shenxianpeng.github.io/pipguard/zh/runtime-sandbox/</loc>
+        <lastmod>2026-07-12</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://shenxianpeng.github.io/pipguard/zh/runtime-sandbox/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://shenxianpeng.github.io/pipguard/runtime-sandbox/"/>
     </url>
     <url>
         <loc>https://shenxianpeng.github.io/pipguard/zh/security-gap-assessment/</loc>
