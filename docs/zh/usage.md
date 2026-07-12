@@ -78,6 +78,34 @@ CLEAN 也会显示。默认仅提示、不阻断；加 `--fail-on-vuln`（隐含
 - `--show-pip-output`：显示原始 pip 安装输出
 - `--policy path/to/pipguard.toml`：使用策略文件
 
+## 扫描 PyPI feed（reporter 工作流）
+
+`pipguard scan-feed` 会监控 PyPI 最近发布的 RSS feed，对每一项**只扫描、不安装**，
+并把高风险的挑出来作为人工核查候选。这把"reporter"工作流落地了——绝大多数新发布
+都平平无奇，扫描让一个人能把注意力集中在少数可疑的上面，人工确认后再提交 advisory。
+
+```bash
+# 扫描最近 20 个发布，列出 HIGH 或 CRITICAL
+pipguard scan-feed
+
+# 新包（而非已有包的新版本），仅 CRITICAL
+pipguard scan-feed --feed packages --min-level critical
+
+# 扫描本地保存的 feed 文件，放宽到 MEDIUM，并查 CVE
+pipguard scan-feed --feed ./updates.xml --min-level medium --check-vulns
+```
+
+参数：`--feed`（`updates`（默认）| `packages` | URL 或本地文件）、`--limit N`
+（默认 20；`0` 表示不限）、`--min-level`（`critical`|`high`|`medium`|`low`，默认
+`high`），以及 `--allow`、`--check-vulns`、`--verbose`、`--policy`。
+
+退出码：任何包达到或超过 `--min-level` 时为 **1**（便于定时任务告警），没有则 **0**，
+feed/下载错误为 **2**。纯 sdist 的发布会被跳过（不执行构建代码就无法扫描）。
+
+!!! note "这是初筛，不是定论"
+    被标记的包只是*核查候选*，不代表确认的攻击。请先人工检查（例如用 PyPI Inspector）
+    再行动。
+
 ## 输出与行为
 
 - 检测到 **CRITICAL/HIGH**：阻断安装，退出码 `1`
