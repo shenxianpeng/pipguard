@@ -1,0 +1,20 @@
+# pre-commit hook definitions for pipguard.
+# Usage in a consumer repo's .pre-commit-config.yaml:
+#
+#   repos:
+#     - repo: https://github.com/shenxianpeng/pipguard
+#       rev: v0.2.0
+#       hooks:
+#         - id: pipguard
+#           # scans requirements.txt by default; override for a different file:
+#           # args: ['-r', 'requirements/prod.txt']
+#
+- id: pipguard
+  name: pipguard
+  description: Scan Python packages for supply chain attacks before installing.
+  entry: pipguard install --yes
+  language: python
+  args: ['-r', 'requirements.txt']
+  files: '^requirements.*\.txt$'
+  pass_filenames: false
+  require_serial: true
