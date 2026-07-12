@@ -4,7 +4,6 @@ Architecture Amendment A1: Use --prefer-binary, detect sdist fallback by extensi
 Architecture Amendment A10: Check disk space before download.
 """
 
-import os
 import shutil
 import subprocess
 import sys

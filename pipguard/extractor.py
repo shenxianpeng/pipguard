@@ -6,6 +6,8 @@ import tarfile
 import zipfile
 from typing import Generator, List, Optional, Tuple
 
+from .scanner import is_install_hook_scope
+
 # Compiled binary extension suffixes that cannot be AST-scanned
 BINARY_EXTENSIONS = frozenset({".so", ".pyd", ".dylib"})
 
@@ -90,15 +92,14 @@ def collect_scannable_files(
 
     Skips __pycache__, .git, and test directories (not executed during install).
     """
-    hook_names = frozenset({"setup.py", "setup.cfg", "pyproject.toml"})
     skip_dirs = frozenset({"__pycache__", ".git", "tests", "test", ".tox"})
 
     for root, dirs, files in os.walk(extract_dir):
         dirs[:] = [d for d in dirs if d not in skip_dirs]
         for fname in files:
             filepath = os.path.join(root, fname)
-            is_hook = fname in hook_names or fname.endswith(".pth")
-            if fname.endswith(".py") or fname in hook_names or fname.endswith(".pth"):
+            is_hook = is_install_hook_scope(filepath)
+            if fname.endswith(".py") or is_hook:
                 yield filepath, is_hook
 
 

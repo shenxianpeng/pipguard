@@ -95,7 +95,6 @@ def _scan_one_package(
 
     extract_dir = extract_archive(archive_path, tmp_dir)
     if extract_dir is None:
-        from .models import Finding
         return PackageScanResult(
             package_name=pkg_name,
             version=pkg_version,
@@ -334,32 +333,8 @@ def cmd_install(args) -> int:
             return 1
 
     # Parallel scan (Architecture Amendment A8)
-    n = len(archive_files)
-    workers = min(n, os.cpu_count() or 4)
-    print(f"🔍 Scanning {n} package(s) ...")
-
-    results: List[PackageScanResult] = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        future_to_arch = {
-            pool.submit(_scan_one_package, arch, tmp_dir, extra_allow, check_vulns): arch
-            for arch in archive_files
-        }
-        for future in concurrent.futures.as_completed(future_to_arch):
-            try:
-                results.append(future.result())
-            except Exception as exc:
-                pkg = _pkg_name_from_filename(future_to_arch[future])
-                print(f"Warning: scan failed for {pkg}: {exc}", file=sys.stderr)
-                results.append(PackageScanResult(
-                    package_name=pkg,
-                    version="",
-                    findings=[Finding(
-                        level=RiskLevel.MEDIUM,
-                        file_path=future_to_arch[future],
-                        line=0,
-                        description=f"Scan error (fail-safe): {exc}",
-                    )],
-                ))
+    print(f"🔍 Scanning {len(archive_files)} package(s) ...")
+    results = _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns)
 
     print_findings_report(results, verbose=verbose)
 
