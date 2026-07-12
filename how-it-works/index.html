@@ -1121,11 +1121,19 @@
 </tr>
 <tr>
 <td>Network in <code>setup.py</code> / install hooks</td>
-<td><code>urllib.request.urlopen(...)</code> in <code>setup.py</code></td>
+<td><code>urllib.request.urlopen(...)</code>, <code>urlretrieve(...)</code> in <code>setup.py</code></td>
 </tr>
 <tr>
-<td>Shell/subprocess execution in install hooks</td>
-<td><code>os.system(...)</code>, <code>subprocess.run(..., shell=True)</code></td>
+<td>Shell/process execution in install hooks</td>
+<td><code>os.system(...)</code>, <code>os.execv(...)</code>, <code>pty.spawn(...)</code>, <code>subprocess.run(..., shell=True)</code></td>
+</tr>
+<tr>
+<td>Code execution via <code>runpy</code> in install hooks</td>
+<td><code>runpy.run_path('payload.py')</code></td>
+</tr>
+<tr>
+<td>Reflection to a dangerous call</td>
+<td><code>getattr(os, name)(...)</code>, <code>__import__('os').system(...)</code></td>
 </tr>
 </tbody>
 </table>
