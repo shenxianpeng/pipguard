@@ -349,6 +349,43 @@ class TestCmdInstallGate:
         assert rc == 2
         mock_install.assert_not_called()
 
+    def test_fail_on_vuln_blocks_clean_package_with_cve(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """A behaviourally-CLEAN package with a known CVE → exit 1 under --fail-on-vuln."""
+        from pipguard.osv import OsvVulnerability
+        mock_dl.return_value = ([str(tmp_path / "jinja2-2.4.1-py3-none-any.whl")], [])
+        result = _make_scan_result("jinja2", RiskLevel.CLEAN)
+        result.version = "2.4.1"
+        result.cves = [OsvVulnerability(vuln_id="CVE-2026-1", summary="XSS")]
+        mock_scan.return_value = result
+        rc = cmd_install(_make_args(packages=["jinja2"], fail_on_vuln=True))
+        assert rc == 1
+        mock_install.assert_not_called()
+
+    def test_known_cve_informational_does_not_block(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """--check-vulns without --fail-on-vuln surfaces CVEs but still installs."""
+        from pipguard.osv import OsvVulnerability
+        mock_dl.return_value = ([str(tmp_path / "jinja2-2.4.1-py3-none-any.whl")], [])
+        result = _make_scan_result("jinja2", RiskLevel.CLEAN)
+        result.cves = [OsvVulnerability(vuln_id="CVE-2026-1", summary="XSS")]
+        mock_scan.return_value = result
+        rc = cmd_install(_make_args(packages=["jinja2"], check_vulns=True))
+        assert rc == 0
+        mock_install.assert_called_once()
+
+    def test_scan_receives_check_vulns_flag(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """--check-vulns must be threaded through to _scan_one_package."""
+        mock_dl.return_value = ([str(tmp_path / "requests-2.31.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("requests", RiskLevel.CLEAN)
+        cmd_install(_make_args(packages=["requests"], check_vulns=True))
+        # 4th positional arg to _scan_one_package is check_vulns
+        assert mock_scan.call_args[0][3] is True
+
     @patch("pipguard.cli.load_policy")
     def test_policy_seed_allowlist_is_applied(
         self,

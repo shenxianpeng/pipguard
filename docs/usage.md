@@ -76,6 +76,46 @@ Proceed with installation? [y/N]
   </div>
 </div>
 
+## Known CVE Lookup (osv.dev)
+
+pipguard's AST scanner detects *suspicious behaviour*. The `--check-vulns` flag
+adds a complementary signal by querying [osv.dev](https://osv.dev) for
+*published* vulnerabilities in each package version:
+
+```bash
+pipguard install --check-vulns requests
+```
+
+Known CVEs appear in a dedicated **Known CVEs (osv.dev)** section — shown even
+for packages the behavioural scan marks CLEAN:
+
+```text
+Known CVEs (osv.dev) — 1 CVE
+  jinja2==3.1.5
+    CVE-2024-56326 [MEDIUM] Jinja sandbox breakout through attr filter selection (fixed in 3.1.6)
+```
+
+CVEs are **informational by default** and do not block the install. To make them
+a hard gate (exit 1), add `--fail-on-vuln` (which implies `--check-vulns`):
+
+```bash
+pipguard install --fail-on-vuln -r requirements.txt
+```
+
+!!! note "Opt-in network call"
+    OSV lookups are the only outbound request pipguard makes during a scan, so
+    they are opt-in. Without `--check-vulns` (or `[osv] enabled = true` in a
+    policy file) pipguard stays offline. The lookup is best-effort — if osv.dev
+    is unreachable it fails open and the behavioural scan still runs.
+
+Policy-file equivalent:
+
+```toml
+[osv]
+enabled = true       # same as --check-vulns
+fail_on_vuln = false # set true for --fail-on-vuln
+```
+
 ## Allowing Known-Legitimate Packages
 
 Some packages legitimately access credential stores (e.g. `paramiko` reads `~/.ssh`).
@@ -129,6 +169,8 @@ pipguard install --allow-sdist some-package
 | `--policy FILE` | Load policy file (default: `./pipguard.toml` if present) |
 | `--intel-feed FILE_OR_URL` | Threat-intel JSON feed containing blocked package versions |
 | `--enforce-intel` | Enforce intel feed denylist and block matching packages |
+| `--check-vulns` | Query OSV.dev for known vulnerabilities (opt-in network call; informational) |
+| `--fail-on-vuln` | Exit 1 if any package has a known OSV vulnerability (implies `--check-vulns`) |
 
 ## Exit Codes
 

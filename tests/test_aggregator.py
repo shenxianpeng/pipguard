@@ -261,3 +261,97 @@ class TestPrintFindingsReport:
         print_findings_report([result], verbose=True)
         out = capsys.readouterr().out
         assert out.index("b.py:2") < out.index("a.py:1") < out.index("z.py:4")
+
+
+class TestCveDisplay:
+    """Tests for osv.dev CVE display in scan reports (Issue #39)."""
+
+    @staticmethod
+    def _make_cve(vuln_id="CVE-2024-1234", summary="Test vuln",
+                   severity="MEDIUM", fixed_version=None):
+        """Create a mock OsvVulnerability-compatible object."""
+        from pipguard.osv import OsvVulnerability
+        return OsvVulnerability(
+            vuln_id=vuln_id,
+            summary=summary,
+            severity=severity,
+            fixed_version=fixed_version,
+        )
+
+    def test_cves_shown_for_package_with_findings(self, capsys):
+        cve = self._make_cve()
+        result = PackageScanResult(
+            "jinja2", "3.1.5",
+            findings=[Finding(level=RiskLevel.MEDIUM, file_path="jinja2/sandbox.py",
+                            line=123, description="Sensitive env access")],
+            cves=[cve],
+        )
+        print_findings_report([result])
+        out = capsys.readouterr().out
+        assert "Known CVEs" in out
+        assert "CVE-2024-1234" in out
+        assert "Test vuln" in out
+
+    def test_cves_shown_for_clean_package(self, capsys):
+        cve = self._make_cve("CVE-2024-9999", "Clean but vulnerable")
+        result = PackageScanResult(
+            "cleanpkg", "1.0.0",
+            findings=[],
+            cves=[cve],
+        )
+        print_findings_report([result], verbose=True)
+        out = capsys.readouterr().out
+        assert "Known CVEs" in out
+        assert "CVE-2024-9999" in out
+
+    def test_cves_shown_for_clean_package_default_mode(self, capsys):
+        """Regression: a behaviourally-CLEAN package's CVE must appear in the
+        default (non-verbose) report, not only under --verbose."""
+        cve = self._make_cve("CVE-2024-56326", "sandbox breakout")
+        result = PackageScanResult("jinja2", "3.1.5", findings=[], cves=[cve])
+        print_findings_report([result])  # non-verbose
+        out = capsys.readouterr().out
+        assert "Known CVEs" in out
+        assert "CVE-2024-56326" in out
+        assert "jinja2==3.1.5" in out
+
+    def test_no_cves_when_empty(self, capsys):
+        result = PackageScanResult(
+            "cleanpkg", "1.0.0",
+            findings=[],
+            cves=[],
+        )
+        print_findings_report([result], verbose=True)
+        out = capsys.readouterr().out
+        assert "Known CVEs" not in out
+
+    def test_cves_for_binary_only_package(self, capsys):
+        cve = self._make_cve("CVE-2024-8888", "Binary vuln")
+        result = PackageScanResult(
+            "binarypkg", "2.0.0",
+            findings=[],
+            is_binary_only=True,
+            cves=[cve],
+        )
+        print_findings_report([result])
+        out = capsys.readouterr().out
+        assert "Known CVEs" in out
+        assert "CVE-2024-8888" in out
+
+    def test_multiple_cves_sorted(self, capsys):
+        cve1 = self._make_cve("CVE-2024-BBBB", "Second cve")
+        cve2 = self._make_cve("CVE-2024-AAAA", "First cve")
+        result = PackageScanResult("pkg", "1.0.0",
+                                   findings=[], cves=[cve1, cve2])
+        print_findings_report([result], verbose=True)
+        out = capsys.readouterr().out
+        assert out.index("CVE-2024-AAAA") < out.index("CVE-2024-BBBB")
+
+    def test_cve_with_fixed_version_displayed(self, capsys):
+        cve = self._make_cve("CVE-2024-CCCC", "Fixed vuln",
+                             severity="HIGH", fixed_version="2.0.0")
+        result = PackageScanResult("pkg", "1.0.0",
+                                   findings=[], cves=[cve])
+        print_findings_report([result], verbose=True)
+        out = capsys.readouterr().out
+        assert "fixed in 2.0.0" in out

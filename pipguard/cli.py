@@ -26,6 +26,7 @@ from .extractor import collect_binary_extension_files, collect_scannable_files, 
 from .installer import install_from_local
 from .intel import load_intel_feed
 from .models import Finding, PackageScanResult, RiskLevel
+from .osv import query_osv
 from .policy import load_policy
 from .scanner import scan_binary_extensions, scan_pth_file, scan_python_file
 
@@ -75,9 +76,11 @@ def _scan_one_package(
     archive_path: str,
     tmp_dir: str,
     extra_allow: List[str],
+    check_vulns: bool = False,
 ) -> PackageScanResult:
     """Scan a single downloaded archive. Designed for parallel execution."""
     pkg_name = _pkg_name_from_filename(archive_path)
+    pkg_version = _pkg_version_from_filename(archive_path)
 
     # Homoglyph / non-ASCII package name check (TODO-2)
     all_findings: List[Finding] = []
@@ -85,18 +88,23 @@ def _scan_one_package(
     if homoglyph:
         all_findings.append(homoglyph)
 
+    # Known-CVE lookup (OSV.dev) — complementary to the AST scan, opt-in via
+    # --check-vulns. Best-effort: query_osv returns [] on any failure.
+    cves = query_osv(pkg_name, pkg_version) if check_vulns else []
+
     extract_dir = extract_archive(archive_path, tmp_dir)
     if extract_dir is None:
         from .models import Finding
         return PackageScanResult(
             package_name=pkg_name,
-            version="",
+            version=pkg_version,
             findings=all_findings + [Finding(
                 level=RiskLevel.MEDIUM,
                 file_path=archive_path,
                 line=0,
                 description="Could not extract archive for scanning",
             )],
+            cves=cves,
         )
 
     has_scannable = False
@@ -114,12 +122,15 @@ def _scan_one_package(
             scan_binary_extensions(binary_files, has_python_source=has_scannable)
         )
 
-    if not has_scannable:
-        return aggregate_findings(
-            pkg_name, all_findings, extra_allow=extra_allow, is_binary_only=True
-        )
-
-    return aggregate_findings(pkg_name, all_findings, extra_allow=extra_allow)
+    result = aggregate_findings(
+        pkg_name,
+        all_findings,
+        extra_allow=extra_allow,
+        is_binary_only=not has_scannable,
+        version=pkg_version,
+    )
+    result.cves = cves
+    return result
 
 
 # ── requirements.txt validation ─────────────────────────────────────────────
@@ -237,6 +248,12 @@ def cmd_install(args) -> int:
     require_hashes = bool(args.require_hashes or policy.require_hashes)
     intel_feed = getattr(args, "intel_feed", None) or policy.intel_feed
     intel_enforce = bool(getattr(args, "enforce_intel", False) or policy.intel_enforce)
+    fail_on_vuln = bool(getattr(args, "fail_on_vuln", False) or getattr(policy, "osv_fail_on_vuln", False))
+    check_vulns = bool(
+        getattr(args, "check_vulns", False)
+        or getattr(policy, "osv_enabled", False)
+        or fail_on_vuln
+    )
     verbose = bool(getattr(args, "verbose", False))
     show_pip_output = bool(getattr(args, "show_pip_output", False))
 
@@ -322,7 +339,7 @@ def cmd_install(args) -> int:
     results: List[PackageScanResult] = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
         future_to_arch = {
-            pool.submit(_scan_one_package, arch, tmp_dir, extra_allow): arch
+            pool.submit(_scan_one_package, arch, tmp_dir, extra_allow, check_vulns): arch
             for arch in archive_files
         }
         for future in concurrent.futures.as_completed(future_to_arch):
@@ -343,6 +360,22 @@ def cmd_install(args) -> int:
                 ))
 
     print_findings_report(results, verbose=verbose)
+
+    # Known-CVE gate (opt-in). Independent of behavioural risk level: a package
+    # can be behaviourally CLEAN yet carry a published CVE.
+    if fail_on_vuln:
+        vulnerable = [r for r in results if r.cves]
+        if vulnerable:
+            names = ", ".join(
+                f"{r.package_name}=={r.version}" if r.version else r.package_name
+                for r in vulnerable
+            )
+            print(
+                "\n❌ Installation BLOCKED — known vulnerabilities detected "
+                f"(--fail-on-vuln): {names}",
+                file=sys.stderr,
+            )
+            return 1
 
     # Determine worst effective risk level across all packages
     max_level = RiskLevel.CLEAN
@@ -469,6 +502,17 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument(
         "--enforce-intel", action="store_true",
         help="Block packages present in intel feed",
+    )
+    install.add_argument(
+        "--check-vulns", action="store_true",
+        help=(
+            "Query OSV.dev for known vulnerabilities in each package "
+            "(opt-in network call; informational unless --fail-on-vuln)"
+        ),
+    )
+    install.add_argument(
+        "--fail-on-vuln", action="store_true",
+        help="Exit 1 if any package has a known OSV vulnerability (implies --check-vulns)",
     )
     return parser
 
