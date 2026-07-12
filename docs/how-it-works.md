@@ -22,7 +22,7 @@ AST scan all .py files            ← parallel, ThreadPoolExecutor
   all other .py                   ← MEDIUM/LOW scope
        │
        ▼
-osv.dev API query                ← known CVE lookup (best-effort)
+osv.dev API query                ← known CVE lookup (opt-in: --check-vulns)
        │
        ▼
 Risk scoring:
@@ -133,8 +133,8 @@ flags them explicitly:
 
 ## Known CVE Lookup (osv.dev)
 
-After AST scanning, pipguard queries the [osv.dev](https://osv.dev) API for
-known vulnerabilities in the scanned package version. osv.dev aggregates
+When `--check-vulns` is passed, pipguard queries the [osv.dev](https://osv.dev)
+API for known vulnerabilities in the scanned package version. osv.dev aggregates
 advisories from PyPI advisories, GitHub Security Advisories, and other sources.
 
 This is complementary to pipguard's AST analysis:
@@ -144,17 +144,19 @@ This is complementary to pipguard's AST analysis:
 - **osv.dev** matches against the public CVE database — catching known
   vulnerabilities that may not trigger AST rules
 
-The query is best-effort and non-blocking: if osv.dev is unreachable, the
-scan continues without CVEs shown. Known CVEs appear as a separate section
-in the scan report:
+The lookup is opt-in (it is the only network call pipguard makes during a
+scan), best-effort, and non-blocking: if osv.dev is unreachable, the scan
+continues without CVEs shown. Known CVEs appear as a dedicated section — shown
+even for packages the behavioural scan marks CLEAN:
 
 ```
-  [MEDIUM] jinja2
-    [MEDIUM] jinja2/sandbox.py:123
-           Access to sensitive env var: 'SECRET_KEY'
-    ── Known CVEs (osv.dev) ──
+Known CVEs (osv.dev) — 1 CVE
+  jinja2==3.1.5
     CVE-2024-56326 [MEDIUM] Jinja sandbox breakout through attr filter selection (fixed in 3.1.6)
 ```
+
+CVEs are informational by default; `--fail-on-vuln` turns them into a hard gate
+(exit 1).
 
 ## Seed Allowlist
 

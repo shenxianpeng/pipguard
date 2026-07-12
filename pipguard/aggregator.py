@@ -146,12 +146,10 @@ def _print_result_details(result: PackageScanResult, verbose: bool = False) -> N
         print(f"  {_color('[UNKNOWN]', 'MEDIUM')} {pkg}")
         print("    Binary-only wheel — no Python source to scan.")
         print("    Verify independently or use --force to install.")
-        _print_cves(result)
         return
 
     if not result.findings:
         print(f"  {_color('✓', 'CLEAN')} {pkg} — CLEAN")
-        _print_cves(result)
         return
 
     print(f"  {_color(f'[{level}]', level.name)} {pkg}")
@@ -165,16 +163,27 @@ def _print_result_details(result: PackageScanResult, verbose: bool = False) -> N
         if finding.snippet:
             print(f"           -> {finding.snippet}")
 
-    _print_cves(result)
 
+def _print_cves_section(results: List[PackageScanResult]) -> None:
+    """Print a standalone "Known CVEs (osv.dev)" section (always shown).
 
-def _print_cves(result: PackageScanResult) -> None:
-    """Print known CVEs from osv.dev for this package version."""
-    if not result.cves:
+    CVEs are reported independently of the behavioural risk level so that a
+    package the AST scanner marks CLEAN but which carries a published CVE is
+    still surfaced — including in the default (non-verbose) report, where
+    CLEAN packages are otherwise collapsed away.
+    """
+    with_cves = [r for r in results if r.cves]
+    if not with_cves:
         return
-    print(f"    ── Known CVEs (osv.dev) ──")
-    for vuln in sorted(result.cves, key=lambda v: v.short_id):
-        print(f"    {_color(vuln.one_line, vuln.severity or 'MEDIUM')}")
+
+    total = sum(len(r.cves) for r in with_cves)
+    noun = "CVE" if total == 1 else "CVEs"
+    print(f"\n{_color('Known CVEs (osv.dev)', 'HIGH')} — {total} {noun}")
+    for result in sorted(with_cves, key=_result_sort_key):
+        label = f"{result.package_name}=={result.version}" if result.version else result.package_name
+        print(f"  {label}")
+        for vuln in sorted(result.cves, key=lambda v: v.short_id):
+            print(f"    {_color(vuln.one_line, vuln.severity or 'MEDIUM')}")
 
 
 def print_findings_report(results: List[PackageScanResult], verbose: bool = False) -> None:
@@ -193,6 +202,7 @@ def print_findings_report(results: List[PackageScanResult], verbose: bool = Fals
 
     if counts[RiskLevel.CLEAN] == len(results) and not verbose:
         print("  All scanned packages are CLEAN.")
+        _print_cves_section(results)
         return
 
     for level in _REPORT_ORDER:
@@ -215,3 +225,5 @@ def print_findings_report(results: List[PackageScanResult], verbose: bool = Fals
 
         for result in group:
             _print_result_details(result, verbose=verbose)
+
+    _print_cves_section(results)

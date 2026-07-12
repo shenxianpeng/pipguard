@@ -304,6 +304,17 @@ class TestCveDisplay:
         assert "Known CVEs" in out
         assert "CVE-2024-9999" in out
 
+    def test_cves_shown_for_clean_package_default_mode(self, capsys):
+        """Regression: a behaviourally-CLEAN package's CVE must appear in the
+        default (non-verbose) report, not only under --verbose."""
+        cve = self._make_cve("CVE-2024-56326", "sandbox breakout")
+        result = PackageScanResult("jinja2", "3.1.5", findings=[], cves=[cve])
+        print_findings_report([result])  # non-verbose
+        out = capsys.readouterr().out
+        assert "Known CVEs" in out
+        assert "CVE-2024-56326" in out
+        assert "jinja2==3.1.5" in out
+
     def test_no_cves_when_empty(self, capsys):
         result = PackageScanResult(
             "cleanpkg", "1.0.0",

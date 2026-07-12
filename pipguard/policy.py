@@ -18,6 +18,8 @@ class Policy:
     binary_only: str = "prompt"  # prompt | block | allow
     intel_feed: str = ""
     intel_enforce: bool = False
+    osv_enabled: bool = False
+    osv_fail_on_vuln: bool = False
     seed_allowlist: List[str] = field(default_factory=list)
 
 
@@ -47,6 +49,7 @@ def load_policy(path: Optional[str]) -> Policy:
         configured_allowlist = []
 
     intel = data.get("intel", {})
+    osv = data.get("osv", {})
 
     return Policy(
         require_hashes=bool(install.get("require_hashes", False)),
@@ -55,6 +58,8 @@ def load_policy(path: Optional[str]) -> Policy:
         binary_only=binary_only,
         intel_feed=str(intel.get("feed", "")).strip(),
         intel_enforce=bool(intel.get("enforce", False)),
+        osv_enabled=bool(osv.get("enabled", False)),
+        osv_fail_on_vuln=bool(osv.get("fail_on_vuln", False)),
         seed_allowlist=[str(item) for item in configured_allowlist if str(item).strip()],
     )
 
