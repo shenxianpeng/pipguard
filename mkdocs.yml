@@ -56,6 +56,7 @@ nav:
     - Exit Codes: exit-codes.md
     - Seed Allowlist: allowlist.md
     - Policy as Code: policy.md
+    - Runtime Sandbox: runtime-sandbox.md
 
 plugins:
   - search
@@ -73,6 +74,7 @@ plugins:
           Exit Codes: 退出码
           Seed Allowlist: 种子允许列表
           Policy as Code: 策略即代码
+          Runtime Sandbox: 运行时沙箱
       languages:
         - locale: en
           default: true

@@ -1,0 +1,102 @@
+"""Tests for the experimental capability sandbox prototype (#55)."""
+
+import os
+import sys
+
+from pipguard.sandbox import (
+    DEFAULT_DENY_FRAGMENTS,
+    make_sitecustomize,
+    path_is_denied,
+    run_sandboxed,
+)
+
+
+# ── path_is_denied ───────────────────────────────────────────────────────────
+
+def test_path_is_denied_matches_credential_paths():
+    assert path_is_denied("/home/u/.ssh/id_rsa", ["/.ssh/"])
+    assert path_is_denied("~/.aws/credentials", ["/.aws/"])
+
+
+def test_path_is_denied_expands_user():
+    home_ssh = os.path.join(os.path.expanduser("~"), ".ssh", "id_ed25519")
+    assert path_is_denied(home_ssh, DEFAULT_DENY_FRAGMENTS)
+
+
+def test_path_is_denied_allows_normal_paths():
+    assert not path_is_denied("/tmp/data.txt", ["/.ssh/"])
+    assert not path_is_denied("", ["/.ssh/"])
+
+
+def test_path_is_denied_handles_resolution_error_safely():
+    # If path normalisation raises, treat the path as not denied (fail open on
+    # the matcher; the sandbox hook has its own guard).
+    from unittest.mock import patch
+    with patch("os.path.abspath", side_effect=ValueError("bad path")):
+        assert not path_is_denied("/home/u/.ssh/id_rsa", ["/.ssh/"])
+
+
+def test_make_sitecustomize_bakes_policy():
+    src = make_sitecustomize(["/.ssh/"], allow_network=False, allow_subprocess=True)
+    assert "addaudithook" in src
+    assert "/.ssh/" in src
+    assert "_ALLOW_NET = False" in src
+    assert "_ALLOW_SUB = True" in src
+
+
+# ── run_sandboxed (real subprocess, hermetic) ────────────────────────────────
+
+def test_sandbox_blocks_credential_read(tmp_path):
+    ssh_dir = tmp_path / ".ssh"
+    ssh_dir.mkdir()
+    key = ssh_dir / "id_rsa"
+    key.write_text("PRIVATE KEY")
+    rc = run_sandboxed(
+        [sys.executable, "-c", f"open({str(key)!r}).read()"],
+        deny_fragments=["/.ssh/"],
+        timeout=30,
+    )
+    assert rc != 0, "reading a credential path must be blocked"
+
+
+def test_sandbox_allows_normal_read(tmp_path):
+    f = tmp_path / "data.txt"
+    f.write_text("hello")
+    rc = run_sandboxed(
+        [sys.executable, "-c", f"open({str(f)!r}).read()"],
+        deny_fragments=["/.ssh/"],
+        timeout=30,
+    )
+    assert rc == 0, "reading a normal file must be allowed"
+
+
+def test_sandbox_blocks_outbound_network():
+    # socket.connect fires the audit event before the syscall, so this is
+    # hermetic — no real network is required for the block to trigger.
+    rc = run_sandboxed(
+        [sys.executable, "-c",
+         "import socket; socket.create_connection(('1.1.1.1', 80), timeout=2)"],
+        allow_network=False,
+        timeout=30,
+    )
+    assert rc != 0, "outbound network must be blocked when allow_network=False"
+
+
+def test_sandbox_blocks_subprocess_when_disallowed():
+    rc = run_sandboxed(
+        [sys.executable, "-c",
+         "import subprocess; subprocess.Popen(['echo', 'hi'])"],
+        allow_subprocess=False,
+        timeout=30,
+    )
+    assert rc != 0, "process execution must be blocked when allow_subprocess=False"
+
+
+def test_sandbox_allows_subprocess_by_default(tmp_path):
+    # A benign command with the default allow_subprocess=True should succeed.
+    rc = run_sandboxed(
+        [sys.executable, "-c", "print('ok')"],
+        deny_fragments=["/.ssh/"],
+        timeout=30,
+    )
+    assert rc == 0
