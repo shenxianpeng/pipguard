@@ -1,0 +1,9 @@
+{
+  "tpr": 1.0,
+  "fpr": 0.0,
+  "attack_total": 12,
+  "attack_detected": 12,
+  "benign_total": 7,
+  "benign_false_positive": 0,
+  "note": "Baseline recorded on the corpus in benchmark/corpus.json. Enforced by tests/test_benchmark.py."
+}
