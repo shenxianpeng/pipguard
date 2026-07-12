@@ -112,5 +112,41 @@
     "scope": "runtime",
     "expect": "allow",
     "desc": "getattr on a harmless object attribute"
+  },
+  {
+    "file": "bypass/getattr_variable_attr_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "reflection through a string variable: s='system'; getattr(os,s)()"
+  },
+  {
+    "file": "bypass/os_execv_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "process replacement via os.execv"
+  },
+  {
+    "file": "bypass/pty_spawn_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "shell spawned via pty.spawn"
+  },
+  {
+    "file": "bypass/runpy_run_path_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "arbitrary code execution via runpy.run_path"
+  },
+  {
+    "file": "bypass/urlretrieve_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "network fetch via urllib.request.urlretrieve"
+  },
+  {
+    "file": "benign/reflection_local_obj.py",
+    "scope": "runtime",
+    "expect": "allow",
+    "desc": "getattr reflection via variable on a harmless local object"
   }
 ]
