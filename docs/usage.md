@@ -170,6 +170,17 @@ releases are skipped (they can't be scanned without executing build code).
     A flagged package is a *candidate for review*, not a confirmed attack.
     Inspect it (e.g. via the PyPI Inspector) before acting.
 
+### Run it as a scheduled sentinel
+
+The exit-1-on-candidates behavior makes `scan-feed` easy to schedule. The repo
+ships a ready-to-copy GitHub Actions workflow at
+[`examples/scan-feed-cron.yml`](https://github.com/shenxianpeng/pipguard/blob/main/examples/scan-feed-cron.yml)
+that runs on a cron and opens a GitHub issue whenever releases are flagged:
+
+```bash
+cp examples/scan-feed-cron.yml .github/workflows/pipguard-sentinel.yml
+```
+
 ## Allowing Known-Legitimate Packages
 
 Some packages legitimately access credential stores (e.g. `paramiko` reads `~/.ssh`).

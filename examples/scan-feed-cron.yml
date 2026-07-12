@@ -1,0 +1,78 @@
+# pipguard PyPI sentinel — scheduled reporter workflow.
+#
+# Copy this file into your repository's .github/workflows/ to run
+# `pipguard scan-feed` on a schedule. When it finds PyPI releases at or above
+# the risk threshold it opens a GitHub issue with the report, turning the
+# reporter workflow into a hands-off sentinel.
+#
+# This file lives under examples/ and is INERT here — GitHub only runs
+# workflows under .github/workflows/. Copy it there to activate.
+
+name: pipguard PyPI sentinel
+
+on:
+  schedule:
+    # Every 6 hours. Adjust to taste (min interval on GitHub is ~5 min).
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      feed:
+        description: "Feed to scan: updates | packages | URL"
+        default: "updates"
+      min-level:
+        description: "Report at or above: critical | high | medium | low"
+        default: "high"
+      limit:
+        description: "Max recent entries to scan (0 = no limit)"
+        default: "50"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  scan-feed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install pipguard
+        run: python -m pip install pipguard
+
+      - name: Scan the PyPI feed
+        id: scan
+        run: |
+          set +e
+          pipguard scan-feed \
+            --feed "${{ inputs.feed || 'updates' }}" \
+            --min-level "${{ inputs.min-level || 'high' }}" \
+            --limit "${{ inputs.limit || '50' }}" \
+            | tee scan-report.txt
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Open an issue for review candidates
+        if: steps.scan.outputs.code == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "pipguard flagged one or more recent PyPI releases for review."
+            echo "These are **candidates**, not confirmed attacks — inspect each"
+            echo "(e.g. via the PyPI Inspector) before acting."
+            echo
+            echo '```'
+            cat scan-report.txt
+            echo '```'
+          } > issue-body.md
+          gh issue create \
+            --title "pipguard: PyPI releases to review ($(date -u +%Y-%m-%d))" \
+            --body-file issue-body.md
+
+      - name: Fail the run on a scan error
+        if: steps.scan.outputs.code == '2'
+        run: |
+          echo "::error::pipguard scan-feed failed (feed or download error)."
+          exit 1
