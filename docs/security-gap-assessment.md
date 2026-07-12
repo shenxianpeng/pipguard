@@ -3,6 +3,17 @@
 > 评估时间：2026-04-13
 > 评估范围：当前仓库主流程（download → extract → AST scan → gated install）
 
+> **更新（2026-07）：本文为历史快照，下列早期缺口已实现，阅读时请以代码为准。**
+> - 别名/一跳数据流追踪、`getattr`/`__import__` 反射、变量反射（`s="system"; getattr(os,s)`）
+> - 点号导入解析（`import urllib.request` → `urllib.request.urlopen`）
+> - 命令执行扩展：`os.exec*`/`os.spawn*`/`posix.system`/`pty.spawn`/`runpy`、`subprocess(["bash","-c",...])`
+> - 凭据路径拼接检测（`os.path.join(expanduser("~"), ".ssh", ...)`）
+> - 供应链完整性：`--require-hashes`、pinned VCS/直接 URL 校验（见 `docs/usage.md`）
+> - policy-as-code（`pipguard.toml`，见 `docs/policy.md`）、OSV 已知 CVE 查询（opt-in）
+> - 检出力回归基准（`benchmark/`，TPR/FPR，CI 强制）
+>
+> 仍未实现（本文剩余有效项）：运行时沙箱、二进制扩展深度审计、实例方法数据流（`s=socket.socket(); s.connect()`）。
+
 ## 1) 当前做得好的地方（功能层）
 
 1. **默认阻断安装期高危行为**：

@@ -23,6 +23,28 @@ pipguard install -r requirements.txt
 
 Scans all packages in the file. Blocks on first CRITICAL or HIGH finding.
 
+## Supported Dependency Sources
+
+pipguard can only guarantee its scan promise for artifacts it downloads and
+inspects, so it accepts requirement entries that resolve to a fixed, verifiable
+artifact and rejects (exit 2) the ones that don't:
+
+| Requirement form | Accepted? |
+|------------------|-----------|
+| PyPI specifier (`requests==2.31.0`, `numpy>=1.24`) | ✅ |
+| Hash-locked (`pkg==1.0 --hash=sha256:…`) | ✅ |
+| Pinned VCS (`git+https://…@<commit-sha>`) | ✅ (commit SHA required) |
+| Direct URL with hash (`pkg @ https://…/pkg-1.0.whl#sha256=…`) | ✅ (hash required) |
+| Editable (`-e .`) | ⏭️ skipped with a warning |
+| Unpinned VCS (`git+https://…`, no commit) | ❌ exit 2 |
+| Direct URL without a hash | ❌ exit 2 |
+| Local path (`./pkg`, `/abs/pkg`) | ❌ exit 2 |
+
+Use `--require-hashes` (or `[install] require_hashes = true` in a policy file) to
+require a hash on **every** entry — the same integrity guarantee as
+`pip install --require-hashes`. VCS and direct-URL support can be disabled
+entirely via the `allow_vcs_pinned` / `allow_direct_url_pinned` policy keys.
+
 ## CI Mode
 
 In CI, you never want interactive prompts. Use `--yes` to suppress all confirmation prompts

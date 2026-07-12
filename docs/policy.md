@@ -29,6 +29,10 @@ seed = ["my-internal-auth-lib", "corp-keyring"]
 [intel]
 feed = "https://example.org/pipguard-feed.json"
 enforce = true
+
+[osv]
+enabled = true        # query OSV.dev for known CVEs (same as --check-vulns)
+fail_on_vuln = false  # if true, a known CVE fails the install (same as --fail-on-vuln)
 ```
 
 ## Keys
@@ -50,3 +54,14 @@ enforce = true
 
 - `seed` (list[string]): project-level seed allowlist entries. These are merged with
   the built-in seed allowlist and `--allow` CLI flags.
+
+`[osv]` section:
+
+- `enabled` (bool): query [OSV.dev](https://osv.dev) for known CVEs (equivalent to
+  `--check-vulns`). Off by default — this is the only outbound network call pipguard
+  makes during a scan.
+- `fail_on_vuln` (bool): if `true`, a package with a known CVE fails the install
+  (equivalent to `--fail-on-vuln`); implies `enabled`. Informational otherwise.
+
+CLI flags take precedence over the policy file, which takes precedence over the
+built-in defaults.
