@@ -23,6 +23,7 @@ from .aggregator import aggregate_findings, check_package_name_for_homoglyph, pr
 from .cleanup import install_signal_handlers, register_temp_dir
 from .downloader import download_packages
 from .extractor import collect_binary_extension_files, collect_scannable_files, extract_archive
+from .feed import fetch_feed, parse_feed
 from .installer import install_from_local
 from .intel import load_intel_feed
 from .models import Finding, PackageScanResult, RiskLevel
@@ -432,6 +433,119 @@ def cmd_install(args) -> int:
     return 0
 
 
+# ── scan-feed subcommand (PyPI RSS reporter workflow, #40/#41) ───────────────
+
+_LEVEL_BY_NAME = {
+    "critical": RiskLevel.CRITICAL,
+    "high": RiskLevel.HIGH,
+    "medium": RiskLevel.MEDIUM,
+    "low": RiskLevel.LOW,
+}
+
+
+def _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns):
+    """Scan a list of downloaded archives in parallel. Returns results."""
+    results: List[PackageScanResult] = []
+    if not archive_files:
+        return results
+    workers = min(len(archive_files), os.cpu_count() or 4)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        future_to_arch = {
+            pool.submit(_scan_one_package, arch, tmp_dir, extra_allow, check_vulns): arch
+            for arch in archive_files
+        }
+        for future in concurrent.futures.as_completed(future_to_arch):
+            try:
+                results.append(future.result())
+            except Exception as exc:
+                pkg = _pkg_name_from_filename(future_to_arch[future])
+                print(f"Warning: scan failed for {pkg}: {exc}", file=sys.stderr)
+                results.append(PackageScanResult(
+                    package_name=pkg,
+                    version="",
+                    findings=[Finding(
+                        level=RiskLevel.MEDIUM,
+                        file_path=future_to_arch[future],
+                        line=0,
+                        description=f"Scan error (fail-safe): {exc}",
+                    )],
+                ))
+    return results
+
+
+def cmd_scan_feed(args) -> int:
+    """Implement `pipguard scan-feed`: scan recent PyPI releases for review.
+
+    Reporter workflow (#40/#41): fetch the PyPI new-package / new-release RSS
+    feed, scan each entry WITHOUT installing, and surface the high-risk ones as
+    candidates for manual review. Exit 1 if any candidate meets the threshold.
+    """
+    install_signal_handlers()
+
+    policy = load_policy(getattr(args, "policy", None))
+    check_vulns = bool(getattr(args, "check_vulns", False) or getattr(policy, "osv_enabled", False))
+    verbose = bool(getattr(args, "verbose", False))
+    extra_allow = [*(policy.seed_allowlist or []), *(args.allow or [])]
+    min_level = _LEVEL_BY_NAME[args.min_level]
+
+    xml = fetch_feed(args.feed)
+    if not xml:
+        print(f"Error: could not fetch feed '{args.feed}'", file=sys.stderr)
+        return 2
+    entries = parse_feed(xml)
+    if not entries:
+        print("No entries found in feed.", file=sys.stderr)
+        return 2
+    if args.limit and args.limit > 0:
+        entries = entries[: args.limit]
+
+    by_spec = {e.to_spec(): e for e in entries}
+    specs = list(by_spec.keys())
+
+    tmp_dir = tempfile.mkdtemp(prefix="pipguard-feed-")
+    register_temp_dir(tmp_dir)
+
+    print(f"📡 Fetched {len(entries)} feed ent(ies); downloading for scan ...")
+    try:
+        archive_files, sdist_rejects = download_packages(specs, tmp_dir)
+    except RuntimeError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+
+    if sdist_rejects:
+        print(
+            f"  Skipping {len(sdist_rejects)} sdist-only package(s) "
+            "(cannot scan without executing build code): "
+            + ", ".join(sdist_rejects),
+            file=sys.stderr,
+        )
+
+    print(f"🔍 Scanning {len(archive_files)} package(s) ...")
+    results = _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns)
+
+    print_findings_report(results, verbose=verbose)
+
+    # Reporter summary: candidates at or above the threshold, newest first.
+    candidates = [r for r in results if r.effective_level.value >= min_level.value]
+    print("\n" + "─" * 60)
+    if not candidates:
+        print(f"No packages at or above {min_level.name} — nothing to review.")
+        return 0
+
+    candidates.sort(key=lambda r: -r.effective_level.value)
+    print(f"🚩 {len(candidates)} package(s) to review (>= {min_level.name}):")
+    for r in candidates:
+        spec = f"{r.package_name}=={r.version}" if r.version else r.package_name
+        entry = by_spec.get(spec) or by_spec.get(r.package_name)
+        link = f"  {entry.link}" if entry and entry.link else ""
+        print(f"  [{r.effective_level.name}] {spec}{link}")
+    print(
+        "\nReview these manually (e.g. via the PyPI Inspector) and, if confirmed "
+        "malicious, submit an advisory.",
+    )
+    return 1
+
+
 # ── CLI wiring ───────────────────────────────────────────────────────────────
 
 def build_parser() -> argparse.ArgumentParser:
@@ -514,6 +628,41 @@ def build_parser() -> argparse.ArgumentParser:
         "--fail-on-vuln", action="store_true",
         help="Exit 1 if any package has a known OSV vulnerability (implies --check-vulns)",
     )
+
+    # ── scan-feed ─────────────────────────────────────────────────────────────
+    feed = sub.add_parser(
+        "scan-feed",
+        help="Scan recent PyPI releases from the RSS feed for review (reporter workflow)",
+    )
+    feed.add_argument(
+        "--feed", default="updates", metavar="updates|packages|URL|FILE",
+        help="PyPI RSS feed to scan: 'updates' (new releases, default), "
+             "'packages' (new packages), or a URL / local file path",
+    )
+    feed.add_argument(
+        "--limit", type=int, default=20, metavar="N",
+        help="Scan at most N most-recent entries (default: 20; 0 = no limit)",
+    )
+    feed.add_argument(
+        "--min-level", default="high", choices=["critical", "high", "medium", "low"],
+        help="Report packages at or above this risk level as review candidates (default: high)",
+    )
+    feed.add_argument(
+        "--allow", action="append", metavar="package", default=[],
+        help="Add package to per-invocation allowlist (repeatable)",
+    )
+    feed.add_argument(
+        "--check-vulns", action="store_true",
+        help="Also query OSV.dev for known vulnerabilities in each entry",
+    )
+    feed.add_argument(
+        "--verbose", action="store_true",
+        help="Show full scan details, including LOW findings and CLEAN packages",
+    )
+    feed.add_argument(
+        "--policy", metavar="pipguard.toml",
+        help="Path to policy file (default: ./pipguard.toml if present)",
+    )
     return parser
 
 
@@ -523,6 +672,8 @@ def main() -> int:
     args = parser.parse_args()
     if args.command == "install":
         return cmd_install(args)
+    if args.command == "scan-feed":
+        return cmd_scan_feed(args)
     return 0  # pragma: no cover
 
 

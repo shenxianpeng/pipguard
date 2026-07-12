@@ -138,6 +138,38 @@ enabled = true       # same as --check-vulns
 fail_on_vuln = false # set true for --fail-on-vuln
 ```
 
+## Scanning the PyPI Feed (Reporter Workflow)
+
+`pipguard scan-feed` watches PyPI's RSS feed of recent releases, scans each entry
+**without installing anything**, and surfaces the high-risk ones as candidates
+for manual review. This operationalizes the "reporter" workflow — most new
+releases are boring; a scan lets one person focus attention on the few that look
+suspicious, and file an advisory if a manual look confirms it.
+
+```bash
+# Scan the 20 most recent releases; list anything HIGH or CRITICAL
+pipguard scan-feed
+
+# New packages (not just new releases of existing ones), CRITICAL-only
+pipguard scan-feed --feed packages --min-level critical
+
+# Scan a saved feed file, widen the net to MEDIUM, add CVE lookups
+pipguard scan-feed --feed ./updates.xml --min-level medium --check-vulns
+```
+
+Options: `--feed` (`updates` (default) | `packages` | a URL or local file),
+`--limit N` (default 20; `0` = no limit), `--min-level`
+(`critical`|`high`|`medium`|`low`, default `high`), plus `--allow`,
+`--check-vulns`, `--verbose`, and `--policy`.
+
+Exit codes: **1** if any package meets or exceeds `--min-level` (so a scheduled
+job can alert), **0** if none do, **2** on a feed/download error. sdist-only
+releases are skipped (they can't be scanned without executing build code).
+
+!!! note "This is triage, not proof"
+    A flagged package is a *candidate for review*, not a confirmed attack.
+    Inspect it (e.g. via the PyPI Inspector) before acting.
+
 ## Allowing Known-Legitimate Packages
 
 Some packages legitimately access credential stores (e.g. `paramiko` reads `~/.ssh`).

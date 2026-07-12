@@ -22,8 +22,16 @@ from pipguard.cli import (
     _validate_requirements_file,
     build_parser,
     cmd_install,
+    cmd_scan_feed,
 )
 from pipguard.models import Finding, PackageScanResult, RiskLevel
+
+_FEED_XML = (
+    '<rss><channel>'
+    '<item><title>evilpkg 1.2.3</title>'
+    '<link>https://pypi.org/project/evilpkg/1.2.3/</link></item>'
+    '</channel></rss>'
+)
 
 
 # ── Package name extraction ──────────────────────────────────────────────────
@@ -506,3 +514,160 @@ class TestNetworkIntegration:
             f"Expected exit 0 for clean package, got {result.returncode}\n"
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
+
+
+# ── scan-feed subcommand (reporter workflow, #40/#41) ────────────────────────
+
+def _make_feed_args(**kwargs):
+    defaults = dict(
+        feed="updates",
+        limit=20,
+        min_level="high",
+        allow=[],
+        check_vulns=False,
+        verbose=False,
+        policy=None,
+    )
+    defaults.update(kwargs)
+    return types.SimpleNamespace(**defaults)
+
+
+@patch("pipguard.cli.print_findings_report")
+@patch("pipguard.cli._scan_one_package")
+@patch("pipguard.cli.download_packages")
+@patch("pipguard.cli.fetch_feed")
+@patch("pipguard.cli.register_temp_dir")
+@patch("pipguard.cli.install_signal_handlers")
+class TestCmdScanFeed:
+
+    def test_high_risk_entry_is_flagged_exit_1(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
+    ):
+        mock_fetch.return_value = _FEED_XML
+        mock_dl.return_value = ([str(tmp_path / "evilpkg-1.2.3-py3-none-any.whl")], [])
+        result = PackageScanResult(
+            "evilpkg", "1.2.3",
+            findings=[Finding(level=RiskLevel.CRITICAL, file_path="setup.py", line=1, description="x")],
+        )
+        mock_scan.return_value = result
+        rc = cmd_scan_feed(_make_feed_args())
+        assert rc == 1
+
+    def test_clean_feed_exit_0(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
+    ):
+        mock_fetch.return_value = _FEED_XML
+        mock_dl.return_value = ([str(tmp_path / "evilpkg-1.2.3-py3-none-any.whl")], [])
+        mock_scan.return_value = PackageScanResult("evilpkg", "1.2.3", findings=[])
+        rc = cmd_scan_feed(_make_feed_args())
+        assert rc == 0
+
+    def test_below_threshold_not_flagged(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
+    ):
+        """A MEDIUM result with default --min-level high is not a candidate."""
+        mock_fetch.return_value = _FEED_XML
+        mock_dl.return_value = ([str(tmp_path / "evilpkg-1.2.3-py3-none-any.whl")], [])
+        mock_scan.return_value = PackageScanResult(
+            "evilpkg", "1.2.3",
+            findings=[Finding(level=RiskLevel.MEDIUM, file_path="m.py", line=1, description="x")],
+        )
+        rc = cmd_scan_feed(_make_feed_args(min_level="high"))
+        assert rc == 0
+
+    def test_fetch_failure_exit_2(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
+    ):
+        mock_fetch.return_value = ""
+        rc = cmd_scan_feed(_make_feed_args())
+        assert rc == 2
+        mock_dl.assert_not_called()
+
+    def test_empty_feed_exit_2(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
+    ):
+        mock_fetch.return_value = "<rss><channel></channel></rss>"
+        rc = cmd_scan_feed(_make_feed_args())
+        assert rc == 2
+        mock_dl.assert_not_called()
+
+    def test_limit_zero_scans_all(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
+    ):
+        two = (
+            '<rss><channel>'
+            '<item><title>a 1.0</title><link>https://pypi.org/project/a/1.0/</link></item>'
+            '<item><title>b 2.0</title><link>https://pypi.org/project/b/2.0/</link></item>'
+            '</channel></rss>'
+        )
+        mock_fetch.return_value = two
+        mock_dl.return_value = ([], [])
+        mock_scan.return_value = PackageScanResult("a", "1.0", findings=[])
+        cmd_scan_feed(_make_feed_args(limit=0))
+        specs = mock_dl.call_args[0][0]
+        assert specs == ["a==1.0", "b==2.0"]
+
+    def test_limit_truncates_entries(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
+    ):
+        two = (
+            '<rss><channel>'
+            '<item><title>a 1.0</title><link>https://pypi.org/project/a/1.0/</link></item>'
+            '<item><title>b 2.0</title><link>https://pypi.org/project/b/2.0/</link></item>'
+            '</channel></rss>'
+        )
+        mock_fetch.return_value = two
+        mock_dl.return_value = ([], [])
+        mock_scan.return_value = PackageScanResult("a", "1.0", findings=[])
+        cmd_scan_feed(_make_feed_args(limit=1))
+        # only 1 spec should be passed to download_packages
+        specs = mock_dl.call_args[0][0]
+        assert specs == ["a==1.0"]
+
+    def test_download_runtime_error_exit_2(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
+    ):
+        mock_fetch.return_value = _FEED_XML
+        mock_dl.side_effect = RuntimeError("pip blew up")
+        rc = cmd_scan_feed(_make_feed_args())
+        assert rc == 2
+
+    def test_sdist_rejects_are_reported_and_scan_continues(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path, capsys
+    ):
+        mock_fetch.return_value = _FEED_XML
+        mock_dl.return_value = (
+            [str(tmp_path / "evilpkg-1.2.3-py3-none-any.whl")], ["sdistpkg"]
+        )
+        mock_scan.return_value = PackageScanResult("evilpkg", "1.2.3", findings=[])
+        rc = cmd_scan_feed(_make_feed_args())
+        assert rc == 0
+        assert "sdistpkg" in capsys.readouterr().err
+
+    def test_scan_exception_is_captured_not_fatal(
+        self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
+    ):
+        """A per-package scan crash becomes a MEDIUM fail-safe result, not a raise."""
+        mock_fetch.return_value = _FEED_XML
+        mock_dl.return_value = ([str(tmp_path / "evilpkg-1.2.3-py3-none-any.whl")], [])
+        mock_scan.side_effect = RuntimeError("boom")
+        rc = cmd_scan_feed(_make_feed_args(min_level="high"))
+        # MEDIUM fail-safe < high threshold → exit 0, but report still produced
+        assert rc == 0
+        mock_report.assert_called_once()
+
+
+class TestMainDispatch:
+    @patch("pipguard.cli.cmd_scan_feed", return_value=0)
+    def test_main_routes_scan_feed(self, mock_cmd):
+        from pipguard.cli import main
+        with patch("sys.argv", ["pipguard", "scan-feed", "--feed", "updates"]):
+            assert main() == 0
+        mock_cmd.assert_called_once()
+
+    def test_parser_scan_feed_defaults(self):
+        args = build_parser().parse_args(["scan-feed"])
+        assert args.command == "scan-feed"
+        assert args.feed == "updates"
+        assert args.limit == 20
+        assert args.min_level == "high"
