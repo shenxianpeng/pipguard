@@ -1,0 +1,74 @@
+name: 'pipguard'
+description: 'Scan Python packages for supply chain attacks before installing them.'
+author: 'Xianpeng Shen'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  requirements:
+    description: 'Path to a requirements file to scan and install (e.g. requirements.txt).'
+    required: false
+    default: ''
+  packages:
+    description: 'Space-separated package specifiers to scan and install (e.g. "requests numpy==1.26.3").'
+    required: false
+    default: ''
+  check-vulns:
+    description: 'Also query OSV.dev for known vulnerabilities (adds --check-vulns).'
+    required: false
+    default: 'false'
+  fail-on-vuln:
+    description: 'Fail the job if any package has a known OSV vulnerability (adds --fail-on-vuln).'
+    required: false
+    default: 'false'
+  args:
+    description: 'Additional arguments passed through to `pipguard install`.'
+    required: false
+    default: ''
+  version:
+    description: 'pipguard version to install (e.g. 0.2.0). Default: latest release from PyPI.'
+    required: false
+    default: ''
+  python-version:
+    description: 'Python version used to run pipguard.'
+    required: false
+    default: '3.12'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install pipguard
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [ -n "${{ inputs.version }}" ]; then
+          python -m pip install "pipguard==${{ inputs.version }}"
+        else
+          python -m pip install pipguard
+        fi
+
+    - name: Run pipguard
+      shell: bash
+      run: |
+        set -euo pipefail
+        EXTRA=""
+        if [ "${{ inputs.check-vulns }}" = "true" ]; then
+          EXTRA="$EXTRA --check-vulns"
+        fi
+        if [ "${{ inputs.fail-on-vuln }}" = "true" ]; then
+          EXTRA="$EXTRA --fail-on-vuln"
+        fi
+        if [ -n "${{ inputs.requirements }}" ]; then
+          pipguard install --yes $EXTRA ${{ inputs.args }} -r "${{ inputs.requirements }}"
+        elif [ -n "${{ inputs.packages }}" ]; then
+          pipguard install --yes $EXTRA ${{ inputs.args }} ${{ inputs.packages }}
+        else
+          echo "::error::pipguard action requires either the 'requirements' or 'packages' input."
+          exit 1
+        fi

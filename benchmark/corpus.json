@@ -1,0 +1,116 @@
+[
+  {
+    "file": "malicious/pth_autorun.pth",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "litellm-style .pth autorun executing shell"
+  },
+  {
+    "file": "malicious/exec_b64_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "obfuscated exec of base64-decoded payload in setup.py"
+  },
+  {
+    "file": "malicious/cred_read_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "reads ~/.ssh/id_rsa literal path in install hook"
+  },
+  {
+    "file": "malicious/os_system_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "direct shell execution in setup.py"
+  },
+  {
+    "file": "malicious/net_exfil_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "outbound network call in install hook"
+  },
+  {
+    "file": "malicious/pickle_loads_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "unsafe deserialization in install hook"
+  },
+  {
+    "file": "bypass/alias_network_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "aliased network call (import requests as r)"
+  },
+  {
+    "file": "bypass/assigned_callable_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "one-hop assigned network callable"
+  },
+  {
+    "file": "bypass/getattr_os_system_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "reflection via getattr(os,'system')"
+  },
+  {
+    "file": "bypass/dunder_import_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "__import__('os').system(...) chained call"
+  },
+  {
+    "file": "bypass/cred_path_join_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "credential path assembled via os.path.join"
+  },
+  {
+    "file": "bypass/subprocess_bash_c_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "subprocess Popen(['bash','-c',...]) shell=False"
+  },
+  {
+    "file": "benign/normal_path_join.py",
+    "scope": "runtime",
+    "expect": "allow",
+    "desc": "ordinary os.path.join on non-credential segments"
+  },
+  {
+    "file": "benign/legit_setup.py",
+    "scope": "hook",
+    "expect": "allow",
+    "desc": "standard setuptools metadata-only setup.py"
+  },
+  {
+    "file": "benign/plugin_loader.py",
+    "scope": "runtime",
+    "expect": "allow",
+    "desc": "dynamic import for plugin loading (LOW, not blocked)"
+  },
+  {
+    "file": "benign/http_client.py",
+    "scope": "runtime",
+    "expect": "allow",
+    "desc": "runtime network call in a client library (MEDIUM, not blocked)"
+  },
+  {
+    "file": "benign/app_config.py",
+    "scope": "runtime",
+    "expect": "allow",
+    "desc": "non-sensitive env var read"
+  },
+  {
+    "file": "benign/runtime_subprocess.py",
+    "scope": "runtime",
+    "expect": "allow",
+    "desc": "subprocess in runtime code (hook-only rule; not blocked)"
+  },
+  {
+    "file": "benign/dynamic_attr.py",
+    "scope": "runtime",
+    "expect": "allow",
+    "desc": "getattr on a harmless object attribute"
+  }
+]

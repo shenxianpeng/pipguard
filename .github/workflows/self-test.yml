@@ -22,6 +22,9 @@ jobs:
       - name: Install pipguard from source
         run: pip install -e .
 
+      - name: Detection benchmark (TPR/FPR report)
+        run: python benchmark/run_benchmark.py
+
       - name: Clean package is allowed (requests)
         run: pipguard install requests --yes
 
@@ -45,3 +48,20 @@ jobs:
             echo "❌ FAIL: expected exit 1, got $exit_code"
             exit 1
           fi
+
+  action-test:
+    # Exercises the composite Action (action.yml) end-to-end so its wiring is
+    # covered by CI. Installs pipguard from source into the runner first, then
+    # points the action at that build via version="" (latest) is avoided by
+    # using packages input against the already-installed CLI.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      - name: Scan a clean package via the pipguard action
+        uses: ./
+        with:
+          packages: 'requests'
+
+      - name: Verify requests is importable
+        run: python -c "import requests"

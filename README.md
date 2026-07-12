@@ -84,6 +84,41 @@ Use `--verbose` for full scan details and `--show-pip-output` to restore raw pip
 
 For the full reference — risk levels, exit codes, allowlist, and CI integration — see the **[documentation](https://shenxianpeng.github.io/pipguard/)**.
 
+## CI Integration
+
+### GitHub Actions
+
+Use the bundled composite action to gate installs in a workflow — it fails the job on `CRITICAL`/`HIGH` findings:
+
+```yaml
+- uses: shenxianpeng/pipguard@v0.2.0
+  with:
+    requirements: requirements.txt
+    check-vulns: true        # also query OSV.dev for known CVEs (optional)
+```
+
+Or scan explicit packages:
+
+```yaml
+- uses: shenxianpeng/pipguard@v0.2.0
+  with:
+    packages: "requests numpy==1.26.3"
+```
+
+### pre-commit
+
+Add pipguard to `.pre-commit-config.yaml` to scan your requirements file before every commit that changes it:
+
+```yaml
+repos:
+  - repo: https://github.com/shenxianpeng/pipguard
+    rev: v0.2.0
+    hooks:
+      - id: pipguard
+        # scans requirements.txt by default; override for a different file:
+        # args: ['-r', 'requirements/prod.txt']
+```
+
 ## License
 
 MIT
