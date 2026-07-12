@@ -184,7 +184,7 @@ def scan_pth_file(filepath: str) -> List[Finding]:
                         level=RiskLevel.CRITICAL,
                         file_path=filepath,
                         line=lineno,
-                        description=f".pth file contains executable Python code",
+                        description=".pth file contains executable Python code",
                         snippet=line[:100],
                     ))
                     continue
@@ -202,7 +202,7 @@ def scan_pth_file(filepath: str) -> List[Finding]:
                             level=RiskLevel.CRITICAL,
                             file_path=filepath,
                             line=lineno,
-                            description=f".pth file contains parseable Python code",
+                            description=".pth file contains parseable Python code",
                             snippet=line[:100],
                         ))
                 except SyntaxError:
