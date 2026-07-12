@@ -651,6 +651,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Scanning the PyPI Feed (Reporter Workflow)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-it-as-a-scheduled-sentinel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run it as a scheduled sentinel
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1040,6 +1057,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Scanning the PyPI Feed (Reporter Workflow)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-it-as-a-scheduled-sentinel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run it as a scheduled sentinel
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1281,10 +1315,17 @@ releases are skipped (they can't be scanned without executing build code).</p>
 <p>A flagged package is a <em>candidate for review</em>, not a confirmed attack.
 Inspect it (e.g. via the PyPI Inspector) before acting.</p>
 </div>
+<h3 id="run-it-as-a-scheduled-sentinel">Run it as a scheduled sentinel<a class="headerlink" href="#run-it-as-a-scheduled-sentinel" title="Permanent link">&para;</a></h3>
+<p>The exit-1-on-candidates behavior makes <code>scan-feed</code> easy to schedule. The repo
+ships a ready-to-copy GitHub Actions workflow at
+<a href="https://github.com/shenxianpeng/pipguard/blob/main/examples/scan-feed-cron.yml"><code>examples/scan-feed-cron.yml</code></a>
+that runs on a cron and opens a GitHub issue whenever releases are flagged:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>cp<span class="w"> </span>examples/scan-feed-cron.yml<span class="w"> </span>.github/workflows/pipguard-sentinel.yml
+</span></code></pre></div>
 <h2 id="allowing-known-legitimate-packages">Allowing Known-Legitimate Packages<a class="headerlink" href="#allowing-known-legitimate-packages" title="Permanent link">&para;</a></h2>
 <p>Some packages legitimately access credential stores (e.g. <code>paramiko</code> reads <code>~/.ssh</code>).
 Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow<span class="w"> </span>paramiko<span class="w"> </span>paramiko
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow<span class="w"> </span>paramiko<span class="w"> </span>paramiko
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">CRITICAL findings are never reduced</p>
@@ -1292,7 +1333,7 @@ Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
 </div>
 <h2 id="forcing-a-package-escape-hatch">Forcing a Package (Escape Hatch)<a class="headerlink" href="#forcing-a-package-escape-hatch" title="Permanent link">&para;</a></h2>
 <p>For known false-positives on fully-trusted internal packages:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--force<span class="w"> </span>my-trusted-internal-pkg
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--force<span class="w"> </span>my-trusted-internal-pkg
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Use with care</p>
@@ -1301,7 +1342,7 @@ Use <code>--allow</code> to reduce their finding from HIGH to MEDIUM:</p>
 <h2 id="allowing-sdist-packages">Allowing sdist Packages<a class="headerlink" href="#allowing-sdist-packages" title="Permanent link">&para;</a></h2>
 <p>By default pipguard exits with code 2 if a package falls back to sdist (source distribution),
 because sdists execute build scripts. To opt in:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow-sdist<span class="w"> </span>some-package
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--allow-sdist<span class="w"> </span>some-package
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">sdist installs execute arbitrary code</p>
