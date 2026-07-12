@@ -186,6 +186,19 @@ class TestScanPythonFileCritical:
         findings = scan_python_file(str(setup), is_hook=True)
         assert any(f.level == RiskLevel.CRITICAL for f in findings)
 
+    def test_getattr_non_name_non_literal_attr_is_not_resolved(self, tmp_path):
+        """getattr whose attr is a computed expression (not a literal or a
+        variable string const) is not resolved — and must not crash or
+        false-positive."""
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import os\n"
+            "getattr(os, 'sys' + 'tem')('id')\n"       # BinOp attr
+            "getattr(os, undefined_var)('id')\n"        # unknown Name attr
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert not any(f.level == RiskLevel.CRITICAL for f in findings)
+
     def test_os_exec_family_in_hook_is_critical(self, tmp_path):
         setup = tmp_path / "setup.py"
         setup.write_text("import os\nos.execv('/bin/sh', ['sh', '-c', 'id'])\n")
