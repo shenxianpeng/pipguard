@@ -1421,6 +1421,10 @@ Never use <code>--allow-sdist</code> in automated pipelines without explicit rev
 <td>Show raw pip install output instead of the quiet default</td>
 </tr>
 <tr>
+<td><code>--sandbox</code></td>
+<td>Run the install step under a capability sandbox (experimental) — install-time code (e.g. an sdist build) can't read credential paths or open network connections. See <a href="../runtime-sandbox/">Runtime Sandbox</a>.</td>
+</tr>
+<tr>
 <td><code>--policy FILE</code></td>
 <td>Load policy file (default: <code>./pipguard.toml</code> if present)</td>
 </tr>

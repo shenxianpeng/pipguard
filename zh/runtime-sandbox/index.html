@@ -828,6 +828,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-pipguard-install-sandbox-covers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What pipguard install --sandbox covers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#limitations-be-honest" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -839,10 +850,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#decision-next-steps" class="md-nav__link">
+  <a href="#status-next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Decision / next steps
+        Status / next steps
       
     </span>
   </a>
@@ -936,6 +947,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-pipguard-install-sandbox-covers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What pipguard install --sandbox covers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#limitations-be-honest" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -947,10 +969,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#decision-next-steps" class="md-nav__link">
+  <a href="#status-next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Decision / next steps
+        Status / next steps
       
     </span>
   </a>
@@ -1075,8 +1097,22 @@ Python children) via a generated <code>sitecustomize</code> on <code>PYTHONPATH<
 <p>Because it hooks audit <em>events</em>, the block is hermetic and syscall-accurate: a
 <code>socket.create_connection(...)</code> is stopped at the <code>connect</code> event, no real
 network needed.</p>
+<h2 id="what-pipguard-install-sandbox-covers">What <code>pipguard install --sandbox</code> covers<a class="headerlink" href="#what-pipguard-install-sandbox-covers" title="Permanent link">&para;</a></h2>
+<p><code>--sandbox</code> runs the <strong>pip install process</strong> under the sandbox. It contains code
+that executes <em>during</em> installation — most importantly an <strong>sdist build</strong>
+(<code>setup.py</code> / build-backend), which is where install-time credential theft and
+callbacks live.</p>
+<p>It does <strong>not</strong> cover code that runs <em>after</em> the pip process exits — a <code>.pth</code>
+autorun or a first-import payload runs at the <strong>next</strong> interpreter startup, which
+is outside the sandboxed process. Those are pipguard's job <em>before</em> install: the
+static scanner flags <code>.pth</code> executable content as CRITICAL and blocks it at the
+gate. <code>--sandbox</code> is defense-in-depth for the build-time surface, not a
+replacement for the scan.</p>
 <h2 id="limitations-be-honest">Limitations (be honest)<a class="headerlink" href="#limitations-be-honest" title="Permanent link">&para;</a></h2>
 <ul>
+<li><strong>Install-time only.</strong> Covers code run during the pip process (e.g. sdist
+  builds), not post-install <code>.pth</code> / first-import autorun (the scanner handles
+  those pre-install).</li>
 <li><strong>Python only.</strong> A payload in a <code>.so</code>/<code>.pyd</code> extension, or a non-Python child
   process, is not covered. Pair with an OS sandbox for those.</li>
 <li><strong>Not a syscall firewall.</strong> It enforces the specific audit events above, not
@@ -1084,14 +1120,14 @@ network needed.</p>
 <li><strong>Path matching is substring-based</strong> on the normalised path — intentionally
   conservative to avoid breaking legitimate installs.</li>
 </ul>
-<h2 id="decision-next-steps">Decision / next steps<a class="headerlink" href="#decision-next-steps" title="Permanent link">&para;</a></h2>
+<h2 id="status-next-steps">Status / next steps<a class="headerlink" href="#status-next-steps" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Land the prototype + this note (done).</li>
-<li>Add an opt-in <code>pipguard install --sandbox</code> that runs the <code>pip install</code> step
-   under <code>run_sandboxed</code> — needs care so pip's own file access isn't tripped
-   (installing from the scanned local cache is already offline, so
-   <code>allow_network=False</code> is safe there).</li>
-<li>Evaluate a landlock backend on Linux for native-code containment.</li>
+<li>Prototype + this note — <strong>done</strong>.</li>
+<li>Opt-in <code>pipguard install --sandbox</code> running the <code>pip install</code> step under
+   <code>run_sandboxed</code> (network denied — the local-cache install is already offline
+   via <code>--no-index</code>; credential reads denied; subprocesses allowed so build
+   backends work) — <strong>done</strong>.</li>
+<li>Evaluate a landlock backend on Linux for native-code containment — todo.</li>
 </ol>
 
 
