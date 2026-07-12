@@ -72,8 +72,10 @@ pipguard uses Python's built-in `ast` module — no third-party dependencies —
     |---------|---------|
     | `.pth` file with executable Python | `import os; os.system(...)` in `.pth` |
     | Obfuscated eval | `eval(base64.b64decode(...))` |
-    | Network in `setup.py` / install hooks | `urllib.request.urlopen(...)` in `setup.py` |
-    | Shell/subprocess execution in install hooks | `os.system(...)`, `subprocess.run(..., shell=True)` |
+    | Network in `setup.py` / install hooks | `urllib.request.urlopen(...)`, `urlretrieve(...)` in `setup.py` |
+    | Shell/process execution in install hooks | `os.system(...)`, `os.execv(...)`, `pty.spawn(...)`, `subprocess.run(..., shell=True)` |
+    | Code execution via `runpy` in install hooks | `runpy.run_path('payload.py')` |
+    | Reflection to a dangerous call | `getattr(os, name)(...)`, `__import__('os').system(...)` |
 
 === "HIGH"
 

@@ -83,9 +83,33 @@ _NETWORK_FUNCS = frozenset({
     "requests.delete",
     "requests.request",
     "urllib.request.urlopen",
+    "urllib.request.urlretrieve",
     "urllib.urlopen",
+    "urllib.urlretrieve",
     "http.client.HTTPConnection",
     "http.client.HTTPSConnection",
+})
+
+# Shell / process-execution calls — always CRITICAL in install-hook scope.
+# Covers the exec* family (process replacement), spawn*, posix equivalents,
+# and pty.spawn, in addition to os.system / os.popen.
+_SHELL_EXEC_FUNCS = frozenset({
+    "os.system",
+    "os.popen",
+    "posix.system",
+    "posix.popen",
+    "os.execv", "os.execve", "os.execvp", "os.execvpe",
+    "os.execl", "os.execle", "os.execlp", "os.execlpe",
+    "os.spawnv", "os.spawnve", "os.spawnvp", "os.spawnvpe",
+    "os.spawnl", "os.spawnle", "os.spawnlp", "os.spawnlpe",
+    "posix.execv", "posix.execve",
+    "pty.spawn",
+})
+
+# runpy executes arbitrary Python from a path/module — code execution.
+_RUNPY_EXEC_FUNCS = frozenset({
+    "runpy.run_path",
+    "runpy.run_module",
 })
 
 _BINARY_SCAN_LIMIT = 2 * 1024 * 1024  # 2MB quick heuristic scan
@@ -296,7 +320,7 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
         # ── Dynamic code execution in install hooks ─────────────────────────────
         if is_hook and isinstance(node, ast.Call):
             name = _resolved_call_name(node, aliases)
-            if name in ("exec", "eval", "compile"):
+            if name in ("exec", "eval", "compile") or name in _RUNPY_EXEC_FUNCS:
                 findings.append(Finding(
                     level=RiskLevel.CRITICAL,
                     file_path=filepath,
@@ -390,10 +414,10 @@ def scan_python_file(filepath: str, is_hook: bool = False) -> List[Finding]:
                     description=f"tempfile usage ({name}()) in install hook — potential write-and-execute",
                 ))
 
-        # ── os.system / os.popen in install hooks (always shell execution) ────────
+        # ── shell / process execution in install hooks (os.system, exec*, …) ──────
         if is_hook and isinstance(node, ast.Call):
             name = _resolved_call_name(node, aliases)
-            if name in ("os.system", "os.popen"):
+            if name in _SHELL_EXEC_FUNCS:
                 findings.append(Finding(
                     level=RiskLevel.CRITICAL,
                     file_path=filepath,
@@ -589,6 +613,10 @@ def _build_alias_map(tree: ast.AST) -> Dict[str, str]:
 
         elif isinstance(node, ast.Assign):
             resolved = _resolve_expr_name(node.value, aliases)
+            if resolved is None and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                # Track a one-hop string constant so reflection through a
+                # variable resolves, e.g. `s = "system"; getattr(os, s)()`.
+                resolved = node.value.value
             if not resolved:
                 continue
             for target in node.targets:
@@ -616,11 +644,19 @@ def _resolve_expr_name(expr: ast.AST, aliases: Dict[str, str]) -> Optional[str]:
     if isinstance(expr, ast.Call):
         callee = _resolve_expr_name(expr.func, aliases)
         # getattr(module_or_alias, "attr") -> module.attr
+        # attr may be a string literal or a variable holding a string constant.
         if callee == "getattr" and len(expr.args) >= 2:
             base = _resolve_expr_name(expr.args[0], aliases)
             attr = expr.args[1]
-            if base and isinstance(attr, ast.Constant) and isinstance(attr.value, str):
-                return f"{base}.{attr.value}"
+            attr_name = None
+            if isinstance(attr, ast.Constant) and isinstance(attr.value, str):
+                attr_name = attr.value
+            elif isinstance(attr, ast.Name):
+                candidate = aliases.get(attr.id)
+                if isinstance(candidate, str) and candidate and "." not in candidate:
+                    attr_name = candidate
+            if base and attr_name:
+                return f"{base}.{attr_name}"
         # __import__("os") / importlib.import_module("os") -> os
         # so chained calls like __import__("os").system(...) resolve to os.system
         if callee in _DYNAMIC_IMPORT_FUNCS and expr.args:
