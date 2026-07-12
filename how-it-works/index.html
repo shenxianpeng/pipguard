@@ -673,6 +673,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#known-cve-lookup-osvdev" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known CVE Lookup (osv.dev)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#seed-allowlist" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -983,6 +994,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#known-cve-lookup-osvdev" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known CVE Lookup (osv.dev)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#seed-allowlist" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1044,16 +1066,19 @@
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>  all other .py                   ← MEDIUM/LOW scope
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>       │
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>       ▼
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>Risk scoring:
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>  CRITICAL → block (exit 1)
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  HIGH     → block (exit 1)
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  MEDIUM   → warn + confirm
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>  LOW      → warn + confirm
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  CLEAN    → install silently
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>       │
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>       ▼
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>pip install --no-index            ← installs FROM SCANNED FILES (TOCTOU-safe)
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    --find-links /tmp/pipguard-XX
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>osv.dev API query                ← known CVE lookup (opt-in: --check-vulns)
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>       │
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>       ▼
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>Risk scoring:
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>  CRITICAL → block (exit 1)
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  HIGH     → block (exit 1)
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>  MEDIUM   → warn + confirm
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>  LOW      → warn + confirm
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>  CLEAN    → install silently
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>       │
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>       ▼
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>pip install --no-index            ← installs FROM SCANNED FILES (TOCTOU-safe)
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>    --find-links /tmp/pipguard-XX
 </span></code></pre></div>
 <h2 id="why-pre-install">Why Pre-Install?<a class="headerlink" href="#why-pre-install" title="Permanent link">&para;</a></h2>
 <p>Classical security tools (pip-audit, Safety, GuardDog) work post-hoc — they check installed packages against known-bad signature databases. This means:</p>
@@ -1210,6 +1235,27 @@ flags them explicitly:</p>
   is emitted, and the confirmation gate fires. pipguard's core scan promise
   cannot be fulfilled for packages with no Python source.</li>
 </ul>
+<h2 id="known-cve-lookup-osvdev">Known CVE Lookup (osv.dev)<a class="headerlink" href="#known-cve-lookup-osvdev" title="Permanent link">&para;</a></h2>
+<p>When <code>--check-vulns</code> is passed, pipguard queries the <a href="https://osv.dev">osv.dev</a>
+API for known vulnerabilities in the scanned package version. osv.dev aggregates
+advisories from PyPI advisories, GitHub Security Advisories, and other sources.</p>
+<p>This is complementary to pipguard's AST analysis:</p>
+<ul>
+<li><strong>AST scanning</strong> detects suspicious behaviors (network calls, credential
+  access, obfuscated payloads) — including zero-day attacks</li>
+<li><strong>osv.dev</strong> matches against the public CVE database — catching known
+  vulnerabilities that may not trigger AST rules</li>
+</ul>
+<p>The lookup is opt-in (it is the only network call pipguard makes during a
+scan), best-effort, and non-blocking: if osv.dev is unreachable, the scan
+continues without CVEs shown. Known CVEs appear as a dedicated section — shown
+even for packages the behavioural scan marks CLEAN:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Known CVEs (osv.dev) — 1 CVE
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  jinja2==3.1.5
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    CVE-2024-56326 [MEDIUM] Jinja sandbox breakout through attr filter selection (fixed in 3.1.6)
+</span></code></pre></div>
+<p>CVEs are informational by default; <code>--fail-on-vuln</code> turns them into a hard gate
+(exit 1).</p>
 <h2 id="seed-allowlist">Seed Allowlist<a class="headerlink" href="#seed-allowlist" title="Permanent link">&para;</a></h2>
 <p>Some packages legitimately access credentials as part of their core purpose.
 pipguard ships with a seed allowlist that reduces their finding from HIGH to MEDIUM
