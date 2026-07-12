@@ -16,6 +16,7 @@ class Policy:
     allow_vcs_pinned: bool = True
     allow_direct_url_pinned: bool = True
     binary_only: str = "prompt"  # prompt | block | allow
+    sandbox: bool = False
     intel_feed: str = ""
     intel_enforce: bool = False
     osv_enabled: bool = False
@@ -56,6 +57,7 @@ def load_policy(path: Optional[str]) -> Policy:
         allow_vcs_pinned=bool(install.get("allow_vcs_pinned", True)),
         allow_direct_url_pinned=bool(install.get("allow_direct_url_pinned", True)),
         binary_only=binary_only,
+        sandbox=bool(install.get("sandbox", False)),
         intel_feed=str(intel.get("feed", "")).strip(),
         intel_enforce=bool(intel.get("enforce", False)),
         osv_enabled=bool(osv.get("enabled", False)),

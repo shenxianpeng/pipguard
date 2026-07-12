@@ -257,6 +257,7 @@ def cmd_install(args) -> int:
     )
     verbose = bool(getattr(args, "verbose", False))
     show_pip_output = bool(getattr(args, "show_pip_output", False))
+    sandbox = bool(getattr(args, "sandbox", False) or getattr(policy, "sandbox", False))
 
     packages: List[str] = args.packages or []
     requirements_file: Optional[str] = getattr(args, "r", None)
@@ -424,6 +425,7 @@ def cmd_install(args) -> int:
         requirements_file=requirements_file,
         require_hashes=require_hashes,
         show_pip_output=show_pip_output,
+        sandbox=sandbox,
     )
     if rc == 0:
         print("✅ Installation complete.")
@@ -604,6 +606,14 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument(
         "--show-pip-output", action="store_true",
         help="Show raw pip install output instead of pipguard's quiet default",
+    )
+    install.add_argument(
+        "--sandbox", action="store_true",
+        help=(
+            "Run the install step under a capability sandbox (experimental): "
+            "install-time code cannot read credential paths or open network "
+            "connections"
+        ),
     )
     install.add_argument(
         "--policy", metavar="pipguard.toml",

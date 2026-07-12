@@ -46,6 +46,7 @@ fail_on_vuln = false  # 为 true 时，命中已知 CVE 即阻断安装（等价
   - `prompt`（默认）：保持 MEDIUM 行为（提示确认）。
   - `block`：阻断安装（exit 1）。
   - `allow`：不额外施加纯二进制阻断策略。
+- `sandbox`（bool）：在能力沙箱下运行安装步骤（等价于 `--sandbox`）。实验性，详见 [运行时沙箱](runtime-sandbox.md)。
 
 `[allowlist]` 段：
 

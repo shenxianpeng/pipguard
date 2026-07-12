@@ -44,6 +44,8 @@ fail_on_vuln = false  # if true, a known CVE fails the install (same as --fail-o
   - `prompt` (default): keep MEDIUM behavior.
   - `block`: fail installation (exit 1).
   - `allow`: do not enforce additional binary-only policy block.
+- `sandbox` (bool): run the install step under the capability sandbox
+  (equivalent to `--sandbox`). Experimental; see [Runtime Sandbox](runtime-sandbox.md).
 
 `[intel]` section:
 
