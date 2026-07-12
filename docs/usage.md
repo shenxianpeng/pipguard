@@ -231,6 +231,7 @@ pipguard install --allow-sdist some-package
 | `--require-hashes` | Require hash-locked requirements entries (`--hash=...` or URL hash fragment) |
 | `--verbose` | Show full scan details, including LOW findings and CLEAN package list |
 | `--show-pip-output` | Show raw pip install output instead of the quiet default |
+| `--sandbox` | Run the install step under a capability sandbox (experimental) — install-time code (e.g. an sdist build) can't read credential paths or open network connections. See [Runtime Sandbox](runtime-sandbox.md). |
 | `--policy FILE` | Load policy file (default: `./pipguard.toml` if present) |
 | `--intel-feed FILE_OR_URL` | Threat-intel JSON feed containing blocked package versions |
 | `--enforce-intel` | Enforce intel feed denylist and block matching packages |

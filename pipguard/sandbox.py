@@ -22,6 +22,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import List, Optional, Sequence
@@ -95,6 +96,7 @@ def run_sandboxed(
     allow_subprocess: bool = True,
     cwd: Optional[str] = None,
     timeout: Optional[float] = None,
+    capture_output: bool = False,
 ) -> int:
     """Run ``argv`` with the capability audit hook installed in the child.
 
@@ -102,6 +104,9 @@ def run_sandboxed(
     ``PYTHONPATH``, so it also applies to any Python subprocess the command
     spawns (e.g. a build backend). Returns the child's exit code; a blocked
     capability makes the child raise and exit non-zero.
+
+    With ``capture_output=True`` the child's stdout/stderr are captured and
+    only written through on a non-zero exit (matching pipguard's quiet default).
     """
     if deny_fragments is None:
         deny_fragments = DEFAULT_DENY_FRAGMENTS
@@ -114,7 +119,15 @@ def run_sandboxed(
         )
         env = os.environ.copy()
         env["PYTHONPATH"] = tmp + os.pathsep + env.get("PYTHONPATH", "")
-        proc = subprocess.run(list(argv), env=env, cwd=cwd, timeout=timeout)
+        proc = subprocess.run(
+            list(argv), env=env, cwd=cwd, timeout=timeout,
+            capture_output=capture_output, text=True if capture_output else None,
+        )
+        if capture_output and proc.returncode != 0:
+            if proc.stdout:
+                sys.stdout.write(proc.stdout)
+            if proc.stderr:
+                sys.stderr.write(proc.stderr)
         return proc.returncode
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

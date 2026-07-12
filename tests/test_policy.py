@@ -6,6 +6,13 @@ def test_load_policy_defaults_when_missing(tmp_path):
     policy = load_policy(str(p))
     assert policy.require_hashes is False
     assert policy.binary_only == "prompt"
+    assert policy.sandbox is False
+
+
+def test_load_policy_sandbox_key(tmp_path):
+    p = tmp_path / "pipguard.toml"
+    p.write_text("[install]\nsandbox = true\n")
+    assert load_policy(str(p)).sandbox is True
 
 
 def test_load_policy_install_and_intel_sections(tmp_path):

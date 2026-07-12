@@ -68,8 +68,25 @@ Because it hooks audit *events*, the block is hermetic and syscall-accurate: a
 `socket.create_connection(...)` is stopped at the `connect` event, no real
 network needed.
 
+## What `pipguard install --sandbox` covers
+
+`--sandbox` runs the **pip install process** under the sandbox. It contains code
+that executes *during* installation — most importantly an **sdist build**
+(`setup.py` / build-backend), which is where install-time credential theft and
+callbacks live.
+
+It does **not** cover code that runs *after* the pip process exits — a `.pth`
+autorun or a first-import payload runs at the **next** interpreter startup, which
+is outside the sandboxed process. Those are pipguard's job *before* install: the
+static scanner flags `.pth` executable content as CRITICAL and blocks it at the
+gate. `--sandbox` is defense-in-depth for the build-time surface, not a
+replacement for the scan.
+
 ## Limitations (be honest)
 
+- **Install-time only.** Covers code run during the pip process (e.g. sdist
+  builds), not post-install `.pth` / first-import autorun (the scanner handles
+  those pre-install).
 - **Python only.** A payload in a `.so`/`.pyd` extension, or a non-Python child
   process, is not covered. Pair with an OS sandbox for those.
 - **Not a syscall firewall.** It enforces the specific audit events above, not
@@ -77,11 +94,11 @@ network needed.
 - **Path matching is substring-based** on the normalised path — intentionally
   conservative to avoid breaking legitimate installs.
 
-## Decision / next steps
+## Status / next steps
 
-1. Land the prototype + this note (done).
-2. Add an opt-in `pipguard install --sandbox` that runs the `pip install` step
-   under `run_sandboxed` — needs care so pip's own file access isn't tripped
-   (installing from the scanned local cache is already offline, so
-   `allow_network=False` is safe there).
-3. Evaluate a landlock backend on Linux for native-code containment.
+1. Prototype + this note — **done**.
+2. Opt-in `pipguard install --sandbox` running the `pip install` step under
+   `run_sandboxed` (network denied — the local-cache install is already offline
+   via `--no-index`; credential reads denied; subprocesses allowed so build
+   backends work) — **done**.
+3. Evaluate a landlock backend on Linux for native-code containment — todo.

@@ -100,3 +100,53 @@ def test_sandbox_allows_subprocess_by_default(tmp_path):
         timeout=30,
     )
     assert rc == 0
+
+
+def test_sandbox_capture_output_writes_through_on_failure(capsys):
+    """capture_output=True surfaces the child's stdout/stderr on a non-zero exit."""
+    code = "import sys; sys.stdout.write('OUT'); sys.stderr.write('ERR'); sys.exit(3)"
+    rc = run_sandboxed(
+        [sys.executable, "-c", code],
+        deny_fragments=["/.ssh/"],
+        capture_output=True,
+        timeout=30,
+    )
+    assert rc == 3
+    out = capsys.readouterr()
+    assert "OUT" in out.out
+    assert "ERR" in out.err
+
+
+def test_sandbox_capture_output_failure_without_output(capsys):
+    """capture_output=True with a non-zero exit but no stdout/stderr must not
+    write anything (covers the empty-output branches)."""
+    rc = run_sandboxed(
+        [sys.executable, "-c", "import sys; sys.exit(2)"],
+        deny_fragments=["/.ssh/"],
+        capture_output=True,
+        timeout=30,
+    )
+    assert rc == 2
+    out = capsys.readouterr()
+    assert out.out == ""
+    assert out.err == ""
+
+
+def test_sandbox_does_not_break_offline_pip_install(tmp_path):
+    """Integration: pip installs a wheel offline UNDER the sandbox (rc 0),
+    proving the sandbox permits pip's own legitimate file access.
+
+    Installs into an isolated --target that is never added to sys.path, so the
+    fixture's .pth payload is written but never executed.
+    """
+    wheels = os.path.join(os.path.dirname(__file__), "fixtures", "wheels")
+    if not os.path.isdir(wheels) or not os.listdir(wheels):
+        import pytest
+        pytest.skip("no fixture wheels available")
+    target = tmp_path / "target"
+    cmd = [
+        sys.executable, "-m", "pip", "install", "--no-index", "--no-deps",
+        "--find-links", wheels, "--target", str(target), "malicious-pth",
+    ]
+    rc = run_sandboxed(cmd, allow_network=False, allow_subprocess=True, timeout=120)
+    assert rc == 0

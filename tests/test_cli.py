@@ -201,6 +201,11 @@ class TestBuildParser:
         args = parser.parse_args(["install", "--show-pip-output", "requests"])
         assert args.show_pip_output is True
 
+    def test_sandbox_flag(self):
+        parser = build_parser()
+        args = parser.parse_args(["install", "--sandbox", "requests"])
+        assert args.sandbox is True
+
     def test_policy_flag(self):
         parser = build_parser()
         args = parser.parse_args(["install", "--policy", "pipguard.toml", "requests"])
@@ -347,6 +352,15 @@ class TestCmdInstallGate:
         rc = cmd_install(_make_args(show_pip_output=True))
         assert rc == 0
         assert mock_install.call_args.kwargs["show_pip_output"] is True
+
+    def test_sandbox_flag_passed_to_installer(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        mock_dl.return_value = ([str(tmp_path / "pkg-1.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("pkg", RiskLevel.CLEAN)
+        rc = cmd_install(_make_args(sandbox=True))
+        assert rc == 0
+        assert mock_install.call_args.kwargs["sandbox"] is True
 
     def test_sdist_rejected_without_flag(
         self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
