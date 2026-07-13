@@ -674,6 +674,13 @@ class TestCmdScanFeed:
         mock_report.assert_called_once()
 
 
+class TestScanArchives:
+    def test_empty_archive_list_returns_empty(self):
+        """Guard: no archives → empty results (avoids ThreadPoolExecutor(0))."""
+        from pipguard.cli import _scan_archives
+        assert _scan_archives([], "/tmp", [], False) == []
+
+
 class TestMainDispatch:
     @patch("pipguard.cli.cmd_scan_feed", return_value=0)
     def test_main_routes_scan_feed(self, mock_cmd):
