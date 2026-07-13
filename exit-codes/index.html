@@ -702,6 +702,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#pipguard-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipguard-scan-feed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard scan-feed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage-in-ci" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -850,6 +872,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#pipguard-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipguard-scan-feed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard scan-feed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage-in-ci" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -893,6 +937,7 @@
 
 <h1 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h1>
 <p>pipguard uses structured exit codes so CI pipelines can react precisely.</p>
+<h2 id="pipguard-install"><code>pipguard install</code><a class="headerlink" href="#pipguard-install" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -916,6 +961,35 @@
 <td><code>2</code></td>
 <td><strong>Scan error</strong> — could not complete the scan</td>
 <td>Download failed, unsupported archive format, disk space error</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pipguard-scan-feed"><code>pipguard scan-feed</code><a class="headerlink" href="#pipguard-scan-feed" title="Permanent link">&para;</a></h2>
+<p><code>scan-feed</code> is a triage tool, so its codes differ — exit <code>1</code> means "found something
+to review", not "blocked":</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+<th>When it occurs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td><strong>Nothing to review</strong></td>
+<td>No scanned release met or exceeded <code>--min-level</code></td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td><strong>Review candidates found</strong></td>
+<td>At least one release met or exceeded <code>--min-level</code> (so a scheduled job can alert)</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td><strong>Feed error</strong></td>
+<td>The feed could not be fetched, or no entries could be downloaded to scan</td>
 </tr>
 </tbody>
 </table>

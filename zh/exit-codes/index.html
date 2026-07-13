@@ -702,6 +702,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#pipguard-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipguard-scan-feed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard scan-feed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ci" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -839,6 +861,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#pipguard-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipguard-scan-feed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard scan-feed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ci" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -871,6 +915,7 @@
 
 <h1 id="_1">退出码<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p>pipguard 使用结构化退出码，便于 CI/CD 精准处理。</p>
+<h2 id="pipguard-install"><code>pipguard install</code><a class="headerlink" href="#pipguard-install" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -894,6 +939,34 @@
 <td><code>2</code></td>
 <td><strong>Scan error</strong>：扫描失败</td>
 <td>下载失败、归档不支持、磁盘异常等</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pipguard-scan-feed"><code>pipguard scan-feed</code><a class="headerlink" href="#pipguard-scan-feed" title="Permanent link">&para;</a></h2>
+<p><code>scan-feed</code> 是初筛工具，退出码含义不同——<code>1</code> 表示"发现需核查的候选"，不是"已阻断"：</p>
+<table>
+<thead>
+<tr>
+<th>退出码</th>
+<th>含义</th>
+<th>触发场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td><strong>无需核查</strong></td>
+<td>没有被扫的发布达到或超过 <code>--min-level</code></td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td><strong>发现核查候选</strong></td>
+<td>至少一个发布达到或超过 <code>--min-level</code>（便于定时任务告警）</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td><strong>Feed 错误</strong></td>
+<td>无法拉取 feed，或没有任何条目能下载来扫描</td>
 </tr>
 </tbody>
 </table>
