@@ -21,7 +21,7 @@ from typing import List, Optional, Tuple
 from . import __version__
 from .aggregator import aggregate_findings, check_package_name_for_homoglyph, print_findings_report
 from .cleanup import install_signal_handlers, register_temp_dir
-from .downloader import download_packages
+from .downloader import download_for_scan, download_packages
 from .extractor import collect_binary_extension_files, collect_scannable_files, extract_archive
 from .feed import fetch_feed, parse_feed
 from .installer import install_from_local
@@ -483,19 +483,20 @@ def cmd_scan_feed(args) -> int:
     register_temp_dir(tmp_dir)
 
     print(f"📡 Fetched {len(entries)} feed ent(ies); downloading for scan ...")
-    try:
-        archive_files, sdist_rejects = download_packages(specs, tmp_dir)
-    except RuntimeError as exc:
-        print(f"Error: {exc}", file=sys.stderr)
-        return 2
+    # Resilient per-entry download — a feed is full of releases that fail to
+    # resolve (Requires-Python, unresolvable deps, yanks); one must not abort all.
+    archive_files, skipped = download_for_scan(specs, tmp_dir)
 
-    if sdist_rejects:
+    if skipped:
         print(
-            f"  Skipping {len(sdist_rejects)} sdist-only package(s) "
-            "(cannot scan without executing build code): "
-            + ", ".join(sdist_rejects),
+            f"  Skipped {len(skipped)} entr(ies) that could not be downloaded "
+            "(e.g. unavailable / yanked): " + ", ".join(skipped),
             file=sys.stderr,
         )
+
+    if not archive_files:
+        print("No packages could be downloaded from the feed to scan.", file=sys.stderr)
+        return 2
 
     print(f"🔍 Scanning {len(archive_files)} package(s) ...")
     results = _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns)

@@ -86,3 +86,44 @@ def download_packages(
                 sdist_rejects.append(fname)
 
     return archive_files, sdist_rejects
+
+
+def download_for_scan(specs: List[str], dest_dir: str) -> Tuple[List[str], List[str]]:
+    """Resilient, per-package download for the reporter workflow (scan-feed).
+
+    Unlike :func:`download_packages` (one all-or-nothing pip resolve, right for
+    ``install``), this downloads each spec independently so a single bad entry
+    doesn't abort the whole batch — real PyPI feeds are full of releases that
+    fail to resolve for the current interpreter (``Requires-Python``),
+    unresolvable dependencies, yanks, etc.
+
+    Uses ``--no-deps`` (scan only the entry itself, not its dependency tree) and
+    ``--ignore-requires-python`` (scan releases targeting any Python version).
+    Both wheels and sdists are kept: scan-feed only extracts + AST-scans, never
+    installs, so scanning an sdist's ``setup.py`` is safe and is exactly where
+    install-hook attacks live.
+
+    Returns ``(archive_files, skipped_specs)``.
+    """
+    check_disk_space(dest_dir)
+
+    skipped: List[str] = []
+    for spec in specs:
+        cmd = [
+            sys.executable, "-m", "pip", "download",
+            "--no-deps",
+            "--ignore-requires-python",
+            "--prefer-binary",
+            "--dest", dest_dir,
+            "--quiet",
+            spec,
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            skipped.append(spec)
+
+    archive_files = [
+        str(f) for f in Path(dest_dir).iterdir()
+        if f.name.endswith(".whl") or any(f.name.endswith(ext) for ext in SDIST_EXTENSIONS)
+    ]
+    return archive_files, skipped
