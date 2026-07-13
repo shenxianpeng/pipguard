@@ -548,7 +548,7 @@ def _make_feed_args(**kwargs):
 
 @patch("pipguard.cli.print_findings_report")
 @patch("pipguard.cli._scan_one_package")
-@patch("pipguard.cli.download_packages")
+@patch("pipguard.cli.download_for_scan")
 @patch("pipguard.cli.fetch_feed")
 @patch("pipguard.cli.register_temp_dir")
 @patch("pipguard.cli.install_signal_handlers")
@@ -638,25 +638,28 @@ class TestCmdScanFeed:
         specs = mock_dl.call_args[0][0]
         assert specs == ["a==1.0"]
 
-    def test_download_runtime_error_exit_2(
+    def test_all_downloads_skipped_exit_2(
         self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
     ):
+        """When every feed entry fails to download, exit 2 with nothing scanned."""
         mock_fetch.return_value = _FEED_XML
-        mock_dl.side_effect = RuntimeError("pip blew up")
+        mock_dl.return_value = ([], ["evilpkg==1.2.3"])
         rc = cmd_scan_feed(_make_feed_args())
         assert rc == 2
+        mock_scan.assert_not_called()
 
-    def test_sdist_rejects_are_reported_and_scan_continues(
+    def test_skipped_downloads_reported_and_scan_continues(
         self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path, capsys
     ):
+        """Undownloadable entries are reported but don't abort scanning the rest."""
         mock_fetch.return_value = _FEED_XML
         mock_dl.return_value = (
-            [str(tmp_path / "evilpkg-1.2.3-py3-none-any.whl")], ["sdistpkg"]
+            [str(tmp_path / "evilpkg-1.2.3-py3-none-any.whl")], ["unresolvable==9.9"]
         )
         mock_scan.return_value = PackageScanResult("evilpkg", "1.2.3", findings=[])
         rc = cmd_scan_feed(_make_feed_args())
         assert rc == 0
-        assert "sdistpkg" in capsys.readouterr().err
+        assert "unresolvable==9.9" in capsys.readouterr().err
 
     def test_scan_exception_is_captured_not_fatal(
         self, mock_sig, mock_reg, mock_fetch, mock_dl, mock_scan, mock_report, tmp_path
