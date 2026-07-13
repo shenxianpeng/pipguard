@@ -2,11 +2,24 @@
 
 pipguard uses structured exit codes so CI pipelines can react precisely.
 
+## `pipguard install`
+
 | Code | Meaning | When it occurs |
 |------|---------|---------------|
 | `0` | **Clean** — install succeeded | All packages scanned as CLEAN (or MEDIUM/LOW with user confirmation) |
 | `1` | **Blocked** — CRITICAL or HIGH risk detected | Any package triggered a CRITICAL or HIGH finding |
 | `2` | **Scan error** — could not complete the scan | Download failed, unsupported archive format, disk space error |
+
+## `pipguard scan-feed`
+
+`scan-feed` is a triage tool, so its codes differ — exit `1` means "found something
+to review", not "blocked":
+
+| Code | Meaning | When it occurs |
+|------|---------|---------------|
+| `0` | **Nothing to review** | No scanned release met or exceeded `--min-level` |
+| `1` | **Review candidates found** | At least one release met or exceeded `--min-level` (so a scheduled job can alert) |
+| `2` | **Feed error** | The feed could not be fetched, or no entries could be downloaded to scan |
 
 ## Usage in CI
 
