@@ -15,8 +15,11 @@ AST-based static analysis + known CVE lookup via [osv.dev](https://osv.dev).
 
 ```bash
 pip install pipguard
-pipguard install litellm==1.82.8   # Blocks the March 2026 attack. Exits 1.
+pipguard install requests          # downloads, scans, then installs
 ```
+
+pipguard would have blocked the March 2026 `litellm` `.pth` attack before install
+(that release has since been pulled from PyPI — see [The Problem](#the-problem)).
 
 Zero configuration. Zero external dependencies. Pure stdlib.
 
@@ -91,7 +94,7 @@ For the full reference — risk levels, exit codes, allowlist, and CI integratio
 Use the bundled composite action to gate installs in a workflow — it fails the job on `CRITICAL`/`HIGH` findings:
 
 ```yaml
-- uses: shenxianpeng/pipguard@v0.2.0
+- uses: shenxianpeng/pipguard@v0.3.0
   with:
     requirements: requirements.txt
     check-vulns: true        # also query OSV.dev for known CVEs (optional)
@@ -100,7 +103,7 @@ Use the bundled composite action to gate installs in a workflow — it fails the
 Or scan explicit packages:
 
 ```yaml
-- uses: shenxianpeng/pipguard@v0.2.0
+- uses: shenxianpeng/pipguard@v0.3.0
   with:
     packages: "requests numpy==1.26.3"
 ```
@@ -112,7 +115,7 @@ Add pipguard to `.pre-commit-config.yaml` to scan your requirements file before 
 ```yaml
 repos:
   - repo: https://github.com/shenxianpeng/pipguard
-    rev: v0.2.0
+    rev: v0.3.0
     hooks:
       - id: pipguard
         # scans requirements.txt by default; override for a different file:

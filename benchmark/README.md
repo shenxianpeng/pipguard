@@ -36,7 +36,7 @@ suite.
 
 ## Current baseline
 
-See `baseline.json` — TPR 100% (17/17), FPR 0% (0/8).
+See `baseline.json` — TPR 100% (18/18), FPR 0% (0/8).
 
 > This benchmark already paid for itself: it surfaced a false negative where
 > `import urllib.request; urllib.request.urlopen(...)` in an install hook went
