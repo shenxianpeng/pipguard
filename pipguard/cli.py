@@ -21,6 +21,7 @@ from typing import List, Optional, Tuple
 from . import __version__
 from .aggregator import aggregate_findings, check_package_name_for_homoglyph, print_findings_report
 from .cleanup import install_signal_handlers, register_temp_dir
+from .deps import parse_dependencies_file
 from .downloader import download_for_scan, download_packages
 from .extractor import collect_binary_extension_files, collect_scannable_files, extract_archive
 from .feed import fetch_feed, parse_feed
@@ -262,6 +263,17 @@ def cmd_install(args) -> int:
     packages: List[str] = args.packages or []
     requirements_file: Optional[str] = getattr(args, "r", None)
     extra_allow: List[str] = [*(policy.seed_allowlist or []), *(args.allow or [])]
+
+    # Support structured dependency files (pyproject.toml, setup.cfg)
+    if requirements_file:
+        parsed_deps = parse_dependencies_file(requirements_file)
+        if parsed_deps is not None:
+            # Structured file: extract deps and treat as package list
+            if not parsed_deps and not packages:
+                print(f"No dependencies found in {requirements_file}", file=sys.stderr)
+                return 2
+            packages = list(packages) + parsed_deps
+            requirements_file = None  # Don't pass structured file to pip -r
 
     if not packages and not requirements_file:
         print("Error: specify package(s) or -r requirements.txt", file=sys.stderr)
@@ -559,6 +571,16 @@ def cmd_scan(args) -> int:
     packages: List[str] = args.packages or []
     requirements_file: Optional[str] = getattr(args, "r", None)
 
+    # Support structured dependency files (pyproject.toml, setup.cfg)
+    if requirements_file:
+        parsed_deps = parse_dependencies_file(requirements_file)
+        if parsed_deps is not None:
+            if not parsed_deps and not packages:
+                print(f"No dependencies found in {requirements_file}", file=sys.stderr)
+                return 2
+            packages = list(packages) + parsed_deps
+            requirements_file = None
+
     if not packages and not requirements_file:
         print("Error: specify package(s) or -r requirements.txt", file=sys.stderr)
         return 2
@@ -661,8 +683,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Package(s) to install (e.g. requests>=2.28 or litellm==1.82.8)",
     )
     install.add_argument(
-        "-r", metavar="requirements.txt",
-        help="Requirements file to install from",
+        "-r", metavar="FILE",
+        help="Dependency file to install from (requirements.txt, pyproject.toml, or setup.cfg)",
     )
     install.add_argument(
         "--yes", "-y", action="store_true",
@@ -781,8 +803,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Package(s) to scan (e.g. requests>=2.28 or litellm==1.82.8)",
     )
     scan.add_argument(
-        "-r", metavar="requirements.txt",
-        help="Requirements file to scan",
+        "-r", metavar="FILE",
+        help="Dependency file to scan (requirements.txt, pyproject.toml, or setup.cfg)",
     )
     scan.add_argument(
         "--allow", action="append", metavar="package", default=[],
