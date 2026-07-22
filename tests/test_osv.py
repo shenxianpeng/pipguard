@@ -3,9 +3,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from pipguard.osv import OsvVulnerability, query_osv, _parse_osv_response
+from pipguard.osv import OsvVulnerability, _parse_osv_response, query_osv
 
 
 class TestOsvVulnerability:

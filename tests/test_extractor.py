@@ -17,7 +17,6 @@ Critical paths tested:
 import os
 import sys
 import tarfile
-import tempfile
 import zipfile
 
 import pytest
@@ -30,7 +29,6 @@ from pipguard.extractor import (
     extract_archive,
     has_python_source,
 )
-
 
 # ── extract_archive ──────────────────────────────────────────────────────────
 

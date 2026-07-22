@@ -6,7 +6,7 @@ Scan packages for malicious install-time behavior before installing them.
 Zero configuration. Zero external dependencies. Pure stdlib.
 """
 
-from importlib.metadata import version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError, version
 
 try:
     __version__ = version("pipguard")

@@ -10,7 +10,6 @@ from pipguard.sandbox import (
     run_sandboxed,
 )
 
-
 # ── path_is_denied ───────────────────────────────────────────────────────────
 
 def test_path_is_denied_matches_credential_paths():

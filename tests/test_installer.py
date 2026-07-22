@@ -1,7 +1,6 @@
 """Tests for install_from_local, including the --sandbox path (#55)."""
 
 import os
-import sys
 from unittest.mock import patch
 
 from pipguard.installer import install_from_local

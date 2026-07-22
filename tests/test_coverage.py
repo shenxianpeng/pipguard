@@ -12,11 +12,9 @@ Covers:
   - cli.py: _scan_one_package paths, _confirm_install EOFError, cmd_install branches, main()
 """
 
-import io
 import os
 import signal
 import sys
-import tempfile
 import types
 import zipfile
 from unittest.mock import MagicMock, patch
@@ -26,7 +24,6 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pipguard.models import Finding, PackageScanResult, RiskLevel
-
 
 # ── models.py ────────────────────────────────────────────────────────────────
 
@@ -125,7 +122,6 @@ class TestPrintFindingsReport:
 class TestCleanup:
     def test_register_temp_dir_adds_to_list(self, tmp_path):
         from pipguard import cleanup
-        initial_len = len(cleanup._registered_dirs)
         cleanup.register_temp_dir(str(tmp_path))
         assert str(tmp_path) in cleanup._registered_dirs
         cleanup._registered_dirs.clear()
@@ -168,7 +164,7 @@ class TestCheckDiskSpace:
         # No error raised; warning only if truly low disk
 
     def test_warning_when_disk_space_is_low(self, tmp_path, capsys):
-        from pipguard.downloader import check_disk_space, MINIMUM_DISK_MB
+        from pipguard.downloader import check_disk_space
         with patch("shutil.disk_usage") as mock_usage:
             mock_usage.return_value = types.SimpleNamespace(free=10 * 1024 * 1024)
             check_disk_space(str(tmp_path))
@@ -418,8 +414,9 @@ class TestScannerEdgePaths:
 
     def test_call_name_returns_empty_for_non_name_non_attribute(self, tmp_path):
         """_call_name returns '' for Call nodes with non-Name/Attribute func."""
-        from pipguard.scanner import _call_name
         import ast
+
+        from pipguard.scanner import _call_name
         # subscript call: foo[0]()
         tree = ast.parse("foo[0]()", mode="eval")
         call_node = tree.body
@@ -433,7 +430,6 @@ class TestScannerEdgePaths:
 class TestScanOnePackage:
     def test_extract_failure_returns_medium_finding(self, tmp_path):
         from pipguard.cli import _scan_one_package
-        from pipguard.extractor import extract_archive
         with patch("pipguard.cli.extract_archive", return_value=None):
             result = _scan_one_package(
                 str(tmp_path / "mypkg-1.0-py3-none-any.whl"),
@@ -538,7 +534,7 @@ class TestCmdInstallBranches:
 
     def test_force_overrides_critical(self, tmp_path, capsys):
         from pipguard.cli import cmd_install
-        from pipguard.models import PackageScanResult, Finding, RiskLevel
+        from pipguard.models import Finding, PackageScanResult, RiskLevel
         args = self._make_args(packages=["evil"], force=True)
         finding = Finding(level=RiskLevel.CRITICAL, file_path="setup.py", line=1, description="bad")
         result = PackageScanResult("evil", "0.1", findings=[finding])
@@ -553,7 +549,7 @@ class TestCmdInstallBranches:
 
     def test_medium_finding_user_declines(self, tmp_path, capsys):
         from pipguard.cli import cmd_install
-        from pipguard.models import PackageScanResult, Finding, RiskLevel
+        from pipguard.models import Finding, PackageScanResult, RiskLevel
         args = self._make_args(packages=["mypkg"])
         finding = Finding(level=RiskLevel.MEDIUM, file_path="mypkg.py", line=1, description="net")
         result = PackageScanResult("mypkg", "1.0", findings=[finding])
@@ -694,7 +690,7 @@ class TestCmdInstallMediumProceed:
 
     def test_medium_finding_user_confirms(self, tmp_path):
         from pipguard.cli import cmd_install
-        from pipguard.models import PackageScanResult, Finding, RiskLevel
+        from pipguard.models import Finding, PackageScanResult, RiskLevel
         args = self._make_args(packages=["mypkg"])
         finding = Finding(level=RiskLevel.MEDIUM, file_path="mypkg.py", line=1, description="net")
         result = PackageScanResult("mypkg", "1.0", findings=[finding])

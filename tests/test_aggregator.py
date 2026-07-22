@@ -6,17 +6,16 @@ Critical: CRITICAL findings are NEVER reduced by the allowlist (Amendment A3).
 
 import os
 import sys
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from pipguard.aggregator import (
+    SEED_ALLOWLIST,
     aggregate_findings,
     check_package_name_for_homoglyph,
     is_allowlisted,
     normalize_package_name,
     print_findings_report,
-    SEED_ALLOWLIST,
 )
 from pipguard.models import Finding, PackageScanResult, RiskLevel
 

@@ -24,13 +24,13 @@ from .cleanup import install_signal_handlers, register_temp_dir
 from .downloader import download_for_scan, download_packages
 from .extractor import collect_binary_extension_files, collect_scannable_files, extract_archive
 from .feed import fetch_feed, parse_feed
+from .formatters import format_json, format_sarif
 from .installer import install_from_local
 from .intel import load_intel_feed
 from .models import Finding, PackageScanResult, RiskLevel
 from .osv import query_osv
 from .policy import load_policy
 from .scanner import scan_binary_extensions, scan_pth_file, scan_python_file
-
 
 # ── Package name extraction ──────────────────────────────────────────────────
 
@@ -257,6 +257,7 @@ def cmd_install(args) -> int:
     verbose = bool(getattr(args, "verbose", False))
     show_pip_output = bool(getattr(args, "show_pip_output", False))
     sandbox = bool(getattr(args, "sandbox", False) or getattr(policy, "sandbox", False))
+    output_format = getattr(args, "format", "text")
 
     packages: List[str] = args.packages or []
     requirements_file: Optional[str] = getattr(args, "r", None)
@@ -336,7 +337,12 @@ def cmd_install(args) -> int:
     print(f"🔍 Scanning {len(archive_files)} package(s) ...")
     results = _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns)
 
-    print_findings_report(results, verbose=verbose)
+    if output_format == "json":
+        print(format_json(results))
+    elif output_format == "sarif":
+        print(format_sarif(results))
+    else:
+        print_findings_report(results, verbose=verbose)
 
     # Known-CVE gate (opt-in). Independent of behavioural risk level: a package
     # can be behaviourally CLEAN yet carry a published CVE.
@@ -462,6 +468,7 @@ def cmd_scan_feed(args) -> int:
     policy = load_policy(getattr(args, "policy", None))
     check_vulns = bool(getattr(args, "check_vulns", False) or getattr(policy, "osv_enabled", False))
     verbose = bool(getattr(args, "verbose", False))
+    output_format = getattr(args, "format", "text")
     extra_allow = [*(policy.seed_allowlist or []), *(args.allow or [])]
     min_level = _LEVEL_BY_NAME[args.min_level]
 
@@ -501,7 +508,12 @@ def cmd_scan_feed(args) -> int:
     print(f"🔍 Scanning {len(archive_files)} package(s) ...")
     results = _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns)
 
-    print_findings_report(results, verbose=verbose)
+    if output_format == "json":
+        print(format_json(results))
+    elif output_format == "sarif":
+        print(format_sarif(results))
+    else:
+        print_findings_report(results, verbose=verbose)
 
     # Reporter summary: candidates at or above the threshold, newest first.
     candidates = [r for r in results if r.effective_level.value >= min_level.value]
@@ -522,6 +534,107 @@ def cmd_scan_feed(args) -> int:
         "malicious, submit an advisory.",
     )
     return 1
+
+
+# ── scan subcommand (scan only, no install) ──────────────────────────────────
+
+def cmd_scan(args) -> int:
+    """Implement `pipguard scan`: scan packages without installing.
+
+    Useful for CI gates, auditing vendor directories, or pre-checking
+    packages before allowing them through. Supports the same output formats
+    as `pipguard install`.
+    """
+    install_signal_handlers()
+
+    policy = load_policy(getattr(args, "policy", None))
+    check_vulns = bool(getattr(args, "check_vulns", False) or getattr(policy, "osv_enabled", False))
+    fail_on_vuln = bool(getattr(args, "fail_on_vuln", False) or getattr(policy, "osv_fail_on_vuln", False))
+    if fail_on_vuln:
+        check_vulns = True
+    verbose = bool(getattr(args, "verbose", False))
+    output_format = getattr(args, "format", "text")
+    extra_allow = [*(policy.seed_allowlist or []), *(args.allow or [])]
+
+    packages: List[str] = args.packages or []
+    requirements_file: Optional[str] = getattr(args, "r", None)
+
+    if not packages and not requirements_file:
+        print("Error: specify package(s) or -r requirements.txt", file=sys.stderr)
+        return 2
+
+    tmp_dir = tempfile.mkdtemp(prefix="pipguard-scan-")
+    register_temp_dir(tmp_dir)
+
+    if requirements_file:
+        require_hashes = bool(getattr(args, "require_hashes", False) or policy.require_hashes)
+        rc = _validate_requirements_file(
+            requirements_file,
+            require_hashes=require_hashes,
+            allow_vcs_pinned=policy.allow_vcs_pinned,
+            allow_direct_url_pinned=policy.allow_direct_url_pinned,
+        )
+        if rc != 0:
+            return rc
+
+    print(f"📦 Downloading to {tmp_dir} ...")
+    try:
+        archive_files, sdist_rejects = download_packages(
+            packages,
+            tmp_dir,
+            allow_sdist=getattr(args, "allow_sdist", False),
+            requirements_file=requirements_file,
+            require_hashes=getattr(args, "require_hashes", False),
+        )
+    except RuntimeError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+
+    if sdist_rejects:
+        print(
+            "\n⚠️  Source distributions found (cannot guarantee scan completeness):",
+            file=sys.stderr,
+        )
+        for name in sdist_rejects:
+            print(f"   • {name}", file=sys.stderr)
+
+    if not archive_files:
+        print("No downloadable packages found.", file=sys.stderr)
+        return 2
+
+    print(f"🔍 Scanning {len(archive_files)} package(s) ...")
+    results = _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns)
+
+    if output_format == "json":
+        print(format_json(results))
+    elif output_format == "sarif":
+        print(format_sarif(results))
+    else:
+        print_findings_report(results, verbose=verbose)
+
+    # Determine exit code based on findings
+    max_level = RiskLevel.CLEAN
+    for r in results:
+        if r.effective_level.value > max_level.value:
+            max_level = r.effective_level
+
+    if fail_on_vuln:
+        vulnerable = [r for r in results if r.cves]
+        if vulnerable:
+            if output_format == "text":
+                names = ", ".join(
+                    f"{r.package_name}=={r.version}" if r.version else r.package_name
+                    for r in vulnerable
+                )
+                print(f"\n❌ Known vulnerabilities detected: {names}", file=sys.stderr)
+            return 1
+
+    if max_level in (RiskLevel.CRITICAL, RiskLevel.HIGH):
+        if output_format == "text":
+            print(f"\n❌ {max_level} risk detected.", file=sys.stderr)
+        return 1
+
+    return 0
 
 
 # ── CLI wiring ───────────────────────────────────────────────────────────────
@@ -614,6 +727,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--fail-on-vuln", action="store_true",
         help="Exit 1 if any package has a known OSV vulnerability (implies --check-vulns)",
     )
+    install.add_argument(
+        "--format", choices=["text", "json", "sarif"], default="text",
+        help="Output format: text (default), json, or sarif (for GitHub Code Scanning)",
+    )
 
     # ── scan-feed ─────────────────────────────────────────────────────────────
     feed = sub.add_parser(
@@ -646,9 +763,60 @@ def build_parser() -> argparse.ArgumentParser:
         help="Show full scan details, including LOW findings and CLEAN packages",
     )
     feed.add_argument(
+        "--format", choices=["text", "json", "sarif"], default="text",
+        help="Output format: text (default), json, or sarif (for GitHub Code Scanning)",
+    )
+    feed.add_argument(
         "--policy", metavar="pipguard.toml",
         help="Path to policy file (default: ./pipguard.toml if present)",
     )
+
+    # ── scan (scan-only, no install) ─────────────────────────────────────────
+    scan = sub.add_parser(
+        "scan",
+        help="Download and scan package(s) WITHOUT installing (audit/CI gate mode)",
+    )
+    scan.add_argument(
+        "packages", nargs="*", metavar="package",
+        help="Package(s) to scan (e.g. requests>=2.28 or litellm==1.82.8)",
+    )
+    scan.add_argument(
+        "-r", metavar="requirements.txt",
+        help="Requirements file to scan",
+    )
+    scan.add_argument(
+        "--allow", action="append", metavar="package", default=[],
+        help="Add package to per-invocation allowlist (repeatable)",
+    )
+    scan.add_argument(
+        "--allow-sdist", action="store_true",
+        help="Allow sdist packages (WARNING: reduces scan coverage)",
+    )
+    scan.add_argument(
+        "--require-hashes", action="store_true",
+        help="Require hashes for all requirements entries",
+    )
+    scan.add_argument(
+        "--check-vulns", action="store_true",
+        help="Query OSV.dev for known vulnerabilities",
+    )
+    scan.add_argument(
+        "--fail-on-vuln", action="store_true",
+        help="Exit 1 if any package has a known OSV vulnerability (implies --check-vulns)",
+    )
+    scan.add_argument(
+        "--verbose", action="store_true",
+        help="Show full scan details",
+    )
+    scan.add_argument(
+        "--format", choices=["text", "json", "sarif"], default="text",
+        help="Output format: text (default), json, or sarif (for GitHub Code Scanning)",
+    )
+    scan.add_argument(
+        "--policy", metavar="pipguard.toml",
+        help="Path to policy file (default: ./pipguard.toml if present)",
+    )
+
     return parser
 
 
@@ -660,6 +828,8 @@ def main() -> int:
         return cmd_install(args)
     if args.command == "scan-feed":
         return cmd_scan_feed(args)
+    if args.command == "scan":
+        return cmd_scan(args)
     return 0  # pragma: no cover
 
 

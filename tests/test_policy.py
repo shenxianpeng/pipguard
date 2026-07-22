@@ -1,4 +1,4 @@
-from pipguard.policy import load_policy, _parse_policy_toml
+from pipguard.policy import _parse_policy_toml, load_policy
 
 
 def test_load_policy_defaults_when_missing(tmp_path):

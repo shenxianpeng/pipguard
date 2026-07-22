@@ -8,9 +8,8 @@ PIPGUARD_NETWORK_TESTS environment variable.
 
 import os
 import sys
-import tempfile
 import types
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -159,7 +158,7 @@ class TestBuildParser:
     def test_install_parses_requirements_file(self):
         parser = build_parser()
         args = parser.parse_args(["install", "-r", "requirements.txt"])
-        assert getattr(args, "r") == "requirements.txt"
+        assert args.r == "requirements.txt"
 
     def test_yes_flag(self):
         parser = build_parser()
@@ -327,7 +326,7 @@ class TestCmdInstallGate:
         mock_dl.return_value = ([str(tmp_path / "evil-1.0-py3-none-any.whl")], [])
         mock_scan.side_effect = RuntimeError("boom")
         # MEDIUM result means _confirm_install would be called; --yes skips the prompt
-        rc = cmd_install(_make_args(yes=True))
+        cmd_install(_make_args(yes=True))
         # Should NOT exit 0 silently with a clean result — scan error → MEDIUM → prompt/block
         # With --yes it proceeds, but the point is the result was not dropped
         mock_report.assert_called_once()

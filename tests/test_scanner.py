@@ -18,20 +18,17 @@ Critical security paths tested here (from eng review test plan):
 
 import os
 import sys
-import textwrap
-import tempfile
-import pytest
 
 # Ensure pipguard package is importable from repo root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from pipguard.models import RiskLevel
 from pipguard.scanner import (
     is_install_hook_scope,
     scan_binary_extensions,
     scan_pth_file,
     scan_python_file,
 )
-from pipguard.models import RiskLevel
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
 

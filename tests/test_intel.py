@@ -1,5 +1,5 @@
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from pipguard.intel import load_intel_feed
 

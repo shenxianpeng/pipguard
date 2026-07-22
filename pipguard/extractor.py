@@ -105,7 +105,7 @@ def collect_scannable_files(
 
 def has_python_source(extract_dir: str) -> bool:
     """Returns True if the extracted package contains any .py source files."""
-    for root, dirs, files in os.walk(extract_dir):
+    for _root, dirs, files in os.walk(extract_dir):
         dirs[:] = [d for d in dirs if d != "__pycache__"]
         for fname in files:
             if fname.endswith(".py"):
