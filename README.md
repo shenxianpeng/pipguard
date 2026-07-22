@@ -33,6 +33,12 @@ The March 2026 litellm attack (97M downloads/month) embedded Python code in a `.
 file — executed automatically at interpreter startup, exfiltrating SSH keys, AWS credentials,
 and Kubernetes configs from a single `pip install`.
 
+> **Note:** In July 2026, PyPI [began rejecting new file uploads to releases older than
+> 14 days](https://blog.pypi.org/posts/2026-07-22-releases-now-reject-new-files-after-14-days/).
+> This closes one attack vector — injecting malicious wheels into trusted old versions —
+> but attackers can still publish **new** malicious versions. pipguard's AST-based
+> scanning catches suspicious behavior in every version you install, regardless of age.
+
 Classical tools (pip-audit, GuardDog) are blind to zero-day attacks. They check known
 signatures. pipguard asks a different question:
 

@@ -29,6 +29,7 @@ from .intel import load_intel_feed
 from .models import Finding, PackageScanResult, RiskLevel
 from .osv import query_osv
 from .policy import load_policy
+from .release_age import check_release_age
 from .scanner import scan_binary_extensions, scan_pth_file, scan_python_file
 
 
@@ -78,6 +79,7 @@ def _scan_one_package(
     tmp_dir: str,
     extra_allow: List[str],
     check_vulns: bool = False,
+    check_release_age_flag: bool = False,
 ) -> PackageScanResult:
     """Scan a single downloaded archive. Designed for parallel execution."""
     pkg_name = _pkg_name_from_filename(archive_path)
@@ -92,6 +94,10 @@ def _scan_one_package(
     # Known-CVE lookup (OSV.dev) — complementary to the AST scan, opt-in via
     # --check-vulns. Best-effort: query_osv returns [] on any failure.
     cves = query_osv(pkg_name, pkg_version) if check_vulns else []
+
+    # Release age check — detect late file additions within PyPI's 14-day window
+    if check_release_age_flag:
+        all_findings.extend(check_release_age(pkg_name, pkg_version))
 
     extract_dir = extract_archive(archive_path, tmp_dir)
     if extract_dir is None:
@@ -257,6 +263,7 @@ def cmd_install(args) -> int:
     verbose = bool(getattr(args, "verbose", False))
     show_pip_output = bool(getattr(args, "show_pip_output", False))
     sandbox = bool(getattr(args, "sandbox", False) or getattr(policy, "sandbox", False))
+    check_release_age_flag = bool(getattr(args, "check_release_age", False))
 
     packages: List[str] = args.packages or []
     requirements_file: Optional[str] = getattr(args, "r", None)
@@ -334,7 +341,7 @@ def cmd_install(args) -> int:
 
     # Parallel scan (Architecture Amendment A8)
     print(f"🔍 Scanning {len(archive_files)} package(s) ...")
-    results = _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns)
+    results = _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns, check_release_age_flag)
 
     print_findings_report(results, verbose=verbose)
 
@@ -420,7 +427,7 @@ _LEVEL_BY_NAME = {
 }
 
 
-def _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns):
+def _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns, check_release_age_flag=False):
     """Scan a list of downloaded archives in parallel. Returns results."""
     results: List[PackageScanResult] = []
     if not archive_files:
@@ -428,7 +435,7 @@ def _scan_archives(archive_files, tmp_dir, extra_allow, check_vulns):
     workers = min(len(archive_files), os.cpu_count() or 4)
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
         future_to_arch = {
-            pool.submit(_scan_one_package, arch, tmp_dir, extra_allow, check_vulns): arch
+            pool.submit(_scan_one_package, arch, tmp_dir, extra_allow, check_vulns, check_release_age_flag): arch
             for arch in archive_files
         }
         for future in concurrent.futures.as_completed(future_to_arch):
@@ -613,6 +620,14 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument(
         "--fail-on-vuln", action="store_true",
         help="Exit 1 if any package has a known OSV vulnerability (implies --check-vulns)",
+    )
+    install.add_argument(
+        "--check-release-age", action="store_true",
+        help=(
+            "Query PyPI for upload timestamps and flag releases where files "
+            "were added days apart (possible credential compromise within "
+            "PyPI's 14-day upload window)"
+        ),
     )
 
     # ── scan-feed ─────────────────────────────────────────────────────────────

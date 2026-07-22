@@ -111,3 +111,29 @@ real-time feed that could be consumed without building the infrastructure from s
 **Priority:** v0.2
 
 ---
+
+## TODO-6: Track PEP 694 / Upload 2.0 API for Release State
+
+**What:** PyPI's July 2026 policy rejects new file uploads to releases older than
+14 days. Future work (PEP 694 / Upload 2.0 API) may introduce standardized
+semantics for release states (open/closed). When that API is available, pipguard
+can query it to enhance trust decisions.
+
+**Why:** Knowing whether a release is still "open" for uploads provides an
+additional trust signal. A release that is already closed cannot be tampered with,
+which reduces the risk of post-publication injection attacks.
+
+**Action when available:**
+- Consume the release state API in a new check (similar to `release_age.py`)
+- If a release is still "open" AND has other suspicious signals, escalate the
+  risk level
+- Add a policy option to control this behaviour
+
+**Current state:** PEP 694 is still in draft. No public API yet. The existing
+`release_age.py` module provides a heuristic approximation by checking file
+upload time spread within a release.
+
+**Depends on:** PEP 694 acceptance and PyPI implementation
+**Priority:** Long-term / track only
+
+---
