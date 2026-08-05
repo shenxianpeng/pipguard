@@ -5,7 +5,7 @@
 #
 # One-time setup required on PyPI before first run:
 #   pypi.org → Manage account → Publishing → Add a new publisher
-#   Publisher: GitHub  |  Owner: castops  |  Repo: cast
+#   Publisher: GitHub  |  Owner: shenxianpeng  |  Repo: pipguard
 #   Workflow: publish.yml  |  Environment: pypi
 
 name: Publish to PyPI
@@ -62,3 +62,7 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1 @ 2025-03-25
+        with:
+          # Emit PEP 740 build provenance / attestations (signed via OIDC).
+          # Default-on for trusted publishing; set explicitly as a trust signal.
+          attestations: true
