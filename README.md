@@ -40,6 +40,24 @@ signatures. pipguard asks a different question:
 
 The answer is **no**. And that question doesn't require a database.
 
+## How is this different from pip-audit?
+
+They answer different questions — and pipguard is a **superset**:
+
+| | pip-audit / Safety | **pipguard** |
+|---|:---:|:---:|
+| Known CVE / advisory lookup | ✅ | ✅ (`--check-vulns`) |
+| **Behavioral scan of code (zero-days)** | ❌ | ✅ |
+| Blocks **before** install | ❌ | ✅ |
+
+pip-audit checks whether your *versions* have a **published** advisory — reactive,
+and blind to a brand-new attack. pipguard checks what the *code actually does*
+(reads `~/.ssh`, phones home from `setup.py`) — catching the zero-day — and folds
+in the CVE check too. In a head-to-head on a credential-stealing `setup.py`,
+pip-audit reports *"No known vulnerabilities found"* while pipguard blocks it.
+Reproduce it: `python benchmark/compare_pip_audit.py`.
+See the full [comparison](https://shenxianpeng.github.io/pipguard/comparison/).
+
 ## Installation
 
 Install pipguard **outside your project's virtualenv** — this prevents untrusted
