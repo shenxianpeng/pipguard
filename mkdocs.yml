@@ -51,6 +51,7 @@ nav:
     - Installation: installation.md
     - Usage: usage.md
   - How It Works: how-it-works.md
+  - vs Other Tools: comparison.md
   - Reference:
     - Risk Levels: risk-levels.md
     - Exit Codes: exit-codes.md
@@ -65,6 +66,7 @@ plugins:
       nav_translations:
         zh:
           Home: 首页
+          vs Other Tools: 对比其他工具
           Get Started: 快速开始
           Installation: 安装指南
           Usage: 使用说明
