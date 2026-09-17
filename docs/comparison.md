@@ -19,7 +19,7 @@ uses) with `--check-vulns`.
 ## The evidence
 
 A package whose `setup.py` steals your SSH key during install — the
-[litellm](https://shenxianpeng.github.io/pipguard/how-it-works/)-class attack:
+[litellm](https://shenxianpeng.dev/pipguard/how-it-works/)-class attack:
 
 ```python
 # evilpkg/setup.py
