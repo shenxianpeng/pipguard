@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://shenxianpeng.github.io/pipguard/zh/exit-codes/">
+        <link rel="canonical" href="https://shenxianpeng.dev/pipguard/zh/exit-codes/">
       
       
         <link rel="prev" href="../risk-levels/">
@@ -1018,7 +1018,7 @@
 </table>
 <h2 id="ci">CI 示例<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pipguard<span class="w"> </span>install<span class="w"> </span>--yes<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Exit code: </span><span class="nv">$?</span><span class="s2">&quot;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Exit code: </span><span class="nv">$?</span><span class="s2">"</span>
 </span></code></pre></div>
 <div class="language-yaml highlight"><span class="filename">GitHub Actions</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Secure dependency install</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pipguard install --yes -r requirements.txt</span>

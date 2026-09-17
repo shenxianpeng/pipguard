@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://shenxianpeng.github.io/pipguard/how-it-works/">
+        <link rel="canonical" href="https://shenxianpeng.dev/pipguard/how-it-works/">
       
       
         <link rel="prev" href="../usage/">
@@ -1300,7 +1300,7 @@ surface obvious credential-path or exfiltration indicators.</p>
 <p>Before scanning archive contents, pipguard checks the package name itself for
 non-ASCII characters (e.g. Cyrillic <code>о</code> substituted for Latin <code>o</code>). Any such
 character produces a <strong>HIGH</strong> finding regardless of what the package contains:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bоto3   ← Cyrillic &#39;о&#39; (U+043E) in position 1
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bоto3   ← Cyrillic 'о' (U+043E) in position 1
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>↑ visually identical to boto3, but a different string
 </span></code></pre></div>
 <p>Package names are also NFKC-normalized before allowlist comparison, so a
