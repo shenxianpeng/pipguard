@@ -1,6 +1,6 @@
 site_name: pipguard
 site_description: Python supply chain security tool. Scan packages before installing them.
-site_url: https://shenxianpeng.github.io/pipguard/
+site_url: https://shenxianpeng.dev/pipguard/
 repo_url: https://github.com/shenxianpeng/pipguard
 repo_name: shenxianpeng/pipguard
 edit_uri: edit/main/docs/

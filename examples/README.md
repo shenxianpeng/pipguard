@@ -4,7 +4,7 @@ Copy-paste starting points for running pipguard in your own project.
 
 ## `scan-feed-cron.yml` — scheduled PyPI sentinel
 
-A GitHub Actions workflow that runs [`pipguard scan-feed`](https://shenxianpeng.github.io/pipguard/usage/#scanning-the-pypi-feed-reporter-workflow)
+A GitHub Actions workflow that runs [`pipguard scan-feed`](https://shenxianpeng.dev/pipguard/usage/#scanning-the-pypi-feed-reporter-workflow)
 on a schedule and opens a GitHub issue when recent PyPI releases are flagged for
 review. This turns the reporter workflow into a hands-off sentinel.
 

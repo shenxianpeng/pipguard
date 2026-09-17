@@ -6,7 +6,7 @@
 
 [![PyPI - Version](https://img.shields.io/pypi/v/pipguard)](https://pypi.org/project/pipguard/)
 [![codecov](https://codecov.io/gh/shenxianpeng/pipguard/graph/badge.svg)](https://codecov.io/gh/shenxianpeng/pipguard)
-[![Documentation](https://img.shields.io/badge/docs-mkdocs-blue)](https://shenxianpeng.github.io/pipguard/)
+[![Documentation](https://img.shields.io/badge/docs-mkdocs-blue)](https://shenxianpeng.dev/pipguard/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pipguard)](https://pypi.org/project/pipguard/)
 
 **Python supply chain security tool. Scan packages before installing them.**
@@ -56,7 +56,7 @@ and blind to a brand-new attack. pipguard checks what the *code actually does*
 in the CVE check too. In a head-to-head on a credential-stealing `setup.py`,
 pip-audit reports *"No known vulnerabilities found"* while pipguard blocks it.
 Reproduce it: `python benchmark/compare_pip_audit.py`.
-See the full [comparison](https://shenxianpeng.github.io/pipguard/comparison/).
+See the full [comparison](https://shenxianpeng.dev/pipguard/comparison/).
 
 ## Installation
 
@@ -103,7 +103,7 @@ By default, pipguard prints a risk summary, expands `CRITICAL` / `HIGH` / `MEDIU
 collapses `LOW` to package-level counts, and keeps successful `pip install` logs quiet.
 Use `--verbose` for full scan details and `--show-pip-output` to restore raw pip logs.
 
-For the full reference — risk levels, exit codes, allowlist, and CI integration — see the **[documentation](https://shenxianpeng.github.io/pipguard/)**.
+For the full reference — risk levels, exit codes, allowlist, and CI integration — see the **[documentation](https://shenxianpeng.dev/pipguard/)**.
 
 ## CI Integration
 

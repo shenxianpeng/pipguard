@@ -36,12 +36,12 @@ In scope — vulnerabilities **in pipguard itself**, for example:
 
 Out of scope:
 
-- known limitations documented in [How It Works → Limitations](https://shenxianpeng.github.io/pipguard/how-it-works/#limitations)
-  and the [Runtime Sandbox](https://shenxianpeng.github.io/pipguard/runtime-sandbox/)
+- known limitations documented in [How It Works → Limitations](https://shenxianpeng.dev/pipguard/how-it-works/#limitations)
+  and the [Runtime Sandbox](https://shenxianpeng.dev/pipguard/runtime-sandbox/)
   page (e.g. payloads inside compiled `.so`/`.pyd` extensions, post-install
   first-import autorun) — these are acknowledged gaps, not vulnerabilities;
 - vulnerabilities in third-party packages pipguard scans (report those to the
-  package maintainer, or via the [reporter workflow](https://shenxianpeng.github.io/pipguard/usage/#scanning-the-pypi-feed-reporter-workflow)).
+  package maintainer, or via the [reporter workflow](https://shenxianpeng.dev/pipguard/usage/#scanning-the-pypi-feed-reporter-workflow)).
 
 A false negative that lets a real install-time attack through the gate **is** in
 scope and we want to hear about it.
