@@ -1,0 +1,27 @@
+README.md
+  s_797e3933ee8a97::t_8d01d8a87f5653 9,59,106
+SECURITY.md
+  s_797e3933ee8a97::t_061dc5dc746966 39-40,44
+docs/comparison.md
+  s_797e3933ee8a97::t_133cc6e77e7179 22
+examples/README.md
+  s_797e3933ee8a97::t_5fd22d604efa8e 7
+mkdocs.yml
+  s_797e3933ee8a97::t_4e687f110aeb45 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "2bfc10ea897e00feedc7a748ab4982f7b8616b4c",
+  "prompts": {},
+  "sessions": {
+    "s_797e3933ee8a97": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2b4a1047-5655-4524-a769-e344963d8e3f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "Xianpeng Shen <xianpeng.shen@gmail.com>"
+    }
+  }
+}
