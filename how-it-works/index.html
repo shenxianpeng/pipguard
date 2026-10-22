@@ -951,6 +951,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../toolchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Toolchain Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1160,7 +1188,7 @@
 <li><strong>Zero-day blind spot</strong> — a new attack not yet in the database walks straight through</li>
 <li><strong>Race condition</strong> — the malicious code has already run by the time the tool checks</li>
 </ol>
-<p>pipguard reverses the order. It asks: <em>does this code do something that </em><em>any</em><em> pip install should be allowed to do?</em></p>
+<p>pipguard reverses the order. It asks: <em>does this code do something that <strong>any</strong> pip install should be allowed to do?</em></p>
 <p>Regardless of whether the package is on any watchlist, the answer to "reads <code>~/.ssh/id_rsa</code> and sends it over a network" is always <strong>no</strong>.</p>
 <h2 id="toctou-safety">TOCTOU Safety<a class="headerlink" href="#toctou-safety" title="Permanent link">&para;</a></h2>
 <p>A subtle attack vector: scan a clean file, then swap it for a malicious one before install.</p>

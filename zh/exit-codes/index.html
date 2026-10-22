@@ -759,6 +759,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pipguard-doctor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard doctor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pipguard-scan-feed" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -873,6 +884,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../toolchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Toolchain Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -911,6 +950,17 @@
     <span class="md-ellipsis">
       
         pipguard install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipguard-doctor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard doctor
       
     </span>
   </a>
@@ -984,7 +1034,30 @@
 <tr>
 <td><code>2</code></td>
 <td><strong>Scan error</strong>：扫描失败</td>
-<td>下载失败、归档不支持、磁盘异常等</td>
+<td>下载失败、归档不支持、磁盘异常，或 pip 信任被攻破的 CA（见<a href="../toolchain/">工具链信任</a>）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pipguard-doctor"><code>pipguard doctor</code><a class="headerlink" href="#pipguard-doctor" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>退出码</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>普通 pip 不信任被攻破的 CA</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>普通 pip 信任它们（见<a href="../toolchain/">工具链信任</a>）</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>有解释器无法检查</td>
 </tr>
 </tbody>
 </table>

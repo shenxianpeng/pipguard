@@ -770,6 +770,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pipguard-doctor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard doctor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage-in-ci" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -884,6 +895,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../toolchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Toolchain Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -933,6 +972,17 @@
     <span class="md-ellipsis">
       
         pipguard scan-feed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipguard-doctor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pipguard doctor
       
     </span>
   </a>
@@ -1006,7 +1056,7 @@
 <tr>
 <td><code>2</code></td>
 <td><strong>Scan error</strong> — could not complete the scan</td>
-<td>Download failed, unsupported archive format, disk space error</td>
+<td>Download failed, unsupported archive format, disk space error, or pip trusts a compromised CA (<a href="../toolchain/">Toolchain Trust</a>)</td>
 </tr>
 </tbody>
 </table>
@@ -1036,6 +1086,29 @@ to review", not "blocked":</p>
 <td><code>2</code></td>
 <td><strong>Feed error</strong></td>
 <td>The feed could not be fetched, or no entries could be downloaded to scan</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pipguard-doctor"><code>pipguard doctor</code><a class="headerlink" href="#pipguard-doctor" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>Plain pip does not trust the compromised CAs</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>Plain pip trusts them (see <a href="../toolchain/">Toolchain Trust</a>)</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>An interpreter could not be inspected</td>
 </tr>
 </tbody>
 </table>
