@@ -32,7 +32,7 @@ from .osv import query_osv
 from .policy import load_policy
 from .scanner import scan_binary_extensions, scan_pth_file, scan_python_file
 from .toolchain import describe as describe_toolchain
-from .toolchain import filter_system_store, probe_toolchain
+from .toolchain import live_check, mitigation_env, probe_toolchain
 
 
 # ── Package name extraction ──────────────────────────────────────────────────
@@ -241,52 +241,52 @@ def _confirm_install() -> bool:
 # ── Toolchain trust gate ─────────────────────────────────────────────────────
 
 def _toolchain_gate(require_hashes: bool, enforce: bool = True) -> int:
-    """Refuse to download through a pip that trusts a compromised CA.
+    """Make sure pip can't be MITM'd through the compromised eMudhra CAs.
 
-    A MITM with a certificate from a compromised CA can swap the archives
-    pipguard is about to scan, so the scan would vouch for the attacker's
-    bytes. Returns 2 to block, 0 to proceed (possibly after a warning).
-    Hash-locked installs are integrity-checked by pip, so they only warn.
+    A MITM with such a certificate could swap the archives pipguard is about
+    to scan, so the scan would vouch for the attacker's bytes.
 
-    If only the system store is affected, pipguard points this run (and the
-    pip it starts) at a filtered copy without the compromised roots, then
-    re-checks to prove it worked.
+    What pipguard can fix for this run, it fixes (filtered OpenSSL store,
+    ``legacy-certs`` against the OS verifier) and then re-checks. An old pip's
+    own bundle can't be fixed from outside: that blocks (exit 2), unless the
+    install is hash-locked, in which case pip verifies every download anyway.
     """
     status = probe_toolchain()
     if not status.compromised:
         return 0
 
-    if status.system_hits:
-        original = status
-        trust_dir = tempfile.mkdtemp(prefix="pipguard-trust-")
-        register_temp_dir(trust_dir)
-        overrides = filter_system_store(status, trust_dir)
-        if overrides:
-            os.environ.update(overrides)
-            status = probe_toolchain()
-            if not status.system_hits:
-                print(
-                    "\n🛡️  The system trust store still contains a compromised CA "
-                    "(emSign ECC Root CA - G3).\n"
-                    f"   pipguard removed it for this run: SSL_CERT_FILE={overrides['SSL_CERT_FILE']}",
-                    file=sys.stderr,
-                )
-                if not original.platform.startswith("linux"):
-                    print(
-                        "   pip on this OS also asks the system keychain/store, which pipguard "
-                        "can't filter — install OS updates.",
-                        file=sys.stderr,
-                    )
-                print(
-                    "   Permanent fix: update ca-certificates "
-                    "(`sudo apt-get install --only-upgrade ca-certificates`, "
-                    "`brew upgrade ca-certificates`).",
-                    file=sys.stderr,
-                )
-            if not status.compromised:
-                print("", file=sys.stderr)
-                return 0
-    block = enforce and status.blocking and not require_hashes
+    trust_dir = tempfile.mkdtemp(prefix="pipguard-trust-")
+    register_temp_dir(trust_dir)
+    overrides = mitigation_env(status, trust_dir)
+    if overrides:
+        os.environ.update(overrides)
+        status = probe_toolchain()  # verify with exactly what pip will see
+        print("\n🛡️  Your trust stores still vouch for the compromised eMudhra CAs.", file=sys.stderr)
+        if "SSL_CERT_FILE" in overrides:
+            print(
+                f"   pipguard filtered them out of the OpenSSL store for this run: "
+                f"SSL_CERT_FILE={overrides['SSL_CERT_FILE']}",
+                file=sys.stderr,
+            )
+        if "PIP_USE_DEPRECATED" in overrides:
+            print(
+                "   pip will use only its own (clean) CA bundle for this run, not the "
+                f"{status.os_store or 'OS store'}: PIP_USE_DEPRECATED=legacy-certs",
+                file=sys.stderr,
+            )
+        print(
+            "   Permanent fix: update ca-certificates / install OS updates "
+            "(see `pipguard doctor`).",
+            file=sys.stderr,
+        )
+        if not status.blocking:
+            print("", file=sys.stderr)
+            return 0
+
+    if not status.blocking:
+        return 0
+
+    block = enforce and not require_hashes
     icon = "❌" if block else "⚠️ "
     print(f"\n{icon} Untrusted TLS toolchain ({status.executable}):", file=sys.stderr)
     for line in describe_toolchain(status):
@@ -299,7 +299,7 @@ def _toolchain_gate(require_hashes: bool, enforce: bool = True) -> int:
             file=sys.stderr,
         )
         return 2
-    if status.blocking and require_hashes:
+    if require_hashes:
         print("   Continuing: --require-hashes lets pip verify every download.\n", file=sys.stderr)
     else:
         print("", file=sys.stderr)
@@ -609,9 +609,11 @@ def cmd_scan_feed(args) -> int:
 def cmd_doctor(args) -> int:
     """Implement `pipguard doctor`: check pip / CA trust for each interpreter.
 
-    Exit 0 when nothing blocks installs (warnings allowed), 1 when any
-    interpreter's pip can be MITM'd through a compromised CA, 2 when an
-    interpreter could not be inspected.
+    Reports what plain ``pip install`` trusts (pipguard install fixes what it
+    can for its own run). Exit 0 when pip can't be MITM'd through the
+    compromised CAs, 1 when it can, 2 when an interpreter can't be inspected.
+    ``--online`` asks pip to connect to the incident's test hosts, with and
+    without pipguard's run-time mitigation, for ground truth.
     """
     pythons = args.python or [sys.executable]
     worst = 0
@@ -623,15 +625,28 @@ def cmd_doctor(args) -> int:
             continue
         label = f"{status.executable} (Python {status.python}, pip {status.pip_version})"
         if not status.compromised:
-            print(f"✅ {label}: no compromised CAs trusted")
-            continue
-        if status.blocking:
+            print(f"✅ {label}: does not trust the compromised eMudhra CAs")
+        elif status.blocking:
             print(f"❌ {label}")
             worst = max(worst, 1)
         else:
             print(f"⚠️  {label}")
         for line in describe_toolchain(status):
             print(f"   {line}")
+        if getattr(args, "online", False):
+            with tempfile.TemporaryDirectory(prefix="pipguard-trust-") as trust_dir:
+                runs = [("plain pip", {})]
+                fixes = mitigation_env(status, trust_dir)
+                if fixes and not status.pip_hits:
+                    runs.append(("pip under pipguard", fixes))
+                elif status.pip_hits:
+                    print("   ⛔ pipguard install refuses to use this pip until it is upgraded")
+                for title, env in runs:
+                    for host, result in live_check(exe, env).items():
+                        mark = {"rejected": "✅", "ACCEPTED": "❌"}.get(result, "❓")
+                        print(f"   {mark} {title} → {host}: {result}")
+                        if result == "ACCEPTED" and title == "plain pip":
+                            worst = max(worst, 1)
     return worst
 
 
@@ -780,6 +795,13 @@ def build_parser() -> argparse.ArgumentParser:
     doctor.add_argument(
         "--python", action="append", metavar="PATH",
         help="Interpreter to check (repeatable; default: the one running pipguard)",
+    )
+    doctor.add_argument(
+        "--online", action="store_true",
+        help=(
+            "Also have pip connect to the incident's test hosts "
+            "(*.we-have-a-problem.com) to prove whether it trusts the compromised CAs"
+        ),
     )
     return parser
 

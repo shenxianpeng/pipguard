@@ -17,7 +17,10 @@ from pipguard.toolchain import (
     FIXED_PIP_REQUIREMENT,
     ToolchainStatus,
     describe,
+    LIVE_TEST_HOSTS,
     filter_system_store,
+    live_check,
+    mitigation_env,
     probe_toolchain,
 )
 
@@ -39,12 +42,27 @@ def test_fixture_is_the_compromised_root():
     assert _sha256_of_pem(CLEAN_PEM) not in COMPROMISED_ROOTS
 
 
+def test_fingerprint_tables_are_well_formed():
+    from pipguard.toolchain import COMPROMISED_TLS_INTERMEDIATES
+    for fp in [*COMPROMISED_ROOTS, *COMPROMISED_TLS_INTERMEDIATES]:
+        assert re.fullmatch(r"[0-9a-f]{64}", fp), fp
+    assert len(COMPROMISED_TLS_INTERMEDIATES) == 12   # 6 TLS CAs x 2 issuers
+
+
 def test_fixed_pip_requirement_is_hash_pinned():
     assert "pip-26.2.2-py3-none-any.whl" in FIXED_PIP_REQUIREMENT
     assert "#sha256=fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70" in FIXED_PIP_REQUIREMENT
 
 
 # ── probe against a fake pip on PYTHONPATH ───────────────────────────────────
+
+def _hide_os_store(tmp_path, monkeypatch):
+    """Keep the developer's real macOS keychain out of probe tests: with an
+    empty PATH the probe can't run `security`. (Linux has no OS store.)"""
+    bin_dir = tmp_path / "empty-bin"
+    bin_dir.mkdir(exist_ok=True)
+    monkeypatch.setenv("PATH", str(bin_dir))
+
 
 def _fake_env(tmp_path, monkeypatch, pip_bundle_pem, system_pem, pip_version="26.2.1"):
     """Put a fake `pip` (with its own certifi bundle) first on sys.path and
@@ -65,6 +83,8 @@ def _fake_env(tmp_path, monkeypatch, pip_bundle_pem, system_pem, pip_version="26
     monkeypatch.setenv("PYTHONPATH", str(tmp_path / "site"))
     monkeypatch.setenv("SSL_CERT_FILE", str(system))
     monkeypatch.setenv("SSL_CERT_DIR", str(empty_dir))
+    monkeypatch.delenv("PIP_USE_DEPRECATED", raising=False)
+    _hide_os_store(tmp_path, monkeypatch)
     return bundle, system
 
 
@@ -109,6 +129,7 @@ def test_probe_without_pip(tmp_path, monkeypatch):
     clean.write_text(CLEAN_PEM)
     monkeypatch.setenv("SSL_CERT_FILE", str(clean))
     monkeypatch.setenv("SSL_CERT_DIR", str(tmp_path))
+    _hide_os_store(tmp_path, monkeypatch)
     status = probe_toolchain()
     assert not status.checked
     assert "no pip here" in status.error
@@ -124,21 +145,68 @@ def test_probe_bad_interpreter():
 # ── blocking rules and messages ──────────────────────────────────────────────
 
 @pytest.mark.parametrize(
-    "platform,pip_hits,system_hits,blocking",
+    "platform,pip_hits,system_hits,os_hits,legacy,blocking",
     [
-        ("linux", [G3], [], True),
-        ("darwin", [G3], [], True),
-        ("win32", [G3], [], True),
-        ("linux", [], [G3], True),     # pip's truststore reads this very file
-        ("darwin", [], [G3], False),   # pip asks the OS; warn only
-        ("win32", [], [G3], False),
-        ("linux", [], [], False),
+        ("linux", [G3], [], [], False, True),
+        ("darwin", [G3], [], [], True, True),    # legacy-certs can't fix pip's own bundle
+        ("win32", [G3], [], [], False, True),
+        ("linux", [], [G3], [], False, True),    # pip's truststore reads this very file
+        ("darwin", [], [G3], [], False, False),  # pip doesn't use the OpenSSL file here
+        ("darwin", [], [], [G3], False, True),   # ...but it does ask the keychain
+        ("darwin", [], [], [G3], True, False),   # unless it runs with legacy-certs
+        ("win32", [], [], [G3], False, True),
+        ("win32", [], [], [G3], True, False),
+        ("linux", [], [], [], False, False),
     ],
 )
-def test_blocking_rules(platform, pip_hits, system_hits, blocking):
-    s = ToolchainStatus(executable="py", platform=platform, pip_version="1",
-                        pip_hits=pip_hits, system_hits=system_hits)
+def test_blocking_rules(platform, pip_hits, system_hits, os_hits, legacy, blocking):
+    s = ToolchainStatus(executable="py", platform=platform, pip_version="26.2.2",
+                        pip_hits=pip_hits, system_hits=system_hits, os_hits=os_hits,
+                        legacy_certs=legacy)
     assert s.blocking is blocking
+
+
+@pytest.mark.parametrize(
+    "pip_version,pip_hits,expect_legacy",
+    [("26.2.2", [], True), ("24.2", [], True), ("24.1.2", [], False), ("26.2.1", [G3], False)],
+)
+def test_mitigation_env_uses_legacy_certs_against_os_store(tmp_path, monkeypatch,
+                                                          pip_version, pip_hits, expect_legacy):
+    monkeypatch.setenv("PIP_USE_DEPRECATED", "some-other")
+    s = ToolchainStatus(executable="py", platform="darwin", pip_version=pip_version,
+                        pip_hits=pip_hits, os_store="macOS system keychain", os_hits=[G3])
+    env = mitigation_env(s, str(tmp_path))
+    if expect_legacy:
+        assert env["PIP_USE_DEPRECATED"] == "some-other legacy-certs"
+    else:
+        assert "PIP_USE_DEPRECATED" not in env
+
+
+@pytest.mark.real_toolchain
+def test_probe_reads_legacy_certs_from_env(tmp_path, monkeypatch):
+    _fake_env(tmp_path, monkeypatch, CLEAN_PEM, CLEAN_PEM, pip_version="26.2.2")
+    assert probe_toolchain().legacy_certs is False
+    monkeypatch.setenv("PIP_USE_DEPRECATED", "foo,legacy-certs")
+    assert probe_toolchain().legacy_certs is True
+
+
+@pytest.mark.parametrize(
+    "output,expected",
+    [
+        ("ERROR: Could not find a version that satisfies the requirement x (from versions: none)", "ACCEPTED"),
+        ("There was a problem confirming the ssl certificate: [SSL: CERTIFICATE_VERIFY_FAILED] "
+         "certificate verify failed ... (from versions: none)", "rejected"),
+        ("Failed to establish a new connection: Name or service not known", "unknown"),
+    ],
+)
+def test_live_check_classifies_pip_output(output, expected):
+    fake = types.SimpleNamespace(stdout="", stderr=output, returncode=1)
+    with patch("pipguard.toolchain.subprocess.run", return_value=fake) as run:
+        res = live_check("py", {"SSL_CERT_FILE": "/f.pem"})
+    assert res == {h: expected for h in LIVE_TEST_HOSTS}
+    cmd = run.call_args[0][0]
+    assert "--index-url" in cmd and cmd[cmd.index("--index-url") + 1].startswith("https://")
+    assert run.call_args[1]["env"]["SSL_CERT_FILE"] == "/f.pem"
 
 
 def test_describe_gives_hash_pinned_fix():
@@ -203,14 +271,29 @@ def test_install_skip_flag_bypasses_probe():
     dl.assert_called_once()
 
 
-def test_install_warns_when_macos_system_store_cannot_be_filtered(capsys):
-    warn_only = ToolchainStatus(executable="py", platform="darwin", pip_version="26.2.2",
-                                system_stores=["/nonexistent.pem"], system_hits=[G3])
-    with patch("pipguard.cli.probe_toolchain", return_value=warn_only), \
+def test_install_continues_when_only_unused_openssl_file_is_dirty():
+    # macOS: pip asks the keychain, not the OpenSSL file, so this can't hurt pip.
+    s = ToolchainStatus(executable="py", platform="darwin", pip_version="26.2.2",
+                        system_stores=["/nonexistent.pem"], system_hits=[G3])
+    with patch("pipguard.cli.probe_toolchain", return_value=s), \
          patch("pipguard.cli.download_packages", side_effect=RuntimeError("stop")) as dl:
         cmd_install(_install_args())
     dl.assert_called_once()
-    assert "⚠️" in capsys.readouterr().err
+
+
+def test_install_switches_pip_to_legacy_certs_for_dirty_keychain(capsys, _restore_ssl_env, monkeypatch):
+    monkeypatch.delenv("PIP_USE_DEPRECATED", raising=False)
+    dirty = ToolchainStatus(executable="py", platform="darwin", pip_version="26.2.2",
+                            os_store="macOS system keychain", os_hits=[G3])
+    after = ToolchainStatus(executable="py", platform="darwin", pip_version="26.2.2",
+                            os_store="macOS system keychain", os_hits=[G3], legacy_certs=True)
+    with patch("pipguard.cli.probe_toolchain", side_effect=[dirty, after]), \
+         patch("pipguard.cli.download_packages", side_effect=RuntimeError("stop")) as dl:
+        cmd_install(_install_args())
+    dl.assert_called_once()
+    import os
+    assert os.environ["PIP_USE_DEPRECATED"] == "legacy-certs"
+    assert "PIP_USE_DEPRECATED=legacy-certs" in capsys.readouterr().err
 
 
 # ── system store mitigation (GitHub's ubuntu runners still ship the root) ────
@@ -262,7 +345,7 @@ def test_gate_neutralises_dirty_system_store_end_to_end(tmp_path, monkeypatch, c
     assert os.environ["SSL_CERT_FILE"] != str(system)
     after = probe_toolchain()                      # what pip will see now
     assert not after.compromised
-    assert "removed it for this run" in capsys.readouterr().err
+    assert "filtered them out of the OpenSSL store" in capsys.readouterr().err
 
 
 @pytest.mark.real_toolchain
@@ -293,8 +376,8 @@ def test_skip_flag_parses():
 
 # ── doctor ───────────────────────────────────────────────────────────────────
 
-def _doctor(statuses, pythons=None):
-    args = types.SimpleNamespace(python=pythons)
+def _doctor(statuses, pythons=None, online=False):
+    args = types.SimpleNamespace(python=pythons, online=online)
     it = iter(statuses)
     with patch("pipguard.cli.probe_toolchain", side_effect=lambda *a, **k: next(it)):
         return cmd_doctor(args)
@@ -314,6 +397,31 @@ def test_doctor_reports_blocking(capsys):
 
 def test_doctor_unreadable_interpreter(capsys):
     assert _doctor([ToolchainStatus(executable="x", error="boom")], ["x"]) == 2
+
+
+def test_doctor_online_reports_accepted_as_failure(capsys, tmp_path):
+    ok_offline = ToolchainStatus(executable="py", python="3.12.0", pip_version="26.2.2")
+    with patch("pipguard.cli.live_check",
+               return_value={LIVE_TEST_HOSTS[0]: "ACCEPTED", LIVE_TEST_HOSTS[1]: "rejected"}):
+        assert _doctor([ok_offline], online=True) == 1
+    out = capsys.readouterr().out
+    assert f"❌ plain pip → {LIVE_TEST_HOSTS[0]}: ACCEPTED" in out
+
+
+def test_doctor_online_checks_mitigated_pip_too(capsys):
+    keychain = ToolchainStatus(executable="py", python="3.12.0", platform="darwin",
+                               pip_version="26.2.2", os_store="macOS system keychain", os_hits=[G3])
+    calls = []
+
+    def fake_live(exe, env):
+        calls.append(env)
+        verdict = "rejected" if env.get("PIP_USE_DEPRECATED") else "ACCEPTED"
+        return {h: verdict for h in LIVE_TEST_HOSTS}
+
+    with patch("pipguard.cli.live_check", side_effect=fake_live):
+        assert _doctor([keychain], online=True) == 1
+    assert calls[0] == {} and calls[1]["PIP_USE_DEPRECATED"].endswith("legacy-certs")
+    assert "✅ pip under pipguard" in capsys.readouterr().out
 
 
 def test_doctor_parses_multiple_pythons():

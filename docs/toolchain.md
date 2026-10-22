@@ -7,55 +7,79 @@ them. The scan would then vouch for the attacker's code.
 
 ## The eMudhra / emSign incident (October 2026)
 
-The private keys behind eMudhra's emSign intermediates were trivially weak, so
-anyone could mint a trusted certificate for any domain, including `pypi.org`.
-The root they chain to, **emSign ECC Root CA - G3**
-(SHA-256 `86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b`),
-was removed in certifi 2026.10.18/19, pip 26.2.2 and uv 0.13.4.
+The private keys of eight [eMudhra intermediate CAs](https://emudhra.we-have-a-problem.com/)
+were trivially weak, so anyone can mint a trusted certificate for any domain,
+including `pypi.org`. Those intermediates chain to three roots:
 
-**Every pip older than 26.2.2 always trusts its own bundled copy of certifi**,
-in addition to the system store, so updating the OS alone does not help.
+| Root | Trusted by |
+|---|---|
+| emSign ECC Root CA - G3 | certifi / Mozilla, Apple, Microsoft. Removed in certifi 2026.10.18/19 and **pip 26.2.2** |
+| emSign Root TLS CA - G3 | Microsoft |
+| AAA Certificate Services (Sectigo) | Apple, Microsoft. Already removed by Mozilla and Chrome |
+
+pip trusts these intermediates if **any** of the stores it uses contains one of those roots:
+
+1. **pip's own bundle.** Every pip older than 26.2.2 always loads its vendored
+   certifi, so updating the OS alone does not help.
+2. **The OpenSSL system store.** pip 24.2+ asks the system store through
+   truststore, and on Linux that means this file.
+3. **The OS verifier.** On macOS and Windows, truststore asks the OS
+   (keychain / Windows store). On a Mac tested on 2026-10-22, pip 26.2.2
+   still accepted a certificate from the compromised CAs this way.
+
 See the [Python Discourse announcement](https://discuss.python.org/t/information-for-python-users-regarding-emudhra-emsign-ca-certificate-security-incident/109576).
 
-## What pipguard does
+## What `pipguard install` does
 
-Before downloading, `pipguard install` inspects the certificates the pip it is
-about to run actually trusts:
+Before downloading, it inspects the certificates the pip it is about to run
+actually trusts, fixes what it can **for this run**, and re-checks:
 
-| What it finds | Result |
+| What it finds | What pipguard does |
 |---|---|
-| pip's CA bundle contains a compromised root | **Blocked**, exit `2`, with the exact fix command |
-| The system OpenSSL store contains it (pip reads it via truststore on **Linux**) | pipguard writes a copy of the store **without** the compromised root, points this run's pip at it (`SSL_CERT_FILE`), re-checks that pip no longer trusts the root, then continues |
-| On macOS / Windows pip also asks the OS keychain/store, which pipguard can't filter | Same filtering for OpenSSL users, plus a warning to install OS updates |
-| Nothing compromised | Silent, continues |
+| A bad root in pip's own bundle (pip < 26.2.2) | **Blocks**, exit `2`, and prints the hash-pinned fix. Nothing outside pip can fix this |
+| A bad root in the OpenSSL store | Writes a copy of the store **without** the bad roots and points the run at it (`SSL_CERT_FILE`). Other CAs, such as a corporate proxy CA, keep working |
+| A bad root in the macOS keychain / Windows store | Runs pip with `PIP_USE_DEPRECATED=legacy-certs`, so pip uses only its own (clean) bundle |
+| Nothing | Continues silently |
 
-GitHub's `ubuntu-latest` runners still shipped the root in their system store
-when this was written, so the filtering is what lets pip 26.2.2 run safely there.
+GitHub's `ubuntu-latest` runners still shipped emSign ECC Root CA - G3 in
+their system store when this was written. The filtering is what makes pip
+26.2.2 safe there.
 
 It checks the certificates rather than the pip version, so distro pips that are
 patched to use an updated system store (e.g. Debian's) are not flagged.
 
 - `--require-hashes`: pip verifies every download against your lock file, so a
   swapped package is rejected anyway. The block becomes a warning.
-- `--skip-toolchain-check`: skip the check entirely (not recommended).
+- `--skip-toolchain-check`: skip all of this (not recommended).
 - `pipguard scan-feed` never installs, so it only warns.
+- With `legacy-certs`, pip ignores CAs that exist only in your OS store (e.g. a
+  corporate TLS proxy). Give pip that CA with `--cert` / `PIP_CERT`, or update
+  your OS so the bad roots are gone.
 
 ## `pipguard doctor`
 
-Check one or more interpreters without installing anything:
+Shows what **plain** `pip install` trusts, without installing anything:
 
 ```bash
 pipguard doctor
 pipguard doctor --python /usr/bin/python3 --python ~/project/.venv/bin/python
+
+# Ground truth: have pip connect to the incident's test hosts, both as plain
+# pip and as pipguard runs it
+pipguard doctor --online
 ```
+
+`--online` connects to `*.we-have-a-problem.com`, the hosts the incident
+reporters run with certificates from the compromised CAs. `rejected` is the
+safe result.
 
 | Exit code | Meaning |
 |---|---|
-| `0` | Nothing blocks installs (warnings may be printed) |
-| `1` | At least one interpreter's pip can be MITM'd through a compromised CA (plain `pip install`, without pipguard's filtering) |
+| `0` | Plain pip does not trust the compromised CAs |
+| `1` | Plain pip trusts them (pipguard install may still be protected, see the output) |
 | `2` | An interpreter could not be inspected |
 
-## Fixing it
+## Fixing it for good
 
 Upgrade pip from a **hash-pinned** wheel. The sha256 check makes this safe even
 when run through the old, vulnerable pip:
@@ -66,7 +90,7 @@ python -m pip install "pip @ https://files.pythonhosted.org/packages/3f/06/3e442
 
 pip 26.2.2 needs Python 3.10+. Then update the system store
 (`sudo apt-get install --only-upgrade ca-certificates`, `brew upgrade ca-certificates`,
-or OS updates) and rebuild container images: Docker's official `python:3.11` /
+OS updates) and rebuild container images. Docker's official `python:3.11` and
 `python:3.12` images will keep shipping an old pip.
 
-The [GitHub Action](usage.md) does the pip upgrade for you before it installs pipguard.
+The GitHub Action does the pip upgrade for you before it installs pipguard.

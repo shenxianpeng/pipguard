@@ -25,8 +25,8 @@ to review", not "blocked":
 
 | Code | Meaning |
 |------|---------|
-| `0` | Nothing blocks installs (warnings may be printed) |
-| `1` | An interpreter's pip trusts a compromised CA |
+| `0` | Plain pip does not trust the compromised CAs |
+| `1` | Plain pip trusts them (see [Toolchain Trust](toolchain.md)) |
 | `2` | An interpreter could not be inspected |
 
 ## Usage in CI
