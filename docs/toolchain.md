@@ -25,9 +25,12 @@ about to run actually trusts:
 | What it finds | Result |
 |---|---|
 | pip's CA bundle contains a compromised root | **Blocked**, exit `2`, with the exact fix command |
-| The system OpenSSL store contains it, on **Linux** (pip reads that file via truststore) | **Blocked**, exit `2` |
-| The system store contains it on macOS / Windows (pip asks the OS, which may distrust it in ways pipguard can't see) | Warning, continues |
+| The system OpenSSL store contains it (pip reads it via truststore on **Linux**) | pipguard writes a copy of the store **without** the compromised root, points this run's pip at it (`SSL_CERT_FILE`), re-checks that pip no longer trusts the root, then continues |
+| On macOS / Windows pip also asks the OS keychain/store, which pipguard can't filter | Same filtering for OpenSSL users, plus a warning to install OS updates |
 | Nothing compromised | Silent, continues |
+
+GitHub's `ubuntu-latest` runners still shipped the root in their system store
+when this was written, so the filtering is what lets pip 26.2.2 run safely there.
 
 It checks the certificates rather than the pip version, so distro pips that are
 patched to use an updated system store (e.g. Debian's) are not flagged.
@@ -49,7 +52,7 @@ pipguard doctor --python /usr/bin/python3 --python ~/project/.venv/bin/python
 | Exit code | Meaning |
 |---|---|
 | `0` | Nothing blocks installs (warnings may be printed) |
-| `1` | At least one interpreter's pip can be MITM'd through a compromised CA |
+| `1` | At least one interpreter's pip can be MITM'd through a compromised CA (plain `pip install`, without pipguard's filtering) |
 | `2` | An interpreter could not be inspected |
 
 ## Fixing it

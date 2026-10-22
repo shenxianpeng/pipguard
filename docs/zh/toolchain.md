@@ -22,9 +22,11 @@ eMudhra 旗下 emSign 中间证书的私钥极弱，任何人都能为任意域�
 | 发现 | 结果 |
 |---|---|
 | pip 的 CA 证书包含被攻破的根证书 | **阻断**，退出码 `2`，并给出修复命令 |
-| **Linux** 系统 OpenSSL 证书库包含它（pip 通过 truststore 读取该文件） | **阻断**，退出码 `2` |
-| macOS / Windows 系统证书库包含它（pip 询问操作系统，系统可能以 pipguard 看不到的方式吊销） | 警告，继续 |
+| 系统 OpenSSL 证书库包含它（**Linux** 上 pip 通过 truststore 读取） | pipguard 生成一份**去掉**该根证书的证书库副本，让本次运行的 pip 使用它（`SSL_CERT_FILE`），再次检查确认 pip 不再信任该根证书后继续 |
+| macOS / Windows 上 pip 还会询问系统钥匙串/证书库，pipguard 无法过滤 | 同样过滤 OpenSSL 部分，并提示安装系统更新 |
 | 没有问题 | 静默继续 |
+
+撰写本文时，GitHub 的 `ubuntu-latest` runner 系统证书库里仍然有这张根证书，正是这个过滤让 pip 26.2.2 能在上面安全运行。
 
 检查的是证书本身而不是 pip 版本号，所以打过补丁、改用系统证书库的发行版 pip（如 Debian）不会误报。
 
@@ -44,7 +46,7 @@ pipguard doctor --python /usr/bin/python3 --python ~/project/.venv/bin/python
 | 退出码 | 含义 |
 |---|---|
 | `0` | 没有会阻断安装的问题（可能有警告） |
-| `1` | 至少一个解释器的 pip 可被利用被攻破的 CA 中间人攻击 |
+| `1` | 至少一个解释器的 pip 可被利用被攻破的 CA 中间人攻击（指不经 pipguard 过滤、直接 `pip install` 的情况） |
 | `2` | 有解释器无法检查 |
 
 ## 修复

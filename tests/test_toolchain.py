@@ -11,12 +11,13 @@ from unittest.mock import patch
 import pytest
 
 from pipguard import toolchain
-from pipguard.cli import build_parser, cmd_doctor, cmd_install
+from pipguard.cli import _toolchain_gate, build_parser, cmd_doctor, cmd_install
 from pipguard.toolchain import (
     COMPROMISED_ROOTS,
     FIXED_PIP_REQUIREMENT,
     ToolchainStatus,
     describe,
+    filter_system_store,
     probe_toolchain,
 )
 
@@ -104,6 +105,10 @@ def test_probe_without_pip(tmp_path, monkeypatch):
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").write_text("raise ImportError('no pip here')\n")
     monkeypatch.setenv("PYTHONPATH", str(tmp_path / "site"))
+    clean = tmp_path / "clean.pem"
+    clean.write_text(CLEAN_PEM)
+    monkeypatch.setenv("SSL_CERT_FILE", str(clean))
+    monkeypatch.setenv("SSL_CERT_DIR", str(tmp_path))
     status = probe_toolchain()
     assert not status.checked
     assert "no pip here" in status.error
@@ -198,14 +203,87 @@ def test_install_skip_flag_bypasses_probe():
     dl.assert_called_once()
 
 
-def test_install_warns_but_continues_for_macos_system_store(capsys):
+def test_install_warns_when_macos_system_store_cannot_be_filtered(capsys):
     warn_only = ToolchainStatus(executable="py", platform="darwin", pip_version="26.2.2",
-                                system_stores=["/etc/ssl/cert.pem"], system_hits=[G3])
+                                system_stores=["/nonexistent.pem"], system_hits=[G3])
     with patch("pipguard.cli.probe_toolchain", return_value=warn_only), \
          patch("pipguard.cli.download_packages", side_effect=RuntimeError("stop")) as dl:
         cmd_install(_install_args())
     dl.assert_called_once()
     assert "⚠️" in capsys.readouterr().err
+
+
+# ── system store mitigation (GitHub's ubuntu runners still ship the root) ────
+
+@pytest.fixture
+def _restore_ssl_env(monkeypatch):
+    # The gate exports SSL_CERT_FILE/DIR into os.environ; undo it after a test.
+    monkeypatch.setenv("SSL_CERT_FILE", "")
+    monkeypatch.setenv("SSL_CERT_DIR", "")
+    monkeypatch.delenv("SSL_CERT_FILE")
+    monkeypatch.delenv("SSL_CERT_DIR")
+
+
+def test_filter_system_store_drops_compromised_root(tmp_path):
+    store = tmp_path / "cert.pem"
+    store.write_text(CLEAN_PEM + G3_PEM)
+    certdir = tmp_path / "certs"
+    certdir.mkdir()
+    (certdir / "aaaa.0").write_text(G3_PEM)
+    (certdir / "bbbb.0").write_text(CLEAN_PEM)          # duplicate, kept once
+    status = ToolchainStatus(executable="py", platform="linux", pip_version="26.2.2",
+                             system_stores=[str(store), str(certdir), "windows:ROOT"],
+                             system_hits=[G3])
+    env = filter_system_store(status, str(tmp_path / "work"))
+    bundle = Path(env["SSL_CERT_FILE"]).read_text()
+    assert [_sha256_of_pem(b) for b in re.findall(r"-----BEGIN.*?-----END CERTIFICATE-----", bundle, re.S)] == [
+        _sha256_of_pem(CLEAN_PEM)
+    ]
+    assert Path(env["SSL_CERT_DIR"]).is_dir()
+    assert list(Path(env["SSL_CERT_DIR"]).iterdir()) == []
+
+
+def test_filter_system_store_noop_without_hits(tmp_path):
+    status = ToolchainStatus(executable="py", system_stores=["/x.pem"], system_hits=[])
+    assert filter_system_store(status, str(tmp_path)) == {}
+
+
+@pytest.mark.real_toolchain
+def test_gate_neutralises_dirty_system_store_end_to_end(tmp_path, monkeypatch, capsys):
+    # pip itself is clean (26.2.2), but the OpenSSL store still has the root —
+    # exactly the state of GitHub's ubuntu runners in Oct 2026.
+    _, system = _fake_env(tmp_path, monkeypatch, CLEAN_PEM, CLEAN_PEM + G3_PEM,
+                          pip_version="26.2.2")
+    assert probe_toolchain().system_hits == [G3]
+
+    assert _toolchain_gate(require_hashes=False) == 0
+
+    import os
+    assert os.environ["SSL_CERT_FILE"] != str(system)
+    after = probe_toolchain()                      # what pip will see now
+    assert not after.compromised
+    assert "removed it for this run" in capsys.readouterr().err
+
+
+@pytest.mark.real_toolchain
+def test_gate_still_blocks_old_pip_with_dirty_system_store(tmp_path, monkeypatch):
+    # Filtering the system store can't help: old pip always loads its own bundle.
+    _fake_env(tmp_path, monkeypatch, CLEAN_PEM + G3_PEM, CLEAN_PEM + G3_PEM, pip_version="26.2.1")
+    assert _toolchain_gate(require_hashes=False) == 2
+    assert not probe_toolchain().system_hits      # store was filtered...
+    assert probe_toolchain().pip_hits == [G3]     # ...pip's bundle was not
+
+
+def test_install_proceeds_after_linux_store_is_filtered(tmp_path, _restore_ssl_env):
+    store = tmp_path / "cert.pem"
+    store.write_text(CLEAN_PEM + G3_PEM)
+    dirty = ToolchainStatus(executable="py", platform="linux", pip_version="26.2.2",
+                            system_stores=[str(store)], system_hits=[G3])
+    clean = ToolchainStatus(executable="py", platform="linux", pip_version="26.2.2")
+    with patch("pipguard.cli.probe_toolchain", side_effect=[dirty, clean]), \
+         patch("pipguard.cli.download_packages", side_effect=RuntimeError("stop")) as dl:
+        cmd_install(_install_args())
+    dl.assert_called_once()
 
 
 def test_skip_flag_parses():

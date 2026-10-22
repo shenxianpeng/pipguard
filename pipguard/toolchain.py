@@ -20,7 +20,11 @@ incident only needs a new fingerprint in :data:`COMPROMISED_ROOTS`.
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
+import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -155,7 +159,11 @@ class ToolchainStatus:
 
 
 def probe_toolchain(python: Optional[str] = None, timeout: int = 60) -> ToolchainStatus:
-    """Inspect the pip and trust stores of ``python`` (default: this interpreter)."""
+    """Inspect the pip and trust stores of ``python`` (default: this interpreter).
+
+    Runs with the current ``os.environ``, so a ``SSL_CERT_FILE`` set by
+    :func:`filter_system_store` is reflected, exactly as pip would see it.
+    """
     exe = python or sys.executable
     try:
         proc = subprocess.run(
@@ -180,6 +188,64 @@ def probe_toolchain(python: Optional[str] = None, timeout: int = 60) -> Toolchai
         system_hits=list(data.get("system_hits") or []),
         error=data.get("error"),
     )
+
+
+_PEM_RE = re.compile(
+    r"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----", re.S
+)
+
+
+def _pem_blocks(path: str) -> List[str]:
+    try:
+        with open(path, "rb") as fh:
+            text = fh.read().decode("ascii", "replace")
+    except OSError:
+        return []
+    return _PEM_RE.findall(text)
+
+
+def _fingerprint(pem: str) -> Optional[str]:
+    body = pem.split("-----", 2)[2].rsplit("-----END", 1)[0]
+    try:
+        der = base64.b64decode("".join(body.split()))
+    except ValueError:
+        return None
+    return hashlib.sha256(der).hexdigest()
+
+
+def filter_system_store(status: ToolchainStatus, work_dir: str) -> Dict[str, str]:
+    """Copy the OpenSSL system store without the compromised roots.
+
+    Returns ``SSL_CERT_FILE`` / ``SSL_CERT_DIR`` overrides pointing at the
+    filtered copy (empty dict if there is nothing to filter). OpenSSL, Python's
+    ``ssl`` module and pip's truststore backend on Linux all honour these
+    variables, so a pip whose own bundle is clean then trusts no compromised
+    CA. It cannot help an old pip, which always loads its vendored bundle.
+    """
+    sources = [s for s in status.system_stores if not s.startswith("windows:")]
+    if not status.system_hits or not sources:
+        return {}
+    kept: Dict[str, str] = {}
+    for src in sources:
+        files = [src]
+        if os.path.isdir(src):
+            files = [os.path.join(src, n) for n in sorted(os.listdir(src))]
+        for f in files:
+            if not os.path.isfile(f):
+                continue
+            for pem in _pem_blocks(f):
+                fp = _fingerprint(pem)
+                if fp and fp not in COMPROMISED_ROOTS:
+                    kept.setdefault(fp, pem)
+    if not kept:
+        return {}
+    os.makedirs(work_dir, exist_ok=True)
+    bundle = os.path.join(work_dir, "ca-bundle-filtered.pem")
+    with open(bundle, "w", encoding="ascii") as fh:
+        fh.write("\n".join(kept.values()) + "\n")
+    empty_dir = os.path.join(work_dir, "ca-certs-empty")
+    os.makedirs(empty_dir, exist_ok=True)
+    return {"SSL_CERT_FILE": bundle, "SSL_CERT_DIR": empty_dir}
 
 
 def _python_too_old(version: Optional[str]) -> bool:
@@ -219,6 +285,10 @@ def describe(status: ToolchainStatus) -> List[str]:
                 "  pip also trusts this store (truststore), so update it: "
                 "`sudo apt-get install --only-upgrade ca-certificates` "
                 "(or your distro's equivalent)."
+            )
+            lines.append(
+                "  Until then `pipguard install` filters it out for its own run "
+                "(SSL_CERT_FILE); plain `pip install` is still exposed."
             )
         else:
             lines.append(

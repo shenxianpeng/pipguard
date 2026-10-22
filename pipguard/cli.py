@@ -32,7 +32,7 @@ from .osv import query_osv
 from .policy import load_policy
 from .scanner import scan_binary_extensions, scan_pth_file, scan_python_file
 from .toolchain import describe as describe_toolchain
-from .toolchain import probe_toolchain
+from .toolchain import filter_system_store, probe_toolchain
 
 
 # ── Package name extraction ──────────────────────────────────────────────────
@@ -247,10 +247,45 @@ def _toolchain_gate(require_hashes: bool, enforce: bool = True) -> int:
     pipguard is about to scan, so the scan would vouch for the attacker's
     bytes. Returns 2 to block, 0 to proceed (possibly after a warning).
     Hash-locked installs are integrity-checked by pip, so they only warn.
+
+    If only the system store is affected, pipguard points this run (and the
+    pip it starts) at a filtered copy without the compromised roots, then
+    re-checks to prove it worked.
     """
     status = probe_toolchain()
     if not status.compromised:
         return 0
+
+    if status.system_hits:
+        original = status
+        trust_dir = tempfile.mkdtemp(prefix="pipguard-trust-")
+        register_temp_dir(trust_dir)
+        overrides = filter_system_store(status, trust_dir)
+        if overrides:
+            os.environ.update(overrides)
+            status = probe_toolchain()
+            if not status.system_hits:
+                print(
+                    "\n🛡️  The system trust store still contains a compromised CA "
+                    "(emSign ECC Root CA - G3).\n"
+                    f"   pipguard removed it for this run: SSL_CERT_FILE={overrides['SSL_CERT_FILE']}",
+                    file=sys.stderr,
+                )
+                if not original.platform.startswith("linux"):
+                    print(
+                        "   pip on this OS also asks the system keychain/store, which pipguard "
+                        "can't filter — install OS updates.",
+                        file=sys.stderr,
+                    )
+                print(
+                    "   Permanent fix: update ca-certificates "
+                    "(`sudo apt-get install --only-upgrade ca-certificates`, "
+                    "`brew upgrade ca-certificates`).",
+                    file=sys.stderr,
+                )
+            if not status.compromised:
+                print("", file=sys.stderr)
+                return 0
     block = enforce and status.blocking and not require_hashes
     icon = "❌" if block else "⚠️ "
     print(f"\n{icon} Untrusted TLS toolchain ({status.executable}):", file=sys.stderr)

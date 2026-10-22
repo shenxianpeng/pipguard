@@ -73,7 +73,6 @@ jobs:
         run: |
           python -m pip --version
           python -c 'from importlib.metadata import version; v = tuple(int(p) for p in version("pip").split(".")[:3]); assert v >= (26, 2, 2), v'
-          pipguard doctor
 
   toolchain-gate:
     # Proves the gate end-to-end: an install through a pip that still trusts
@@ -103,9 +102,12 @@ jobs:
           echo "exit code: $rc"
           test "$rc" -eq 2
 
-      - name: Fixed pip is allowed
+      - name: Fixed pip is allowed (system store filtered for the run)
         run: |
           python -m pip install --disable-pip-version-check "pip @ https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/pip-26.2.2-py3-none-any.whl#sha256=fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70"
-          pipguard doctor
-          pipguard install six --yes
+          pipguard doctor || true
+          set -o pipefail
+          pipguard install six --yes 2>&1 | tee out.txt
           python -c "import six"
+          # The runner's store still has the root, so the run must have filtered it.
+          if pipguard doctor >/dev/null; then echo "runner store already clean"; else grep -q "removed it for this run" out.txt; fi
