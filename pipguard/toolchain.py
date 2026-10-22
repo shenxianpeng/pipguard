@@ -285,10 +285,12 @@ def _pem_blocks(path: str) -> List[str]:
 def _fingerprint(pem: str) -> Optional[str]:
     body = pem.split("-----", 2)[2].rsplit("-----END", 1)[0]
     try:
-        der = base64.b64decode("".join(body.split()))
-    except ValueError:
+        # Strict: a corrupt block must not end up in the filtered store, where
+        # it could make OpenSSL reject the whole file.
+        der = base64.b64decode("".join(body.split()), validate=True)
+    except ValueError:  # binascii.Error
         return None
-    return hashlib.sha256(der).hexdigest()
+    return hashlib.sha256(der).hexdigest() if der else None
 
 
 def filter_system_store(status: ToolchainStatus, work_dir: str) -> Dict[str, str]:

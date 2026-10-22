@@ -442,3 +442,159 @@ def test_cli_survives_a_console_that_cannot_encode_emoji(tmp_path):
     assert proc.returncode == 2, proc.stderr
     assert b"UnicodeEncodeError" not in proc.stderr
     assert b"could not inspect pip" in proc.stdout
+
+
+# ── edge cases and error paths ───────────────────────────────────────────────
+
+import subprocess as _subprocess  # noqa: E402
+
+from pipguard import toolchain as tc  # noqa: E402
+
+
+def test_probe_reports_unparsable_output():
+    garbage = types.SimpleNamespace(stdout="not json\n", stderr="boom: probe crashed\n", returncode=1)
+    with patch("pipguard.toolchain.subprocess.run", return_value=garbage):
+        status = probe_toolchain("py")
+    assert not status.checked
+    assert status.error == "boom: probe crashed"
+
+
+def test_probe_reports_empty_output():
+    empty = types.SimpleNamespace(stdout="", stderr="", returncode=1)
+    with patch("pipguard.toolchain.subprocess.run", return_value=empty):
+        assert probe_toolchain("py").error == "probe failed"
+
+
+def test_probe_timeout():
+    with patch("pipguard.toolchain.subprocess.run",
+               side_effect=_subprocess.TimeoutExpired("py", 1)):
+        status = probe_toolchain("py")
+    assert not status.checked
+    assert status.error.startswith("TimeoutExpired")
+
+
+def test_pem_helpers_tolerate_bad_input(tmp_path):
+    assert tc._pem_blocks(str(tmp_path / "missing.pem")) == []
+    broken = "-----BEGIN CERTIFICATE-----\n@@@not base64@@@\n-----END CERTIFICATE-----"
+    assert tc._fingerprint(broken) is None
+    assert tc._fingerprint(CLEAN_PEM.split("# Label")[-1][CLEAN_PEM.split("# Label")[-1].index("-----BEGIN"):]) \
+        == _sha256_of_pem(CLEAN_PEM)
+
+
+def test_filter_system_store_skips_missing_and_broken_entries(tmp_path):
+    good = tmp_path / "good.pem"
+    good.write_text(CLEAN_PEM + G3_PEM)
+    broken = tmp_path / "broken.pem"
+    broken.write_text("-----BEGIN CERTIFICATE-----\n@@@\n-----END CERTIFICATE-----\n")
+    status = ToolchainStatus(executable="py", platform="linux", pip_version="26.2.2",
+                             system_stores=[str(tmp_path / "gone.pem"), str(broken), str(good)],
+                             system_hits=[G3])
+    env = filter_system_store(status, str(tmp_path / "work"))
+    assert Path(env["SSL_CERT_FILE"]).read_text().count("BEGIN CERTIFICATE") == 1
+
+
+def test_filter_system_store_with_only_bad_roots_gives_up(tmp_path):
+    only_bad = tmp_path / "bad.pem"
+    only_bad.write_text(G3_PEM)
+    status = ToolchainStatus(executable="py", platform="linux", pip_version="26.2.2",
+                             system_stores=[str(only_bad)], system_hits=[G3])
+    assert filter_system_store(status, str(tmp_path / "work")) == {}
+
+
+@pytest.mark.parametrize(
+    "version,expected",
+    [("26.2.2", (26, 2, 2)), ("24.2", (24, 2)), ("26.3.dev0", (26, 3)), ("25.0rc1", (25, 0)),
+     ("abc", ()), (None, ())],
+)
+def test_version_tuple(version, expected):
+    assert tc._version_tuple(version) == expected
+
+
+def test_describe_system_store_hit():
+    s = ToolchainStatus(executable="py", platform="linux", pip_version="26.2.2",
+                        system_stores=["/etc/ssl/cert.pem"], system_hits=[G3])
+    text = "\n".join(describe(s))
+    assert "OpenSSL trust store still has: emSign ECC Root CA - G3" in text
+    assert "stores: /etc/ssl/cert.pem" in text
+    assert "apt-get install --only-upgrade ca-certificates" in text
+
+
+def test_describe_os_store_hit_with_and_without_legacy_certs():
+    base = dict(executable="py", platform="darwin", pip_version="26.2.2",
+                os_store="macOS system keychain", os_hits=[G3])
+    exposed = "\n".join(describe(ToolchainStatus(**base)))
+    assert "macOS system keychain still has: emSign ECC Root CA - G3" in exposed
+    assert "PIP_USE_DEPRECATED=legacy-certs" in exposed
+    guarded = "\n".join(describe(ToolchainStatus(**base, legacy_certs=True)))
+    assert "(not used: pip runs with legacy-certs)" in guarded
+    assert "Install OS updates" not in guarded
+
+
+def test_describe_unknown_fingerprint_is_shortened():
+    s = ToolchainStatus(executable="py", platform="linux", pip_version="1",
+                        system_hits=["ab" * 32])
+    assert "abababababababab" in "\n".join(describe(s))
+
+
+def test_live_check_network_failure_is_unknown():
+    with patch("pipguard.toolchain.subprocess.run", side_effect=OSError("no network")):
+        assert live_check("py") == {h: "unknown" for h in LIVE_TEST_HOSTS}
+
+
+# ── CLI paths not covered above ──────────────────────────────────────────────
+
+def test_scan_feed_gate_only_warns(capsys):
+    # enforce=False (scan-feed never installs): an affected pip warns, never blocks.
+    with patch("pipguard.cli.probe_toolchain", return_value=BAD):
+        assert _toolchain_gate(require_hashes=False, enforce=False) == 0
+    err = capsys.readouterr().err
+    assert "⚠️" in err and "will not download" not in err
+
+
+def test_scan_feed_runs_the_gate():
+    from pipguard.cli import cmd_scan_feed
+    args = build_parser().parse_args(["scan-feed", "--feed", "/nonexistent.xml"])
+    with patch("pipguard.cli._toolchain_gate", return_value=0) as gate, \
+         patch("pipguard.cli.fetch_feed", return_value=""):
+        assert cmd_scan_feed(args) == 2
+    gate.assert_called_once_with(require_hashes=False, enforce=False)
+
+
+def test_scan_feed_skip_flag():
+    from pipguard.cli import cmd_scan_feed
+    args = build_parser().parse_args(["scan-feed", "--skip-toolchain-check"])
+    with patch("pipguard.cli._toolchain_gate") as gate, \
+         patch("pipguard.cli.fetch_feed", return_value=""):
+        cmd_scan_feed(args)
+    gate.assert_not_called()
+
+
+def test_doctor_warning_only_status(capsys):
+    # macOS: dirty OpenSSL file that pip doesn't use → ⚠️, exit 0.
+    s = ToolchainStatus(executable="py", python="3.12.0", platform="darwin", pip_version="26.2.2",
+                        system_stores=["/etc/ssl/cert.pem"], system_hits=[G3])
+    assert _doctor([s]) == 0
+    assert "⚠️" in capsys.readouterr().out
+
+
+def test_doctor_online_old_pip_says_pipguard_refuses_it(capsys):
+    with patch("pipguard.cli.live_check",
+               return_value={h: "ACCEPTED" for h in LIVE_TEST_HOSTS}) as live:
+        assert _doctor([BAD], online=True) == 1
+    assert live.call_count == 1          # no "under pipguard" run for an old pip
+    assert "⛔ pipguard install refuses to use this pip" in capsys.readouterr().out
+
+
+def test_doctor_online_unknown_result(capsys):
+    ok = ToolchainStatus(executable="py", python="3.12.0", pip_version="26.2.2")
+    with patch("pipguard.cli.live_check", return_value={h: "unknown" for h in LIVE_TEST_HOSTS}):
+        assert _doctor([ok], online=True) == 0
+    assert "❓ plain pip" in capsys.readouterr().out
+
+
+def test_main_dispatches_doctor(monkeypatch):
+    from pipguard import cli
+    monkeypatch.setattr(sys, "argv", ["pipguard", "doctor"])
+    with patch("pipguard.cli.cmd_doctor", return_value=0) as doctor:
+        assert cli.main() == 0
+    doctor.assert_called_once()
