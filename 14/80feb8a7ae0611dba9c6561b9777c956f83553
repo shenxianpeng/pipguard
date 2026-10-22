@@ -1,0 +1,21 @@
+pipguard/cli.py
+  s_94f8ad457a8856::t_3a6d9deb82d16e 809-818,821
+tests/test_toolchain.py
+  s_94f8ad457a8856::t_307298ba9a73a8 430-444
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1480feb8a7ae0611dba9c6561b9777c956f83553",
+  "prompts": {},
+  "sessions": {
+    "s_94f8ad457a8856": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7be2542b-cfc1-4e2d-a3c2-514ba313a44c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Xianpeng Shen <xianpeng.shen@gmail.com>"
+    }
+  }
+}
