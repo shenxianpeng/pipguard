@@ -1,0 +1,31 @@
+pipguard/extractor.py
+  s_808bcb54b94641::t_8403ff8cd16b5d 51,60
+pyproject.toml
+  s_808bcb54b94641::t_f0e8e89a078d4e 54
+tests/test_cli.py
+  s_808bcb54b94641::t_1fb7c9f00d0f4a 67-75,153-165,501-533
+tests/test_coverage.py
+  s_808bcb54b94641::t_5a527f4c09b739 13,16,361-371,443-451,780-818,826-848
+tests/test_extractor.py
+  s_808bcb54b94641::t_2040464d5823fa 17,22,29,31,109-174
+tests/test_intel.py
+  s_808bcb54b94641::t_2ee16690cc03a2 40-58
+tests/test_policy.py
+  s_808bcb54b94641::t_54bd44865848af 1-30,85-181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "64445267bc68ef3e2ebd2a45220dbdfc4b33707c",
+  "prompts": {},
+  "sessions": {
+    "s_808bcb54b94641": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f452822-7f74-42c5-8597-23c2eec5567e",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "Xianpeng Shen <xianpeng.shen@gmail.com>"
+    }
+  }
+}
