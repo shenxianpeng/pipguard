@@ -37,3 +37,22 @@ def test_load_intel_feed_http_success():
 def test_load_intel_feed_http_failure_returns_empty():
     with patch("urllib.request.urlopen", side_effect=RuntimeError("boom")):
         assert load_intel_feed("https://example.org/feed.json") == {}
+
+
+def test_load_intel_feed_skips_entries_without_name_or_version(tmp_path):
+    feed = tmp_path / "feed.json"
+    feed.write_text(json.dumps({
+        "blocked": [
+            {"name": "evilpkg", "version": "1.2.3"},
+            {"name": "", "version": "1.0.0", "reason": "no name"},
+            {"version": "2.0.0", "reason": "no name key"},
+            {"name": "noversion", "reason": "no version"},
+        ]
+    }))
+    rules = load_intel_feed(str(feed))
+    assert rules == {("evilpkg", "1.2.3"): "blocked by intel feed"}
+
+
+def test_load_intel_feed_unreadable_source_returns_empty(tmp_path):
+    """A path that exists but cannot be read as text (a directory) → OSError → empty."""
+    assert load_intel_feed(str(tmp_path)) == {}

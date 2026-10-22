@@ -14,17 +14,21 @@ Critical paths tested:
  10. has_python_source returns False for binary-only directory
 """
 
+import io
 import os
 import sys
 import tarfile
 import tempfile
+import types
 import zipfile
 
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from pipguard import extractor as extractor_module
 from pipguard.extractor import (
+    _safe_tar_members,
     collect_binary_extension_files,
     collect_scannable_files,
     extract_archive,
@@ -100,6 +104,72 @@ class TestExtractArchive:
         assert not sentinel.exists(), (
             "Path traversal succeeded — escaped.txt was written outside extract_dest"
         )
+
+
+class TestTarExtractionStrategies:
+    """extract_archive picks a tar-safety strategy by interpreter version:
+    the stdlib ``filter="data"`` on 3.12+, ``_safe_tar_members`` before that.
+    Both must behave the same, whichever interpreter runs the suite."""
+
+    STRATEGIES = (
+        pytest.param((3, 12, 0), id="data-filter"),
+        pytest.param((3, 11, 9), id="member-filter"),
+    )
+
+    @staticmethod
+    def _write_tar(path, members):
+        with tarfile.open(str(path), "w:gz") as tf:
+            for name, payload in members:
+                info = tarfile.TarInfo(name=name)
+                info.size = len(payload)
+                tf.addfile(info, io.BytesIO(payload))
+
+    @pytest.fixture
+    def force_version(self, monkeypatch, request):
+        monkeypatch.setattr(
+            extractor_module, "sys", types.SimpleNamespace(version_info=request.param)
+        )
+
+    # Forcing the pre-3.12 strategy on a 3.12/3.13 interpreter trips tarfile's
+    # "3.14 will filter by default" warning; real 3.10/3.11 never emit it.
+    @pytest.mark.filterwarnings("ignore:Python 3.14 will, by default, filter:DeprecationWarning")
+    @pytest.mark.parametrize("force_version", STRATEGIES, indirect=True)
+    def test_safe_members_are_extracted(self, tmp_path, force_version):
+        tgz = tmp_path / "mypkg-1.0.tar.gz"
+        self._write_tar(tgz, [("mypkg-1.0/setup.py", b"from setuptools import setup\n")])
+        dest = tmp_path / "extract_dest"
+        dest.mkdir()
+        result = extract_archive(str(tgz), str(dest))
+        assert result is not None
+        extracted = os.path.join(result, "mypkg-1.0", "setup.py")
+        with open(extracted, "rb") as f:
+            assert f.read() == b"from setuptools import setup\n"
+
+    # Forcing the pre-3.12 strategy on a 3.12/3.13 interpreter trips tarfile's
+    # "3.14 will filter by default" warning; real 3.10/3.11 never emit it.
+    @pytest.mark.filterwarnings("ignore:Python 3.14 will, by default, filter:DeprecationWarning")
+    @pytest.mark.parametrize("force_version", STRATEGIES, indirect=True)
+    def test_path_traversal_prevented(self, tmp_path, force_version):
+        tgz = tmp_path / "evil-1.0.tar.gz"
+        self._write_tar(tgz, [("../escaped.txt", b"pwned\n")])
+        dest = tmp_path / "extract_dest"
+        dest.mkdir()
+        extract_archive(str(tgz), str(dest))
+        assert not (tmp_path / "escaped.txt").exists()
+
+    def test_safe_tar_members_filters_escaping_paths(self, tmp_path):
+        tgz = tmp_path / "evil-1.0.tar.gz"
+        self._write_tar(tgz, [
+            ("mypkg-1.0/setup.py", b"ok\n"),
+            ("../escaped.txt", b"pwned\n"),
+            ("mypkg-1.0/../../escaped2.txt", b"pwned\n"),
+            ("mypkg-1.0/sub/../ok.txt", b"ok\n"),
+        ])
+        dest = tmp_path / "extract_dest"
+        dest.mkdir()
+        with tarfile.open(str(tgz), "r:gz") as tf:
+            names = [m.name for m in _safe_tar_members(tf, str(dest))]
+        assert names == ["mypkg-1.0/setup.py", "mypkg-1.0/sub/../ok.txt"]
 
 
 # ── collect_scannable_files ──────────────────────────────────────────────────
