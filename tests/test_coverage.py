@@ -10,8 +10,10 @@ Covers:
   - installer.py: install_from_local
   - scanner.py: large-file skip, OSError paths, SyntaxError, pth secondary check, _call_name ""
   - cli.py: _scan_one_package paths, _confirm_install EOFError, cmd_install branches, main()
+  - __init__.py: __version__ fallback when the package is not installed
 """
 
+import ast
 import io
 import os
 import signal
@@ -356,6 +358,17 @@ class TestInstallFromLocal:
             install_from_local(["requests"], str(tmp_path), show_pip_output=True)
         assert "capture_output" not in mock_run.call_args.kwargs
 
+    def test_failure_with_no_captured_output_writes_nothing(self, tmp_path, capsys):
+        """A failing pip that printed nothing must not replay empty streams."""
+        from pipguard.installer import install_from_local
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="")
+            rc = install_from_local(["badpkg"], str(tmp_path))
+        assert rc == 1
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert captured.err == ""
+
 
 # ── scanner.py ────────────────────────────────────────────────────────────────
 
@@ -426,6 +439,15 @@ class TestScannerEdgePaths:
         assert isinstance(call_node, ast.Call)
         result = _call_name(call_node)
         assert result == ""
+
+    def test_call_name_resolves_plain_name(self):
+        from pipguard.scanner import _call_name
+        assert _call_name(ast.parse("eval(payload)", mode="eval").body) == "eval"
+
+    def test_call_name_resolves_attribute_chain(self):
+        from pipguard.scanner import _call_name
+        call_node = ast.parse("os.path.join(base, name)", mode="eval").body
+        assert _call_name(call_node) == "os.path.join"
 
 
 # ── cli.py extra coverage ─────────────────────────────────────────────────────
@@ -755,6 +777,45 @@ class TestScannerBranchCoverage:
         # The non-constant key path is exercised; no finding for variable key
         assert not any("sensitive env var" in fi.description for fi in findings)
 
+    def test_subprocess_without_positional_args_is_high_not_critical(self, tmp_path):
+        """subprocess.run(**opts) has no argv to inspect → HIGH, not shell CRITICAL."""
+        from pipguard.scanner import scan_python_file
+        f = tmp_path / "setup.py"
+        f.write_text("import subprocess\nopts = {}\nsubprocess.run(**opts)\n")
+        findings = scan_python_file(str(f), is_hook=True)
+        levels = {fi.level.name for fi in findings if "subprocess" in fi.description}
+        assert levels == {"HIGH"}
+
+    def test_subprocess_argv_without_shell_flag_is_high_not_critical(self, tmp_path):
+        """['bash', 'build.sh'] is a plain argv list, not `sh -c` shell semantics."""
+        from pipguard.scanner import scan_python_file
+        f = tmp_path / "setup.py"
+        f.write_text("import subprocess\nsubprocess.run(['bash', 'build.sh'])\n")
+        findings = scan_python_file(str(f), is_hook=True)
+        levels = {fi.level.name for fi in findings if "subprocess" in fi.description}
+        assert levels == {"HIGH"}
+
+    def test_relative_import_adds_no_alias(self):
+        """`from . import x` has no module name, so it cannot contribute an alias."""
+        from pipguard.scanner import _build_alias_map
+        assert _build_alias_map(ast.parse("from . import helper\nhelper.run()\n")) == {}
+
+    def test_assignment_to_non_name_target_adds_no_alias(self):
+        """Only bare-name targets are tracked; attribute/subscript targets are skipped."""
+        from pipguard.scanner import _build_alias_map
+        tree = ast.parse("import os\nconfig.runner = os.system\nhooks[0] = os.system\n")
+        assert _build_alias_map(tree) == {"os": "os"}
+
+    def test_dynamic_import_with_non_literal_module_does_not_resolve(self, tmp_path):
+        """__import__(variable) cannot be resolved statically but is still flagged as dynamic."""
+        from pipguard.scanner import _resolve_expr_name, scan_python_file
+        expr = ast.parse("__import__(mod).system", mode="eval").body
+        assert _resolve_expr_name(expr, {}) is None
+        f = tmp_path / "setup.py"
+        f.write_text("mod = input()\n__import__(mod).system('ls')\n")
+        findings = scan_python_file(str(f), is_hook=True)
+        assert any(fi.description == "Dynamic import: __import__()" for fi in findings)
+
 
 class TestPkgNameLoopExhausts:
     def test_all_non_digit_parts_loop_exhausts(self):
@@ -762,3 +823,26 @@ class TestPkgNameLoopExhausts:
         # Both parts are non-digit → loop exhausts without break
         result = _pkg_name_from_filename("requests-alpha.whl")
         assert result == "requests-alpha"
+
+
+# ── __init__.py ───────────────────────────────────────────────────────────────
+
+class TestVersionFallback:
+    def test_version_falls_back_when_package_not_installed(self):
+        """Running from a bare source checkout (no dist-info) reports 0.0.0 instead of crashing."""
+        import importlib
+        import importlib.metadata
+        import pipguard
+
+        original = pipguard.__version__
+
+        def _not_installed(name):
+            raise importlib.metadata.PackageNotFoundError(name)
+
+        try:
+            with pytest.MonkeyPatch.context() as mp:
+                mp.setattr(importlib.metadata, "version", _not_installed)
+                assert importlib.reload(pipguard).__version__ == "0.0.0"
+        finally:
+            importlib.reload(pipguard)
+        assert pipguard.__version__ == original

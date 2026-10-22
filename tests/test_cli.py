@@ -64,6 +64,15 @@ class TestPkgNameFromFilename:
     def test_version_extracted_from_wheel(self):
         assert _pkg_version_from_filename("requests-2.28.0-py3-none-any.whl") == "2.28.0"
 
+    def test_version_extracted_from_sdist(self):
+        assert _pkg_version_from_filename("litellm-1.82.8.tar.gz") == "1.82.8"
+
+    def test_version_extracted_without_archive_suffix(self):
+        assert _pkg_version_from_filename("/tmp/pipguard-xxxx/requests-2.28.0") == "2.28.0"
+
+    def test_version_missing_returns_empty(self):
+        assert _pkg_version_from_filename("requests-alpha.whl") == ""
+
 
 # ── requirements.txt validation ──────────────────────────────────────────────
 
@@ -140,6 +149,19 @@ class TestValidateRequirementsFile:
             "requests==2.28.0 --hash=sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890\n",
         )
         assert _validate_requirements_file(f, require_hashes=True) == 0
+
+    def test_pinned_vcs_rejected_when_policy_disables_vcs(self, tmp_path, capsys):
+        f = self._write(tmp_path, "git+https://github.com/org/repo.git@a1b2c3d4\n")
+        assert _validate_requirements_file(f, allow_vcs_pinned=False) == 2
+        assert "VCS dependency disabled by policy" in capsys.readouterr().err
+
+    def test_hashed_direct_url_rejected_when_policy_disables_direct_url(self, tmp_path, capsys):
+        f = self._write(
+            tmp_path,
+            "pkg @ https://example.com/pkg-1.0.0.whl#sha256=abcdefabcdefabcdefabcdefabcdefab\n",
+        )
+        assert _validate_requirements_file(f, allow_direct_url_pinned=False) == 2
+        assert "direct URL dependency disabled by policy" in capsys.readouterr().err
 
 
 # ── CLI parser ───────────────────────────────────────────────────────────────
@@ -475,6 +497,39 @@ class TestCmdInstallGate:
         rc = cmd_install(_make_args(packages=["okpkg"], enforce_intel=True, intel_feed=None))
         assert rc == 0
         mock_intel.assert_not_called()
+
+    @patch("pipguard.cli.load_intel_feed")
+    def test_intel_feed_does_not_block_unlisted_packages(
+        self, mock_intel, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """An enforced feed blocks only exact (name, version) matches; the rest are scanned."""
+        mock_intel.return_value = {("evilpkg", "1.0.0"): "known malware sample"}
+        mock_dl.return_value = (
+            [
+                str(tmp_path / "evilpkg-2.0.0-py3-none-any.whl"),
+                str(tmp_path / "okpkg-1.0.0-py3-none-any.whl"),
+            ],
+            [],
+        )
+        mock_scan.return_value = _make_scan_result("okpkg", RiskLevel.CLEAN)
+        rc = cmd_install(
+            _make_args(packages=["evilpkg==2.0.0", "okpkg"], enforce_intel=True, intel_feed="feed.json")
+        )
+        assert rc == 0
+        mock_intel.assert_called_once_with("feed.json")
+        assert mock_scan.call_count == 2
+        mock_install.assert_called_once()
+
+    def test_fail_on_vuln_without_known_cves_installs(
+        self, mock_sig, mock_reg, mock_dl, mock_scan, mock_report, mock_install, tmp_path
+    ):
+        """--fail-on-vuln only blocks when OSV reports something; it still implies --check-vulns."""
+        mock_dl.return_value = ([str(tmp_path / "requests-2.31.0-py3-none-any.whl")], [])
+        mock_scan.return_value = _make_scan_result("requests", RiskLevel.CLEAN)
+        rc = cmd_install(_make_args(fail_on_vuln=True))
+        assert rc == 0
+        assert mock_scan.call_args[0][3] is True
+        mock_install.assert_called_once()
 
 
 class TestValidateRequirementsFilePEP508:

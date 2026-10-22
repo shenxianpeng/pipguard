@@ -48,7 +48,7 @@ def extract_archive(archive_path: str, dest_dir: str) -> Optional[str]:
                 with tarfile.open(archive_path, mode) as tf:
                     if sys.version_info >= (3, 12):
                         tf.extractall(extract_to, filter="data")
-                    else:  # pragma: no cover
+                    else:
                         tf.extractall(extract_to, members=_safe_tar_members(tf, extract_to))
             return extract_to
         except (tarfile.TarError, zipfile.BadZipFile, EOFError, OSError):
@@ -57,7 +57,7 @@ def extract_archive(archive_path: str, dest_dir: str) -> Optional[str]:
     return None
 
 
-def _safe_tar_members(tf: tarfile.TarFile, dest_dir: str) -> List[tarfile.TarInfo]:  # pragma: no cover
+def _safe_tar_members(tf: tarfile.TarFile, dest_dir: str) -> List[tarfile.TarInfo]:
     """Filter tar members to prevent path traversal attacks (Python < 3.12)."""
     real_dest = os.path.realpath(dest_dir)
     safe = []
