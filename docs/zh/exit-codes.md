@@ -8,7 +8,15 @@ pipguard 使用结构化退出码，便于 CI/CD 精准处理。
 |---|---|---|
 | `0` | **Clean**：安装成功 | 所有包为 CLEAN（或 MEDIUM/LOW 已确认） |
 | `1` | **Blocked**：已阻断 | 任意包触发 CRITICAL 或 HIGH |
-| `2` | **Scan error**：扫描失败 | 下载失败、归档不支持、磁盘异常等 |
+| `2` | **Scan error**：扫描失败 | 下载失败、归档不支持、磁盘异常，或 pip 信任被攻破的 CA（见[工具链信任](toolchain.md)） |
+
+## `pipguard doctor`
+
+| 退出码 | 含义 |
+|---|---|
+| `0` | 没有会阻断安装的问题（可能有警告） |
+| `1` | 有解释器的 pip 信任被攻破的 CA |
+| `2` | 有解释器无法检查 |
 
 ## `pipguard scan-feed`
 

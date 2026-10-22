@@ -7,7 +7,8 @@ Usage:
 Exit codes:
     0  Clean — all packages scanned CLEAN, install succeeded
     1  Blocked — CRITICAL or HIGH risk detected (without --force)
-    2  Error — download failed, unsupported format, or scan error
+    2  Error — download failed, unsupported format, scan error, or pip
+       trusts a compromised CA (see `pipguard doctor`)
 """
 
 import argparse
@@ -30,6 +31,8 @@ from .models import Finding, PackageScanResult, RiskLevel
 from .osv import query_osv
 from .policy import load_policy
 from .scanner import scan_binary_extensions, scan_pth_file, scan_python_file
+from .toolchain import describe as describe_toolchain
+from .toolchain import probe_toolchain
 
 
 # ── Package name extraction ──────────────────────────────────────────────────
@@ -235,6 +238,39 @@ def _confirm_install() -> bool:
         return False
 
 
+# ── Toolchain trust gate ─────────────────────────────────────────────────────
+
+def _toolchain_gate(require_hashes: bool, enforce: bool = True) -> int:
+    """Refuse to download through a pip that trusts a compromised CA.
+
+    A MITM with a certificate from a compromised CA can swap the archives
+    pipguard is about to scan, so the scan would vouch for the attacker's
+    bytes. Returns 2 to block, 0 to proceed (possibly after a warning).
+    Hash-locked installs are integrity-checked by pip, so they only warn.
+    """
+    status = probe_toolchain()
+    if not status.compromised:
+        return 0
+    block = enforce and status.blocking and not require_hashes
+    icon = "❌" if block else "⚠️ "
+    print(f"\n{icon} Untrusted TLS toolchain ({status.executable}):", file=sys.stderr)
+    for line in describe_toolchain(status):
+        print(f"   {line}", file=sys.stderr)
+    if block:
+        print(
+            "\n   pipguard will not download through it: a network attacker could swap\n"
+            "   the packages before they are scanned. Fix the above, install with\n"
+            "   --require-hashes, or pass --skip-toolchain-check to accept the risk.\n",
+            file=sys.stderr,
+        )
+        return 2
+    if status.blocking and require_hashes:
+        print("   Continuing: --require-hashes lets pip verify every download.\n", file=sys.stderr)
+    else:
+        print("", file=sys.stderr)
+    return 0
+
+
 # ── install subcommand ───────────────────────────────────────────────────────
 
 def cmd_install(args) -> int:
@@ -273,6 +309,11 @@ def cmd_install(args) -> int:
             allow_vcs_pinned=policy.allow_vcs_pinned,
             allow_direct_url_pinned=policy.allow_direct_url_pinned,
         )
+        if rc != 0:
+            return rc
+
+    if not getattr(args, "skip_toolchain_check", False):
+        rc = _toolchain_gate(require_hashes)
         if rc != 0:
             return rc
 
@@ -465,6 +506,10 @@ def cmd_scan_feed(args) -> int:
     extra_allow = [*(policy.seed_allowlist or []), *(args.allow or [])]
     min_level = _LEVEL_BY_NAME[args.min_level]
 
+    if not getattr(args, "skip_toolchain_check", False):
+        # scan-feed never installs, so an untrusted toolchain only warns.
+        _toolchain_gate(require_hashes=False, enforce=False)
+
     xml = fetch_feed(args.feed)
     if not xml:
         print(f"Error: could not fetch feed '{args.feed}'", file=sys.stderr)
@@ -522,6 +567,37 @@ def cmd_scan_feed(args) -> int:
         "malicious, submit an advisory.",
     )
     return 1
+
+
+# ── doctor subcommand ────────────────────────────────────────────────────────
+
+def cmd_doctor(args) -> int:
+    """Implement `pipguard doctor`: check pip / CA trust for each interpreter.
+
+    Exit 0 when nothing blocks installs (warnings allowed), 1 when any
+    interpreter's pip can be MITM'd through a compromised CA, 2 when an
+    interpreter could not be inspected.
+    """
+    pythons = args.python or [sys.executable]
+    worst = 0
+    for exe in pythons:
+        status = probe_toolchain(exe)
+        if not status.checked:
+            print(f"❓ {exe}: could not inspect pip ({status.error or 'unknown error'})")
+            worst = max(worst, 2)
+            continue
+        label = f"{status.executable} (Python {status.python}, pip {status.pip_version})"
+        if not status.compromised:
+            print(f"✅ {label}: no compromised CAs trusted")
+            continue
+        if status.blocking:
+            print(f"❌ {label}")
+            worst = max(worst, 1)
+        else:
+            print(f"⚠️  {label}")
+        for line in describe_toolchain(status):
+            print(f"   {line}")
+    return worst
 
 
 # ── CLI wiring ───────────────────────────────────────────────────────────────
@@ -614,6 +690,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--fail-on-vuln", action="store_true",
         help="Exit 1 if any package has a known OSV vulnerability (implies --check-vulns)",
     )
+    install.add_argument(
+        "--skip-toolchain-check", action="store_true",
+        help=(
+            "Download even if pip trusts a compromised CA "
+            "(DANGER: a network attacker could swap packages before the scan)"
+        ),
+    )
 
     # ── scan-feed ─────────────────────────────────────────────────────────────
     feed = sub.add_parser(
@@ -649,6 +732,20 @@ def build_parser() -> argparse.ArgumentParser:
         "--policy", metavar="pipguard.toml",
         help="Path to policy file (default: ./pipguard.toml if present)",
     )
+    feed.add_argument(
+        "--skip-toolchain-check", action="store_true",
+        help="Skip the check for a pip that trusts a compromised CA",
+    )
+
+    # ── doctor ────────────────────────────────────────────────────────────────
+    doctor = sub.add_parser(
+        "doctor",
+        help="Check that pip and the TLS trust stores don't trust a compromised CA",
+    )
+    doctor.add_argument(
+        "--python", action="append", metavar="PATH",
+        help="Interpreter to check (repeatable; default: the one running pipguard)",
+    )
     return parser
 
 
@@ -660,6 +757,8 @@ def main() -> int:
         return cmd_install(args)
     if args.command == "scan-feed":
         return cmd_scan_feed(args)
+    if args.command == "doctor":
+        return cmd_doctor(args)
     return 0  # pragma: no cover
 
 

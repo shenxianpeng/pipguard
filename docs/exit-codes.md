@@ -8,7 +8,7 @@ pipguard uses structured exit codes so CI pipelines can react precisely.
 |------|---------|---------------|
 | `0` | **Clean** — install succeeded | All packages scanned as CLEAN (or MEDIUM/LOW with user confirmation) |
 | `1` | **Blocked** — CRITICAL or HIGH risk detected | Any package triggered a CRITICAL or HIGH finding |
-| `2` | **Scan error** — could not complete the scan | Download failed, unsupported archive format, disk space error |
+| `2` | **Scan error** — could not complete the scan | Download failed, unsupported archive format, disk space error, or pip trusts a compromised CA ([Toolchain Trust](toolchain.md)) |
 
 ## `pipguard scan-feed`
 
@@ -20,6 +20,14 @@ to review", not "blocked":
 | `0` | **Nothing to review** | No scanned release met or exceeded `--min-level` |
 | `1` | **Review candidates found** | At least one release met or exceeded `--min-level` (so a scheduled job can alert) |
 | `2` | **Feed error** | The feed could not be fetched, or no entries could be downloaded to scan |
+
+## `pipguard doctor`
+
+| Code | Meaning |
+|------|---------|
+| `0` | Nothing blocks installs (warnings may be printed) |
+| `1` | An interpreter's pip trusts a compromised CA |
+| `2` | An interpreter could not be inspected |
 
 ## Usage in CI
 

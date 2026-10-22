@@ -58,6 +58,7 @@ nav:
     - Seed Allowlist: allowlist.md
     - Policy as Code: policy.md
     - Runtime Sandbox: runtime-sandbox.md
+    - Toolchain Trust: toolchain.md
 
 plugins:
   - search
@@ -77,6 +78,7 @@ plugins:
           Seed Allowlist: 种子允许列表
           Policy as Code: 策略即代码
           Runtime Sandbox: 运行时沙箱
+          Toolchain Trust: 工具链信任
       languages:
         - locale: en
           default: true

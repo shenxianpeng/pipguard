@@ -43,6 +43,21 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
+    - name: Make sure pip does not trust compromised CAs
+      # pip < 26.2.2 always trusts its vendored certifi, which still contains
+      # the compromised "emSign ECC Root CA - G3" (eMudhra, Oct 2026), so a
+      # network attacker could swap anything it downloads. Upgrade it from a
+      # hash-pinned wheel: the sha256 check makes this safe even through the
+      # old pip. https://discuss.python.org/t/109576
+      shell: bash
+      run: |
+        set -euo pipefail
+        if python -c 'import sys; from importlib.metadata import version; v = tuple(int(p) for p in version("pip").split(".")[:3] if p.isdigit()); sys.exit(0 if v < (26, 2, 2) else 1)'; then
+          python -m pip install --disable-pip-version-check \
+            "pip @ https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/pip-26.2.2-py3-none-any.whl#sha256=fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70"
+        fi
+        python -m pip --version
+
     - name: Install pipguard
       shell: bash
       run: |
