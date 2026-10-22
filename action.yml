@@ -60,29 +60,38 @@ runs:
 
     - name: Install pipguard
       shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
       run: |
         set -euo pipefail
-        if [ -n "${{ inputs.version }}" ]; then
-          python -m pip install "pipguard==${{ inputs.version }}"
+        if [ -n "$INPUT_VERSION" ]; then
+          python -m pip install "pipguard==$INPUT_VERSION"
         else
           python -m pip install pipguard
         fi
 
     - name: Run pipguard
       shell: bash
+      env:
+        INPUT_CHECK_VULNS: ${{ inputs.check-vulns }}
+        INPUT_FAIL_ON_VULN: ${{ inputs.fail-on-vuln }}
+        INPUT_REQUIREMENTS: ${{ inputs.requirements }}
+        INPUT_PACKAGES: ${{ inputs.packages }}
+        INPUT_ARGS: ${{ inputs.args }}
       run: |
         set -euo pipefail
         EXTRA=""
-        if [ "${{ inputs.check-vulns }}" = "true" ]; then
+        if [ "$INPUT_CHECK_VULNS" = "true" ]; then
           EXTRA="$EXTRA --check-vulns"
         fi
-        if [ "${{ inputs.fail-on-vuln }}" = "true" ]; then
+        if [ "$INPUT_FAIL_ON_VULN" = "true" ]; then
           EXTRA="$EXTRA --fail-on-vuln"
         fi
-        if [ -n "${{ inputs.requirements }}" ]; then
-          pipguard install --yes $EXTRA ${{ inputs.args }} -r "${{ inputs.requirements }}"
-        elif [ -n "${{ inputs.packages }}" ]; then
-          pipguard install --yes $EXTRA ${{ inputs.args }} ${{ inputs.packages }}
+        # $INPUT_ARGS and $INPUT_PACKAGES are unquoted on purpose: they are space-separated lists that must word-split into separate CLI arguments.
+        if [ -n "$INPUT_REQUIREMENTS" ]; then
+          pipguard install --yes $EXTRA $INPUT_ARGS -r "$INPUT_REQUIREMENTS"
+        elif [ -n "$INPUT_PACKAGES" ]; then
+          pipguard install --yes $EXTRA $INPUT_ARGS $INPUT_PACKAGES
         else
           echo "::error::pipguard action requires either the 'requirements' or 'packages' input."
           exit 1
