@@ -1,0 +1,50 @@
+pipguard/toolchain.py
+  s_94f8ad457a8856::t_ae874bfc2629de 1-210
+  s_94f8ad457a8856::t_9fcc2ba9c4fa44 211-230
+.github/workflows/docs.yml
+  s_94f8ad457a8856::t_caf4558216a720 27-29
+.github/workflows/publish.yml
+  s_94f8ad457a8856::t_b99354af19dce1 35-38
+.github/workflows/self-test.yml
+  s_94f8ad457a8856::t_b3a5bd5544fb1a 22-24,71-111
+README.md
+  s_94f8ad457a8856::t_0e6fa363a769ec 77-88,112-114
+action.yml
+  s_94f8ad457a8856::t_559e4aae2d732a 46-60
+docs/exit-codes.md
+  s_94f8ad457a8856::t_e6e8673ac036a4 11,24-31
+docs/toolchain.md
+  s_94f8ad457a8856::t_448d797251bc5d 1-69
+docs/zh/exit-codes.md
+  s_94f8ad457a8856::t_98b89bc7b198ea 11-19
+docs/zh/toolchain.md
+  s_94f8ad457a8856::t_f80602bf14f64a 1-62
+mkdocs.yml
+  s_94f8ad457a8856::t_06408d0166b232 61,81
+pipguard/cli.py
+  s_94f8ad457a8856::t_07bfeee5517f3d 10-11,34-35,241-273,315-319,509-512,572-602,693-699,735-748,760-761
+tests/conftest.py
+  s_94f8ad457a8856::t_e530b5d36c9cd6 1-28
+tests/fixtures/certs/emsign_ecc_root_ca_g3.pem
+  s_94f8ad457a8856::t_70aa8503e9a78b 1-22
+tests/fixtures/certs/isrg_root_x1.pem
+  s_94f8ad457a8856::t_8774d991c318ba 1-38
+tests/test_toolchain.py
+  s_94f8ad457a8856::t_5be3f3e44e78fb 1-243
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0a26c820b95b2f3650f887174d1abb82f2f948c9",
+  "prompts": {},
+  "sessions": {
+    "s_94f8ad457a8856": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7be2542b-cfc1-4e2d-a3c2-514ba313a44c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Xianpeng Shen <xianpeng.shen@gmail.com>"
+    }
+  }
+}
