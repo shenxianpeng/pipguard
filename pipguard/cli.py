@@ -806,8 +806,19 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _safe_console() -> None:
+    """Don't crash on emoji when the console can't encode them (e.g. cp1252
+    on Windows); print a replacement character instead."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, ValueError):  # pragma: no cover - non-standard streams
+            pass
+
+
 def main() -> int:
     """Entry point for the `pipguard` CLI."""
+    _safe_console()
     parser = build_parser()
     args = parser.parse_args()
     if args.command == "install":

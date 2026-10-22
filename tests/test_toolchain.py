@@ -427,3 +427,18 @@ def test_doctor_online_checks_mitigated_pip_too(capsys):
 def test_doctor_parses_multiple_pythons():
     args = build_parser().parse_args(["doctor", "--python", "a", "--python", "b"])
     assert args.python == ["a", "b"]
+
+
+def test_cli_survives_a_console_that_cannot_encode_emoji(tmp_path):
+    # Windows runners default to cp1252; pipguard's emoji used to crash there.
+    import os
+    import subprocess
+    env = dict(os.environ, PYTHONIOENCODING="cp1252")
+    proc = subprocess.run(
+        [sys.executable, "-c", "import sys; from pipguard.cli import main; "
+         "sys.argv=['pipguard','doctor','--python','/nonexistent/python']; sys.exit(main())"],
+        capture_output=True, env=env,
+    )
+    assert proc.returncode == 2, proc.stderr
+    assert b"UnicodeEncodeError" not in proc.stderr
+    assert b"could not inspect pip" in proc.stdout
