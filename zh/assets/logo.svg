@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="pipguard logo">
+  <!-- Dark background -->
+  <rect width="512" height="512" fill="#0D0D08"/>
+
+  <!--
+    Flat-top regular hexagon
+    Center: (256, 256), outer radius: 228, inner radius (border: 26px): 202
+    Flat-top angles: 0°, 60°, 120°, 180°, 240°, 300°
+    Outer vertices (r=228):
+      0°:   (484, 256)
+      60°:  (370, 453)
+      120°: (142, 453)
+      180°: (28,  256)
+      240°: (142, 59)
+      300°: (370, 59)
+    Inner vertices (r=202):
+      0°:   (458, 256)
+      60°:  (357, 431)
+      120°: (155, 431)
+      180°: (54,  256)
+      240°: (155, 81)
+      300°: (357, 81)
+  -->
+
+  <!-- Outer hex fill (accent) -->
+  <polygon
+    points="484,256 370,453 142,453 28,256 142,59 370,59"
+    fill="#C8FF00"/>
+
+  <!-- Inner hex fill (dark background) -->
+  <polygon
+    points="458,256 357,431 155,431 54,256 155,81 357,81"
+    fill="#0D0D08"/>
+
+  <!--
+    Geometric "P" glyph — drawn as paths, no font dependency.
+    Bounding box: x: 168–320, y: 148–364 (152×216 px), centered at (256, 256).
+    Stroke width: 32px.
+
+    Components:
+    1. Left vertical bar: x [168,200], y [148,364]
+    2. Top cap:           x [168,320], y [148,180]
+    3. Right bar (bowl):  x [288,320], y [148,272]
+    4. Mid cap:           x [168,320], y [240,272]
+
+    The bowl is the solid region enclosed by top cap + right bar + mid cap + left bar top half.
+    We fill it as a single L-shape = full upper block minus nothing (or just 4 rects).
+  -->
+  <g fill="#C8FF00">
+    <!-- Left vertical bar (full height of P) -->
+    <rect x="168" y="148" width="32" height="216"/>
+    <!-- Top cap -->
+    <rect x="168" y="148" width="152" height="32"/>
+    <!-- Right side of bowl -->
+    <rect x="288" y="148" width="32" height="124"/>
+    <!-- Mid cap (bottom of bowl) -->
+    <rect x="168" y="240" width="152" height="32"/>
+  </g>
+</svg>
