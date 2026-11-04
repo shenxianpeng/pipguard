@@ -80,23 +80,15 @@ LOW
 Proceed with installation? [y/N]
 ```
 
-<div class="pg-terminal">
-  <div class="pg-terminal__bar">
-    <div class="pg-terminal__dot"></div>
-    <div class="pg-terminal__dot"></div>
-    <div class="pg-terminal__dot"></div>
-    <span class="pg-terminal__title">GitHub Actions</span>
-  </div>
-  <div class="pg-terminal__body">
-    <div><span class="t-dollar">$</span><span class="t-cmd">pipguard install --yes -r requirements.txt</span></div>
-    <div>&nbsp;</div>
-    <div><span class="t-ok">✓ requests==2.31.0</span></div>
-    <div><span class="t-ok">✓ numpy==1.26.3</span></div>
-    <div><span class="t-block">✗ litellm==1.82.8  CRITICAL — .pth autorun, reads ~/.ssh/id_rsa</span></div>
-    <div>&nbsp;</div>
-    <div><span class="t-block">Process exited with code 1</span></div>
-  </div>
-</div>
+```text title="GitHub Actions"
+$ pipguard install --yes -r requirements.txt
+
+✓ requests==2.31.0
+✓ numpy==1.26.3
+✗ litellm==1.82.8  CRITICAL — .pth autorun, reads ~/.ssh/id_rsa
+
+Process exited with code 1
+```
 
 ## Known CVE Lookup (osv.dev)
 
