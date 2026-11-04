@@ -122,15 +122,10 @@ jobs:
             rm -f piplog.txt
             PIP_LOG=piplog.txt PIP_INDEX_URL="https://$host/simple/" PIP_RETRIES=0 \
               pipguard install six --yes || true
-            # OpenSSL reports CERTIFICATE_VERIFY_FAILED; the Windows/macOS
-            # verifier (truststore) uses its own wording, so also accept pip's
-            # generic SSL warning. Same rule as `pipguard doctor --online`.
-            if grep -qiE "CERTIFICATE_VERIFY_FAILED|certificate verify failed|problem confirming the ssl" piplog.txt; then
+            if grep -qi "CERTIFICATE_VERIFY_FAILED" piplog.txt; then
               echo "✅ $host: TLS rejected under pipguard"
             else
-              echo "❌ $host: TLS accepted under pipguard"
-              grep -iE "ssl|certificate" piplog.txt | head -20 || true
-              tail -20 piplog.txt; exit 1
+              echo "❌ $host: TLS accepted under pipguard"; tail -20 piplog.txt; exit 1
             fi
           done
 

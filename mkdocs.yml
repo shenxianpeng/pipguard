@@ -6,10 +6,44 @@ repo_name: shenxianpeng/pipguard
 edit_uri: edit/main/docs/
 
 theme:
-  name: sumi
-  accent: indigo
+  name: material
+  custom_dir: docs/overrides
   favicon: assets/favicon.png
   logo: assets/logo.svg
+  font:
+    text: false   # We load fonts manually via extra_css
+    code: false
+  palette:
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.top
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.footer
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
 
 nav:
   - Home: index.md
@@ -28,26 +62,31 @@ nav:
 
 plugins:
   - search
-  - sumi
-
-languages:
-  en: English
-  zh:
-    name: 简体中文
-    nav:
-      - 首页: index.md
-      - 快速开始:
-        - 安装指南: installation.md
-        - 使用说明: usage.md
-      - 工作原理: how-it-works.md
-      - 对比其他工具: comparison.md
-      - 参考:
-        - 风险等级: risk-levels.md
-        - 退出码: exit-codes.md
-        - 种子允许列表: allowlist.md
-        - 策略即代码: policy.md
-        - 运行时沙箱: runtime-sandbox.md
-        - 工具链信任: toolchain.md
+  - i18n:
+      docs_structure: folder
+      nav_translations:
+        zh:
+          Home: 首页
+          vs Other Tools: 对比其他工具
+          Get Started: 快速开始
+          Installation: 安装指南
+          Usage: 使用说明
+          How It Works: 工作原理
+          Reference: 参考
+          Risk Levels: 风险等级
+          Exit Codes: 退出码
+          Seed Allowlist: 种子允许列表
+          Policy as Code: 策略即代码
+          Runtime Sandbox: 运行时沙箱
+          Toolchain Trust: 工具链信任
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: zh
+          name: 简体中文
+          build: true
 
 markdown_extensions:
   - admonition
@@ -68,10 +107,17 @@ markdown_extensions:
       permalink: true
 
 extra:
+  alternate:
+    - name: English
+      link: /pipguard/
+      lang: en
+    - name: 简体中文
+      link: /pipguard/zh/
+      lang: zh
   social:
-    - icon: brand-github
+    - icon: fontawesome/brands/github
       link: https://github.com/shenxianpeng/pipguard
-    - icon: brand-python
+    - icon: fontawesome/brands/python
       link: https://pypi.org/project/pipguard/
   generator: false
 
